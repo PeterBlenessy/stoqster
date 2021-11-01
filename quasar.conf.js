@@ -8,7 +8,7 @@
 
 /* eslint-env node */
 const ESLintPlugin = require('eslint-webpack-plugin')
-const { configure } = require('quasar/wrappers');
+const { configure } = require('quasar/wrappers')
 
 module.exports = configure(function (ctx) {
   return {
@@ -23,7 +23,7 @@ module.exports = configure(function (ctx) {
     // https://quasar.dev/quasar-cli/boot-files
     boot: [
       'i18n',
-      'axios',
+      'axios'
     ],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
@@ -42,7 +42,7 @@ module.exports = configure(function (ctx) {
       // 'roboto-font-latin-ext', // this or either 'roboto-font', NEVER both!
 
       'roboto-font', // optional, you are not bound to it
-      'material-icons', // optional, you are not bound to it
+      'material-icons' // optional, you are not bound to it
     ],
 
     // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
@@ -70,8 +70,8 @@ module.exports = configure(function (ctx) {
       // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain
       chainWebpack (chain) {
         chain.plugin('eslint-webpack-plugin')
-          .use(ESLintPlugin, [{ extensions: [ 'js', 'vue' ] }])
-      },
+          .use(ESLintPlugin, [{ extensions: ['js', 'vue'] }])
+      }
     },
 
     // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-devServer
@@ -113,15 +113,16 @@ module.exports = configure(function (ctx) {
       // manualStoreHydration: true,
       // manualPostHydrationTrigger: true,
 
-      prodPort: 3000, // The default port that the production server should use
-                      // (gets superseded if process.env.PORT is specified at runtime)
+      // The default port that the production server should use
+      // (gets superseded if process.env.PORT is specified at runtime)
+      prodPort: 3000,
 
+      // Tell browser when a file from the server should expire from cache (in ms)
       maxAge: 1000 * 60 * 60 * 24 * 30,
-        // Tell browser when a file from the server should expire from cache (in ms)
 
       chainWebpackWebserver (chain) {
         chain.plugin('eslint-webpack-plugin')
-          .use(ESLintPlugin, [{ extensions: [ 'js' ] }])
+          .use(ESLintPlugin, [{ extensions: ['js'] }])
       },
 
       middlewares: [
@@ -139,7 +140,7 @@ module.exports = configure(function (ctx) {
       // if using workbox in InjectManifest mode
       chainWebpackCustomSW (chain) {
         chain.plugin('eslint-webpack-plugin')
-          .use(ESLintPlugin, [{ extensions: [ 'js' ] }])
+          .use(ESLintPlugin, [{ extensions: ['js'] }])
       },
 
       manifest: {
@@ -199,24 +200,23 @@ module.exports = configure(function (ctx) {
 
         appId: 'com.electron.${productName}',
         mac: {
-          "artifactName": "${productName}-${version}-osx.${ext}",
-          "category": "public.app-category.finance",
-          "hardenedRuntime": true,
-          "target": [
+          artifactName: '${productName}-${version}-osx.${ext}',
+          category: 'public.app-category.finance',
+          hardenedRuntime: true,
+          target: [
             "zip",
             "dmg"
           ]
         },
         linux: {
-          "category": "public.app-category.finance",
-          "target": [
-            "zip",
-            "deb"
+          category: 'public.app-category.finance',
+          target: [
+            'tar.gz'
           ]
         },
         win: {
-          "target": [
-            "portable"
+          target: [
+            'portable'
           ]
         },
         publish: {
