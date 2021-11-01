@@ -192,25 +192,38 @@ module.exports = configure(function (ctx) {
 
     // Full list of options: https://quasar.dev/quasar-cli/developing-electron-apps/configuring-electron
     electron: {
-      bundler: 'packager', // 'packager' or 'builder'
-
-      packager: {
-        // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
-
-        // OS X / Mac App Store
-        // appBundleId: '',
-        // appCategoryType: '',
-        // osxSign: '',
-        // protocol: 'myapp://path',
-
-        // Windows only
-        // win32metadata: { ... }
-      },
+      bundler: 'builder', // 'packager' or 'builder'
 
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'stoqster'
+        appId: 'com.electron.${productName}',
+        mac: {
+          "artifactName": "${productName}-${version}-osx.${ext}",
+          "category": "public.app-category.finance",
+          "hardenedRuntime": true,
+          "target": [
+            "zip",
+            "dmg"
+          ]
+        },
+        linux: {
+          "category": "public.app-category.finance",
+          "target": [
+            "zip",
+            "deb"
+          ]
+        },
+        win: {
+          "target": [
+            "portable"
+          ]
+        },
+        publish: {
+          "provider": "github",
+          "owner": "PeterBlenessy",
+          "repo": "stoqster"
+        }
       },
 
       // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain
