@@ -109,7 +109,6 @@ export default defineComponent({
 
     const api = toRef(props, 'api')
     const title = ibindex[api.value].title
-//    const columns = ibindex[api.value].columns
     const visibleColumns = ibindex[api.value].visibleColumns
     const columns = ibindex[api.value].columns
     const rows = ref([])
@@ -197,10 +196,6 @@ export default defineComponent({
 
       let valuesStringified = JSON.stringify(valuesJSON)
       $q.localStorage.set(key, valuesStringified)
-
-      
-
-
     }
 
     return {
@@ -223,13 +218,6 @@ export default defineComponent({
     }
 
   },
-  computed: {
-    
-  },
-
-  data: () => ({
-    
-  }),
 
   mounted () {
     this.refreshData();

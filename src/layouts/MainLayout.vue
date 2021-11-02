@@ -41,18 +41,14 @@
       bordered
     >
       <q-list>
-        <q-item-label
-          header
-        >
-          Application Links
-        </q-item-label>
-
+        <q-item-label header>Application Links</q-item-label>
         <EssentialLink
           v-for="link in essentialLinks"
           :key="link.title"
           v-bind="link"
         />
       </q-list>
+
     </q-drawer>
 
     <q-page-container>
@@ -63,20 +59,25 @@
 
 <script>
 import EssentialLink from 'components/EssentialLink.vue'
-//import { productName, version } from '../../package.json'
 
 const linksList = [
   {
-    title: 'Forum',
-    caption: 'forum.quasar.dev',
-    icon: 'record_voice_over',
-    link: 'https://forum.quasar.dev'
+    title: 'Dashboard',
+    caption: 'Display watchlisted companies',
+    icon: 'apps',
+    link: '/'
   },
   {
-    title: 'Quasar Awesome',
-    caption: 'Community Quasar projects',
-    icon: 'favorite',
-    link: 'https://awesome.quasar.dev'
+    title: 'Ibindex',
+    caption: 'Ibindex companies',
+    icon: 'list',
+    link: '/ibindex'
+  },
+  {
+    title: 'Ibindex - weights',
+    caption: 'Market and index weights',
+    icon: 'pie_chart',
+    link: '/ibindex-weights'
   }
 ];
 
