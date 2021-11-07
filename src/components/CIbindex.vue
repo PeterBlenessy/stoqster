@@ -143,8 +143,6 @@ export default defineComponent({
     const expandedRows = ref([]);
     const expand = ref(false);
 
-//    const selectedCheckboxes = ref([])
-
     // Fetch data from ibindex using the provided api reference
     const refreshData = async () => {
       loading.value = true;
@@ -174,7 +172,7 @@ export default defineComponent({
 
     // Restore selected rows saved in localStorage
     function restoreSelectedRows () {
-      selectedRows.value = $q.localStorage.getItem('watchlist');
+      selectedRows.value = $q.localStorage.getItem('watchlist') || [];
     }
 
     // Toggle expand / collaps of row with more company details.
@@ -214,8 +212,9 @@ export default defineComponent({
   mounted () {
     this.refreshData();
     this.restoreSelectedRows();
-  },
-});
+  }
+})
+
 </script>
 
 <style scoped>

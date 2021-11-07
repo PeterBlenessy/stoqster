@@ -79,10 +79,12 @@ export default defineComponent({
       window.ipc.axiosRequest( ibiAxiosOptions(ibiAPI) )
         .then( response => {
           rows.value = response.data;
-          Object.entries(watchlist).forEach(([key, value]) => {
-            visibleRows.value.push(value.product);
-          })
-          rows.value = rows.value.filter( i => visibleRows.value.includes( i.product ));
+          if (watchlist !== null) {
+            Object.entries(watchlist).forEach(([key, value]) => {
+              visibleRows.value.push(value.product);
+            });
+            rows.value = rows.value.filter( i => visibleRows.value.includes( i.product ));
+          }
         }).catch( error => {
           console.log(error);
         }).finally(() => { 
@@ -109,6 +111,6 @@ export default defineComponent({
 
   mounted () {
     this.refreshData();
-  },
+  }
 })
 </script>
