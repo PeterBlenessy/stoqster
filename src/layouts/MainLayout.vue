@@ -1,54 +1,56 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
+  <q-layout view="hHh Lpr lFf">
     <q-header elevated>
+      <!--  Top toolbar -->
       <q-toolbar >
-        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer"/>
+        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleDrawer"/>
 
         <q-toolbar-title>Stoqster</q-toolbar-title>
-    
 
+        <!-- Toggle dark / light mode -->
         <q-btn flat round icon="invert_colors" @click.stop="$q.dark.toggle()">
           <q-tooltip transition-show="scale" transition-hide="scale">
             {{ $q.dark.isActive ? "Light mode" : "Dark mode" }}
           </q-tooltip>
         </q-btn>
-        <q-btn flat round icon="apps" @click="$router.replace({path: '/'})">
+
+        <!-- Populate the toolbar with menu item icons an actions -->
+        <q-btn flat round 
+          v-for="item in menuItems"
+          :key="item.title"
+          :icon="item.icon"
+          @click="$router.replace({path: item.path})"
+        >
           <q-tooltip transition-show="scale" transition-hide="scale">
-            {{ "Dashboard" }}
-          </q-tooltip>     
-        </q-btn>
-        <q-btn flat round icon="list" @click="$router.replace({path: '/ibindex'})">
-          <q-tooltip transition-show="scale" transition-hide="scale">
-            {{ "Investmendbolag" }}
-          </q-tooltip>     
-        </q-btn>
-        <q-btn flat round icon="pie_chart" @click="$router.replace({path: '/ibindex-weights'})">
-          <q-tooltip transition-show="scale" transition-hide="scale">
-            {{ "Marknads- och indexvikt" }}
-          </q-tooltip>     
-        </q-btn>
-        <q-btn flat round icon="info" @click="$router.replace({path: '/about'})">
-          <q-tooltip transition-show="scale" transition-hide="scale">
-            {{ "Info" }}
+            {{ item.caption }}
           </q-tooltip>
         </q-btn>
 
       </q-toolbar>
     </q-header>
 
-    <q-drawer
-      v-model="leftDrawerOpen"
-      bordered
-    >
+    <!--  Left drawer listing menu items -->
+    <q-drawer v-model="drawer" bordered>
       <q-list>
-        <q-item-label header>Application Links</q-item-label>
-        <EssentialLink
-          v-for="link in essentialLinks"
-          :key="link.title"
-          v-bind="link"
-        />
-      </q-list>
+        <q-item-label header >Application Links</q-item-label>
 
+        <q-item clickable v-ripple
+          v-for="item in menuItems"
+          :key="item.title"
+          :icon="item.icon"
+          @click="$router.replace({path: item.path})"
+        >
+          <q-item-section avatar>
+            <q-icon :name="item.icon" />
+          </q-item-section>
+
+          <q-item-section>
+            <q-item-label>{{ item.title }}</q-item-label>
+            <q-item-label caption>{{ item.caption }}</q-item-label>
+          </q-item-section>
+        
+        </q-item>
+      </q-list>
     </q-drawer>
 
     <q-page-container>
@@ -58,49 +60,52 @@
 </template>
 
 <script>
-import EssentialLink from 'components/EssentialLink.vue'
 
-const linksList = [
+const links = [
   {
-    title: 'Dashboard',
-    caption: 'Display watchlisted companies',
+    title: 'Dashboard ',
+    caption: 'Display the dashboard of watchlisted companies',
     icon: 'apps',
-    link: '/'
+    path: '/'
   },
   {
     title: 'Ibindex',
     caption: 'Ibindex companies',
-    icon: 'list',
-    link: '/ibindex'
+    path: '/ibindex',
+    icon: 'list'
   },
   {
     title: 'Ibindex - weights',
     caption: 'Market and index weights',
-    icon: 'pie_chart',
-    link: '/ibindex-weights'
+    path: '/ibindex-weights',
+    icon: 'pie_chart'
+  },
+  {
+    title: 'Info',
+    caption: 'Application information',
+    path: '/info',
+    icon: 'info'
   }
-];
+]
 
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref } from 'vue';
 
 export default defineComponent({
   name: 'MainLayout',
 
-  components: {
-    EssentialLink
-  },
+  components: {},
 
   setup () {
-    const leftDrawerOpen = ref(false)
+    const drawer = ref(false);
 
     return {
-      essentialLinks: linksList,
-      leftDrawerOpen,
+      menuItems: links,
+      drawer,
       
-      toggleLeftDrawer () {
-        leftDrawerOpen.value = !leftDrawerOpen.value
+      toggleDrawer () {
+        drawer.value = !drawer.value;
       }
     }
   }
-})
+});
 </script>

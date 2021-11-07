@@ -1,6 +1,6 @@
 {
   "name": "stoqster",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Follow your favourite stocks and fonds, and your portfolio's performance",
   "productName": "Stoqster",
   "author": "Péter Blénessy",
@@ -42,11 +42,5 @@
     "node": ">= 12.22.1",
     "npm": ">= 6.13.4",
     "yarn": ">= 1.21.1"
-  },
-  "standard": {
-    "plugins": [
-      "html"
-    ],
-    "parser": "babel-eslint"
   }
 }
