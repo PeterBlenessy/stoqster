@@ -68,7 +68,7 @@ const ibindex = {
               format: val => `${val.toFixed(2)}%`
             },
         ],
-        visibleColumns: [ 'productName', 'indexWeight', 'marketWeight'],
+        visibleColumns: [ 'productName', 'indexWeight', 'marketWeight']
     },
 
     getTrends: {
@@ -77,24 +77,43 @@ const ibindex = {
         fields : ["product", "productName", "price", "navCalculatedPerShare", "thirtyDaysPriceChange", "sixMonthPriceChange", "oneYearPriceChange", "threeYearPriceChange", "fiveYearPriceChange", "thirtyDaysNavChange", "sixMonthNavChange", "oneYearNavChange", "threeYearNavChange", "fiveYearNavChange"],
         header : ["IB-aktie", "Investmentbolag", "Pris", "Beräknat substansvärde", "30 dagar", "6 månader", "1 år", "3 år", "5 år", "30 dagar", "6 månader", "1 år", "3 år", "5 år"],
         columns: [
-            { name: 'product', label: 'Aktie-id', type: 'string' },
-            { name: 'productName', label: 'Bolag', align: 'start', width: '220px', type: 'string' },
-            { name: 'price', label: 'Pris', type: 'currency' },
-            { name: 'navCalculatedPerShare', label: 'Beräknat substansvärde', type: 'currency' },
-            { name: 'thirtyDaysPriceChange', label: '30 dagar', type: 'percentage' },
-            { name: 'sixMonthPriceChange', label: '6 månader', type: 'percentage' },
-            { name: 'oneYearPriceChange', label: '1 år', type: 'percentage' },
-            { name: 'threeYearPriceChange', label: '3 år', type: 'percentage' },
-            { name: 'fiveYearPriceChange', label: '5 år', type: 'percentage' },
-            { name: 'thirtyDaysNavChange', label: '30 dagar', type: 'percentage' },
-            { name: 'sixMonthNavChange', label: '6 månader', type: 'percentage' },
-            { name: 'oneYearNavChange', label: '1 år', type: 'percentage' },
-            { name: 'threeYearNavChange', label: '3 år', type: 'percentage' },
-            { name: 'fiveYearNavChange', label: '5 år', type: 'percentage' },
-        ],
-        payload : '',
-    
+            { name: 'product', label: 'Aktie-id', field: 'product', type: 'string' },
+            { name: 'productName', label: 'Bolag', field: 'productName', align: 'start', width: '220px', type: 'string' },
+            { name: 'price', label: 'Pris', field: 'price', type: 'currency' },
+            { name: 'navCalculatedPerShare', label: 'Beräknat substansvärde', field: 'navCalculatedPerShare', type: 'percentage' },
+            { name: 'thirtyDaysPriceChange', label: '30 dagar', field: 'thirtyDaysPriceChange', type: 'percentage' },
+            { name: 'sixMonthPriceChange', label: '6 månader', field: 'sixMonthPriceChange', type: 'percentage' },
+            { name: 'oneYearPriceChange', label: '1 år', field: 'oneYearPriceChange', type: 'percentage' },
+            { name: 'threeYearPriceChange', label: '3 år', field: 'threeYearPriceChange', type: 'percentage' },
+            { name: 'fiveYearPriceChange', label: '5 år', field: 'fiveYearPriceChange', type: 'percentage' },
+            { name: 'thirtyDaysNavChange', label: '30 dagar', field: 'thirtyDaysNavChange', type: 'percentage' },
+            { name: 'sixMonthNavChange', label: '6 månader', field: 'sixMonthNavChange', type: 'percentage' },
+            { name: 'oneYearNavChange', label: '1 år', field: 'oneYearNavChange', type: 'percentage' },
+            { name: 'threeYearNavChange', label: '3 år', field: 'threeYearNavChange', type: 'percentage' },
+            { name: 'fiveYearNavChange', label: '5 år', field: 'fiveYearNavChange', type: 'percentage' },
+        ]
     },
+
+    getRebatePremiums: {
+      title: 'Substansvärdet över tid',
+      url: 'https://ibindex.se/ibi//company/getRebatePremiums.req',
+      fields: ['rebatePremium', 'calculatedRebatePremium', 'rebatePremiumMax', 'rebatePremiumMin', 'rebatePremiumAverage', 'calculatedRebatePremiumMax', 'calculatedRebatePremiumMin', 'calculatedRebatePremiumAverage', 'label'],
+      header: ['Rabatt/Premium', 'Beräknad Rabatt/Premium', 'Max', 'Min', 'Medel', 'Max', 'Min', 'Medel', 'Tidsperiod'],
+      columns: [
+        { name: 'label', label: 'Tidsperiod', field: 'label' },
+        { name: 'rebatePremium', label: 'Rabatt/Premium', field: 'rebatePremium', format: val => `${val.toFixed(2)}%`, style: val => getStyle(val.rebatePremium) },
+        { name: 'calculatedRebatePremium', label: 'Beräknad Rabatt/Premium', field: 'calculatedRebatePremium', format: val => `${val.toFixed(2)}%`, style: val => getStyle(val.calculatedRebatePremium) },
+        { name: 'rebatePremiumMax', label: 'Max', field: 'rebatePremiumMax', format: val => `${val.toFixed(2)}%`, style: val => getStyle(val.rebatePremiumMax) },
+        { name: 'rebatePremiumMin', label: 'Min', field: 'rebatePremiumMin', format: val => `${val.toFixed(2)}%`, style: val => getStyle(val.rebatePremiumMin) },
+        { name: 'rebatePremiumAverage', label: 'Medel', field: 'rebatePremiumAverage', format: val => `${val.toFixed(2)}%`, style: val => getStyle(val.rebatePremiumAverage) },
+        { name: 'calculatedRebatePremiumMax', label: 'Max', field: 'calculatedRebatePremiumMax', format: val => `${val.toFixed(2)}%`, style: val => getStyle(val.calculatedRebatePremiumMax) },
+        { name: 'calculatedRebatePremiumMin', label: 'Min', field: 'calculatedRebatePremiumMin', format: val => `${val.toFixed(2)}%`, style: val => getStyle(val.calculatedRebatePremiumMin) },
+        { name: 'calculatedRebatePremiumAverage', label: 'Medel', field: 'calculatedRebatePremiumAverage', format: val => `${val.toFixed(2)}%`, style: val => getStyle(val.calculatedRebatePremiumAverage) }
+      ],
+      visibleColumns: ['label', 'calculatedRebatePremiumMax', 'calculatedRebatePremiumMin', 'calculatedRebatePremiumAverage'],
+      payload: (company) => JSON.stringify(company)
+  },
+
 
     // Holdings of an IB company
     getHoldings: {
@@ -123,6 +142,24 @@ const ibindex = {
         'SPILTAN': 'https://ibindex.se/ibi//spiltan/getHoldings.req',
         'VEFL SDB': 'https://ibindex.se/ibi//vef/getHoldings.req',
     }
+}
+
+function ibiAxiosOptions(ibiRequest, company='') {
+  return {
+            method: 'post',
+            url: ibindex[ibiRequest].url,
+            responseType: 'arraybuffer',
+            headers: {
+              'Content-Type': 'application/json;charset=UTF-8'
+            },
+            data: company !== '' ? JSON.stringify(company) : ''
+          }
+}
+
+module.exports = {
+    ibindex,
+    ibiAxiosOptions,
+
 }
 
 /*
@@ -404,23 +441,3 @@ ibindex.se/ibi//vef/getHoldings.req
 
 
 */
-
-
-
-
-function ibiAxiosOptions(ibiRequest) {
-    return {
-                method: 'post',
-                url: ibindex[ibiRequest].url,
-                responseType: 'arraybuffer',
-                headers: {
-                    'Content-Type': 'application/json;charset=UTF-8',
-                }
-            }
-}
-
-module.exports = {
-    ibindex,
-    ibiAxiosOptions,
-
-}

@@ -11,6 +11,7 @@
       :loading="loading"
       :grid="gridMode"
       color="primary"
+      v-model:expanded="expandedCards"
     >
       <template v-slot:top-right>
         <!-- Search input -->
@@ -26,23 +27,42 @@
 
       <!-- Card items -->
       <template v-slot:item="props">
-        <div class="q-pa-xs col-auto">
+        <div class="q-pa-xs col-3">
           <q-card>
             <q-card-section class="text-center text-subtitle2">{{ props.row.productName }} </q-card-section>
-            <q-separator />
-            <q-card-section class="flex flex-center text-subtitle2"
+            <q-separator inset />
+            <q-card-section>
+              <div class="text-center text-overline">{{ props.colsMap.netAssetValueCalculatedRebatePremium.label }} </div>
+              <div class="flex flex-center text-h6"
                 :style="{
                   color: props.row.netAssetValueCalculatedRebatePremium < 0 ? 'red' : 'green'
                 }"
             >
-              {{ props.row.netAssetValueCalculatedRebatePremium.toFixed(2) }} %
+              {{ props.row.netAssetValueCalculatedRebatePremium.toFixed(2) }}%
+              </div>
             </q-card-section>
+            <q-separator inset />
+            <q-card-actions>
+              <q-btn color="grey" round flat dense size="sm" icon="visibility_off" />
+              <q-btn color="grey" round flat dense size="sm" icon="notification_add" /> <!-- icon="edit_notifications" -->
+              <q-space />
+              <q-btn color="grey" round flat dense size="sm" 
+                :icon="props.expand ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
+                @click="props.expand = !props.expand"
+              />
+            </q-card-actions>
+
+            <q-slide-transition>
+              <div class="q-pa-md" v-show="props.expand">
+
+                  <IbindexRP api="getRebatePremiums" :company="props.row.product" />
+
+              </div>
+            </q-slide-transition>
           </q-card>
         </div>
 
       </template>
-
-
     </q-table>
 
   </div>
@@ -51,12 +71,15 @@
 <script>
 
 import { ibindex, ibiAxiosOptions } from '../api/ibindex/ibindexAPI.js';
+import IbindexRP from 'components/CIbindexRebatePremium.vue';
 import { defineComponent, ref } from 'vue';
 import { useQuasar } from 'quasar';
 
 export default defineComponent({ 
   name: 'CDashboard',
-
+  components: {
+    IbindexRP,
+  },
   props: {},
 
   setup (props) {
@@ -66,13 +89,15 @@ export default defineComponent({
     const loading = ref(false);
     const refreshColor = ref('primary');
 
-    const title = ibindex[ibiAPI].title;
+//    const title = ibindex[ibiAPI].title;
     const visibleColumns = ibindex[ibiAPI].visibleColumns;
     const columns = ibindex[ibiAPI].columns;
 
     const rows = ref([]);
     const visibleRows = ref([]);
+    const navTrends = ref([]);
 
+    // Refresh data
     const refreshData = async () => {
       let watchlist = $q.localStorage.getItem('watchlist');
 
@@ -99,6 +124,7 @@ export default defineComponent({
       rows,
       visibleRows,
       filter: ref(''),
+      expandedCards: ref([]),
 
       loading,
       refreshColor,
@@ -106,7 +132,6 @@ export default defineComponent({
 
       refreshData
     }
-
   },
 
   mounted () {
