@@ -1,7 +1,6 @@
 <template>
   <div class="q-pa-sm">
     <q-table dense flat color="primary"
-      :title="title"
       :rows="rows"
       :columns="columns"
       :visible-columns="visibleColumns"
@@ -9,8 +8,11 @@
       :rows-per-page-options="[0]"
       :loading="loading"
       hide-bottom
-      title-class="text-overline"
     >
+
+      <template v-slot:top>
+        <div class="col-12 text-overline text-center text-uppercase">{{ title }}</div>
+      </template>
 
     </q-table>
   </div>
@@ -73,3 +75,9 @@ export default defineComponent({
 })
 
 </script>
+
+<style >
+.table__top { 
+  justify-content: center
+}
+</style>

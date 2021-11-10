@@ -27,7 +27,7 @@
 
       <!-- Card items -->
       <template v-slot:item="props">
-        <div class="q-pa-xs col-3">
+        <div class="q-pa-xs col-4">
           <q-card>
             <q-card-section class="text-center text-subtitle2">{{ props.row.productName }} </q-card-section>
             <q-separator inset />
@@ -52,13 +52,9 @@
               />
             </q-card-actions>
 
-            <q-slide-transition>
-              <div class="q-pa-md" v-show="props.expand">
-
-                  <IbindexRP api="getRebatePremiums" :company="props.row.product" />
-
-              </div>
-            </q-slide-transition>
+            <div class="q-pa-md" v-show="props.expand">
+              <IbindexRP api="getRebatePremiums" :company="props.row.product" />
+            </div>
           </q-card>
         </div>
 

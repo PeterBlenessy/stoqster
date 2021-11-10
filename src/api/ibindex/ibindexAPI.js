@@ -136,18 +136,27 @@ const ibindex = {
       },
 
     // -----------------------------
-    getSpecialHoldings: {
-        'AJA B': 'https://ibindex.se/ibi//aja/getHoldings.req',
-        'FLAT A': 'https://ibindex.se/ibi//flatcapital/getHoldings.req',
-        'SPILTAN': 'https://ibindex.se/ibi//spiltan/getHoldings.req',
-        'VEFL SDB': 'https://ibindex.se/ibi//vef/getHoldings.req',
+    getSpecialURL: {
+        getHoldings: {
+            'AJA B': 'https://ibindex.se/ibi//aja/getHoldings.req',
+            'FLAT B': 'https://ibindex.se/ibi//flatcapital/getHoldings.req',
+            'SPILTAN': 'https://ibindex.se/ibi//spiltan/getHoldings.req',
+            'VEFL SDB': 'https://ibindex.se/ibi//vef/getHoldings.req'
+        },
+        getRebatePremiums: {
+            'AJA B': 'https://ibindex.se/ibi//aja/getRebatePremiums.req',
+            'FLAT B': 'https://ibindex.se/ibi//flatcapital/getRebatePremiums.req',
+            'SPILTAN': 'https://ibindex.se/ibi//spiltan/getRebatePremiums.req',
+            'VEFL SDB': 'https://ibindex.se/ibi//vef/getRebatePremiums.req'
+        }
     }
 }
 
 function ibiAxiosOptions(ibiRequest, company='') {
+  let url = company !== '' ? ibindex.getSpecialURL[ibiRequest][company] : undefined;
   return {
             method: 'post',
-            url: ibindex[ibiRequest].url,
+            url: url !== undefined ? url : ibindex[ibiRequest].url,
             responseType: 'arraybuffer',
             headers: {
               'Content-Type': 'application/json;charset=UTF-8'
