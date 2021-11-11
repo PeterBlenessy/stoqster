@@ -22,7 +22,11 @@
         </q-input>
 
         <!-- Refresh button -->
-        <q-btn flat round dense class="q-ml-md" icon="refresh" :color="refreshColor" @click="refreshData()" />
+        <q-btn flat round dense class="q-ml-md" icon="refresh" :color="refreshColor" @click="refreshData()">
+          <q-tooltip transition-show="scale" transition-hide="scale">
+            {{ "Refresh data" }}
+          </q-tooltip>
+        </q-btn>
       </template>
 
       <!-- Card items -->
@@ -42,19 +46,41 @@
               </div>
             </q-card-section>
             <q-separator inset />
+
             <q-card-actions>
-              <q-btn color="grey" round flat dense size="sm" icon="visibility_off" />
-              <q-btn color="grey" round flat dense size="sm" icon="notification_add" /> <!-- icon="edit_notifications" -->
+
+              <!-- Delete item button -->
+              <q-btn color="grey" round flat dense size="sm" icon="delete_outline" @click="updateWatchlist(props.row.product)">
+                <q-tooltip transition-show="scale" transition-hide="scale">
+                  {{ "Remove from dashboard" }}
+                </q-tooltip>
+              </q-btn>
+
+              <!-- Add alarm to item button -->
+              <q-btn color="grey" round flat dense size="sm" icon="notification_add"> <!-- icon="edit_notifications" -->
+                <q-tooltip transition-show="scale" transition-hide="scale">
+                  {{ "Add an alarm" }}
+                </q-tooltip>
+              </q-btn>
               <q-space />
+
+              <!-- Expand more info button -->
               <q-btn color="grey" round flat dense size="sm" 
                 :icon="props.expand ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
                 @click="props.expand = !props.expand"
-              />
+              >
+                <q-tooltip transition-show="scale" transition-hide="scale">
+                  {{ props.expand ? "Hide" : "Show more time periods" }}
+                </q-tooltip>
+              </q-btn>
+
             </q-card-actions>
 
+            <!-- Expandable historical info about Rebate/Premiums -->
             <div class="q-pa-md" v-show="props.expand">
               <IbindexRP api="getRebatePremiums" :company="props.row.product" />
             </div>
+
           </q-card>
         </div>
 
@@ -95,7 +121,7 @@ export default defineComponent({
 
     // Refresh data
     const refreshData = async () => {
-      let watchlist = $q.localStorage.getItem('watchlist');
+      let watchlist = getWatchlist();
 
       window.ipc.axiosRequest( ibiAxiosOptions(ibiAPI) )
         .then( response => {
@@ -104,7 +130,7 @@ export default defineComponent({
             Object.entries(watchlist).forEach(([key, value]) => {
               visibleRows.value.push(value.product);
             });
-            rows.value = rows.value.filter( i => visibleRows.value.includes( i.product ));
+            rows.value = rows.value.filter( item => visibleRows.value.includes( item.product ));
           }
         }).catch( error => {
           console.log(error);
@@ -113,6 +139,20 @@ export default defineComponent({
           refreshColor.value = (rows.value.length === 0) ? 'red' : 'primary';
       });
     }
+
+    // Reads the watchlist from localStorage
+    function getWatchlist() {
+      return $q.localStorage.getItem('watchlist');
+    }
+
+    // Updates the watchlist in localStorage
+    function updateWatchlist (removedItem) {
+      let watchlist = getWatchlist();
+      let newWatchlist = watchlist.filter(item => item.product !== removedItem);
+      $q.localStorage.set('watchlist', newWatchlist);
+      rows.value = rows.value.filter(item => item.product !== removedItem);
+    }
+
 
     return {
       columns,
@@ -126,7 +166,8 @@ export default defineComponent({
       refreshColor,
       gridMode,
 
-      refreshData
+      refreshData,
+      updateWatchlist
     }
   },
 

@@ -26,14 +26,14 @@
         </q-input>
 
         <!-- Toggle how the data is presented: grid / table mode -->
-        <q-btn flat round class="q-ml-md" :icon="gridModeIcon" color="primary" @click="toggleGridMode()">
+        <q-btn dense flat round class="q-ml-md" :icon="gridModeIcon" color="primary" @click="toggleGridMode()">
           <q-tooltip transition-show="scale" transition-hide="scale">
             {{ gridModeTooltip }}
           </q-tooltip>
         </q-btn>
         
         <!-- Refresh data -->
-        <q-btn flat round class="q-ml-md" icon="refresh" :color="refreshColor" @click="refreshData()">
+        <q-btn dense flat round icon="refresh" :color="refreshColor" @click="refreshData()">
           <q-tooltip transition-show="scale" transition-hide="scale">
             {{ "Refresh data" }}
           </q-tooltip>
