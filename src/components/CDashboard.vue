@@ -1,7 +1,7 @@
 <template>
   <div class="q-pa-sm col-4">
     <q-table
-      title="Bevakningar: beräknad rabatt/premie"
+      :title="title"
       dense
       :rows="rows"
       :columns="columns"
@@ -57,9 +57,17 @@
               </q-btn>
 
               <!-- Add alarm to item button -->
-              <q-btn color="grey" round flat dense size="sm" icon="notification_add"> <!-- icon="edit_notifications" -->
+              <!-- icon="edit_notifications" -->
+              <q-btn :color="hasAlert(props.row.product) ? 'primary' : 'grey'" round flat dense size="sm" :icon="hasAlert(props.row.product) ? 'edit_notifications' : 'notification_add'"
+                @click="onAddAlert(
+                  props.row.product,
+                  props.row.productName,
+                  props.colsMap.netAssetValueCalculatedRebatePremium.field,
+                  props.colsMap.netAssetValueCalculatedRebatePremium.label
+                )"
+              >            
                 <q-tooltip transition-show="scale" transition-hide="scale">
-                  {{ "Add an alarm" }}
+                  {{ "Add an alert" }}
                 </q-tooltip>
               </q-btn>
               <q-space />
@@ -78,7 +86,7 @@
 
             <!-- Expandable historical info about Rebate/Premiums -->
             <div class="q-pa-md" v-show="props.expand">
-              <IbindexRP api="getRebatePremiums" :company="props.row.product" />
+              <IbindexRebatePremium api="getRebatePremiums" :company="props.row.product" />
             </div>
 
           </q-card>
@@ -93,31 +101,31 @@
 <script>
 
 import { ibindex, ibiAxiosOptions } from '../api/ibindex/ibindexAPI.js';
-import IbindexRP from 'components/CIbindexRebatePremium.vue';
-import { defineComponent, ref } from 'vue';
+import IbindexRebatePremium from 'components/CIbindexRebatePremium.vue';
+import AlertDialog from 'components/CAlertDialog.vue';
+import { defineComponent, ref, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 
 export default defineComponent({ 
   name: 'CDashboard',
   components: {
-    IbindexRP,
+    IbindexRebatePremium
   },
   props: {},
 
-  setup (props) {
+  setup () {
     const $q = useQuasar();
     const ibiAPI = 'getCompanies';
     const gridMode = ref(true);
     const loading = ref(false);
     const refreshColor = ref('primary');
 
-//    const title = ibindex[ibiAPI].title;
+    const title = "Bevakningar: beräknad rabatt/premie"; //ibindex[ibiAPI].title;
     const visibleColumns = ibindex[ibiAPI].visibleColumns;
     const columns = ibindex[ibiAPI].columns;
 
     const rows = ref([]);
     const visibleRows = ref([]);
-    const navTrends = ref([]);
 
     // Refresh data
     const refreshData = async () => {
@@ -149,12 +157,48 @@ export default defineComponent({
     function updateWatchlist (removedItem) {
       let watchlist = getWatchlist();
       let newWatchlist = watchlist.filter(item => item.product !== removedItem);
-      $q.localStorage.set('watchlist', newWatchlist);
       rows.value = rows.value.filter(item => item.product !== removedItem);
+
+      $q.localStorage.set('watchlist', newWatchlist);
     }
 
+    // Checks if an alert has been registered for a company
+    function hasAlert(companyCode) {
+      let alerts = $q.localStorage.getItem('alerts');
+      return JSON.stringify(alerts).includes(companyCode);
+    }
+
+    function onAddAlert(product, productName, field, fieldLabel) {
+      $q.dialog({
+        component: AlertDialog,
+
+        // props forwarded to your custom component
+        componentProps: {
+          companyCode: product,
+          companyName: productName,
+          field: field,
+          fieldLabel: fieldLabel,
+
+          title: 'Alarm: ' + productName,
+          cancel: true,
+          persistent: true
+        }
+      }).onOk(data => {
+        //console.log('>>>> OK, received', data)
+
+      }).onCancel(() => {
+        // console.log('>>>> Cancel')
+      }).onDismiss(() => {
+        // console.log('I am triggered on both OK and Cancel')
+        // todo: There has to be a better way to force refresh of add alert icon color
+        this.refreshData();
+      })
+    }
+
+    onMounted(refreshData);
 
     return {
+      title,
       columns,
       visibleColumns,
       rows,
@@ -167,12 +211,12 @@ export default defineComponent({
       gridMode,
 
       refreshData,
-      updateWatchlist
+      updateWatchlist,
+      limit: ref(''),
+      hasAlert,
+      onAddAlert,
     }
-  },
-
-  mounted () {
-    this.refreshData();
   }
+
 })
 </script>

@@ -116,7 +116,7 @@
 <script>
 
 import { ibindex, ibiAxiosOptions } from '../api/ibindex/ibindexAPI.js';
-import { defineComponent, ref, toRef } from 'vue';
+import { defineComponent, ref, toRef, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 
 export default defineComponent({ 
@@ -181,6 +181,9 @@ export default defineComponent({
       expand.value = !expand.value;
     }
 
+    onMounted(refreshData);
+    onMounted(restoreSelectedRows);
+
     return {
       title,
 
@@ -207,12 +210,8 @@ export default defineComponent({
       gridModeTooltip,
       toggleGridMode
     }
-  },
-
-  mounted () {
-    this.refreshData();
-    this.restoreSelectedRows();
   }
+
 })
 
 </script>
