@@ -10,7 +10,6 @@
       :visible-columns="visibleColumns"
       :rows-per-page-options="[0]"
       :loading="loading"
-      :grid="gridMode"
       selection="multiple"
       v-model:selected="selectedRows"
       @update:selected="onUpdateSelected"
@@ -24,13 +23,6 @@
             <q-icon name="search" />
           </template>
         </q-input>
-
-        <!-- Toggle how the data is presented: grid / table mode -->
-        <q-btn dense flat round class="q-ml-md" :icon="gridModeIcon" color="primary" @click="toggleGridMode()">
-          <q-tooltip transition-show="scale" transition-hide="scale">
-            {{ gridModeTooltip }}
-          </q-tooltip>
-        </q-btn>
         
         <!-- Refresh data -->
         <q-btn dense flat round icon="refresh" :color="refreshColor" @click="refreshData()">
@@ -116,10 +108,10 @@
 <script>
 
 import { ibindex, ibiAxiosOptions } from '../api/ibindex/ibindexAPI.js';
-import { defineComponent, ref, toRef, onMounted } from 'vue';
-import { useQuasar } from 'quasar';
+import { ref, toRef, onMounted } from 'vue';
+import { useStore } from 'vuex';
 
-export default defineComponent({ 
+export default { 
   name: 'CIbindex',
 
   props: {
@@ -127,12 +119,9 @@ export default defineComponent({
   },
 
   setup (props) {
-    const $q = useQuasar();
+    const store = useStore();
     const loading = ref(false);
     const refreshColor = ref('primary');
-    const gridMode = ref(false);
-    const gridModeIcon = ref('grid_view');
-    const gridModeTooltip = ref('Grid view');
 
     const api = toRef(props, 'api');
     const title = ibindex[api.value].title;
@@ -158,21 +147,14 @@ export default defineComponent({
       });
     }
 
-    // Toggle how the data is presented, table or grid mode
-    const toggleGridMode = () => {
-      gridMode.value = !gridMode.value;
-      gridModeIcon.value = gridMode.value ? 'table_view' : 'grid_view';
-      gridModeTooltip.value = gridMode.value ? 'Table view' : 'Grid view';
-    }
-
-    // Save the selected rows in localStorage
+    // Save the selected rows to Vuex state store. These rows represent the watchlist and will also be saved to the localStorage.
     function onUpdateSelected ( newSelection ) {   
-      $q.localStorage.set('watchlist', newSelection);
+      store.commit('setWatchlist', newSelection);
     }
 
-    // Restore selected rows saved in localStorage
+    // Restore selected rows from Vuex state store. These rows represent the watchlist.
     function restoreSelectedRows () {
-      selectedRows.value = $q.localStorage.getItem('watchlist') || [];
+      selectedRows.value = store.state.watchlist;
     }
 
     // Toggle expand / collaps of row with more company details.
@@ -203,16 +185,12 @@ export default defineComponent({
       onUpdateSelected,
 
       loading,
-      refreshColor,
-      
-      gridMode,
-      gridModeIcon,
-      gridModeTooltip,
-      toggleGridMode
+      refreshColor
+
     }
   }
 
-})
+}
 
 </script>
 

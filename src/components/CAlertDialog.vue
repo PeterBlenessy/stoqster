@@ -88,10 +88,11 @@
 <script>
 
 import { ref, toRefs, onMounted } from 'vue';
-import { useQuasar, useDialogPluginComponent } from 'quasar'
+import { useDialogPluginComponent } from 'quasar'
+import { useStore } from 'vuex';
 
 export default { 
-  name: 'CAlertDialog',
+  name: 'AlertDialog',
 
   props: {
     companyCode: { type: String, required: true },
@@ -107,7 +108,7 @@ export default {
   ],
 
   setup (props) {
-    const $q = useQuasar();
+    const store = useStore();
 
     // We can do this since all props are required
     const { companyCode, companyName, field, fieldLabel } = toRefs(props);
@@ -129,18 +130,18 @@ export default {
     const alertAction = ref(['in-app']);
     const expirationDate = ref(new Date().toJSON().slice(0,10).replace(/-/g,'/'));
 
-    // Reads the alarms from localStorage
+    // Reads the alarms from Vuex store
     function getAlerts() {
-      return $q.localStorage.getItem('alerts');
+      return store.state.alerts;
     }
 
     // Checks if an alert has been registered for a company
     function checkAlert() {
-      let alerts = $q.localStorage.getItem('alerts');
+      let alerts = getAlerts();
       hasAlert.value = JSON.stringify(alerts).includes(companyCode.value);
     }
 
-    // Adds / updates alert in localStorage
+    // Adds / updates alert in Vuex store
     function onSaveAlert() {
       let newAlert = { 
         companyCode: companyCode.value,
@@ -163,14 +164,14 @@ export default {
       // This filter return all other alerts, i.e., removes the alarm for company if it exists.
       alerts = alerts.filter(item => item.companyCode !== newAlert.companyCode);
       alerts.push(newAlert);
-      $q.localStorage.set('alerts', alerts);
+      store.commit('setAlerts', alerts);
     }
 
     // Removes an alert if it exists
     function onDeleteAlert() {
       let alerts = getAlerts() || [];
       alerts = alerts.filter(item => item.companyCode !== companyCode.value); // This removes any existing alert for the company
-      $q.localStorage.set('alerts', alerts);
+      store.commit('setAlerts', alerts);
     }
 
     onMounted(checkAlert);

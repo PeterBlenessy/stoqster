@@ -1,27 +1,32 @@
-import { store } from 'quasar/wrappers'
 import { createStore } from 'vuex'
+import { LocalStorage } from 'quasar'
 
-// import example from './module-example'
+import plugins from './plugins'
 
-/*
- * If not building with SSR mode, you can
- * directly export the Store instantiation;
- *
- * The function below can be async too; either use
- * async/await or return a Promise which resolves
- * with the Store instance.
- */
+import { 
+  mutations, 
+  DARK_MODE_KEY,
+  ROUTER_PATH_KEY,
+  WATCHLIST_KEY, 
+  ALERTS_KEY 
+} from './mutations'
 
-export default store(function (/* { ssrContext } */) {
-  const Store = createStore({
-    modules: {
-      // example
-    },
 
-    // enable strict mode (adds overhead!)
-    // for dev mode and --debug builds only
-    strict: process.env.DEBUGGING
-  })
+export default createStore({
+  modules: {},
 
-  return Store
+  state: {
+    darkMode: JSON.parse(LocalStorage.getItem(DARK_MODE_KEY) || 'false'),
+    routerPath: LocalStorage.getItem(ROUTER_PATH_KEY) || '',
+    watchlist: LocalStorage.getItem(WATCHLIST_KEY) || [],
+    alerts: LocalStorage.getItem(ALERTS_KEY) || []
+  },
+
+  mutations,
+
+  plugins,
+
+  // enable strict mode (adds overhead!)
+  // for dev mode and --debug builds only
+  strict: process.env.DEBUGGING
 })

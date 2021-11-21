@@ -1,16 +1,16 @@
 <template>
-  <q-layout view="hHh Lpr lFf">
+  <q-layout view="hHh lpr fFf">
     <q-header elevated>
       <!--  Top toolbar -->
       <q-toolbar >
-        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleDrawer"/>
+        <q-btn flat dense round icon="menu" aria-label="Menu" @click="drawer = !drawer"/>
 
         <q-toolbar-title>Stoqster</q-toolbar-title>
 
         <!-- Toggle dark / light mode -->
-        <q-btn flat round icon="invert_colors" @click.stop="$q.dark.toggle()">
+        <q-btn flat round icon="invert_colors" @click="toggleDarkMode">
           <q-tooltip transition-show="scale" transition-hide="scale">
-            {{ $q.dark.isActive ? "Light mode" : "Dark mode" }}
+            {{ darkMode ? "Light mode" : "Dark mode" }}
           </q-tooltip>
         </q-btn>
 
@@ -19,7 +19,7 @@
           v-for="item in menuItems"
           :key="item.title"
           :icon="item.icon"
-          @click="$router.replace({path: item.path})"
+          @click="setRouterPath({path: item.path})"
         >
           <q-tooltip transition-show="scale" transition-hide="scale">
             {{ item.caption }}
@@ -30,7 +30,7 @@
     </q-header>
 
     <!--  Left drawer listing menu items -->
-    <q-drawer v-model="drawer" bordered>
+    <q-drawer v-model="drawer" bordered overlay>
       <q-list>
         <q-item-label header >Application Links</q-item-label>
 
@@ -38,7 +38,7 @@
           v-for="item in menuItems"
           :key="item.title"
           :icon="item.icon"
-          @click="$router.replace({path: item.path})"
+          @click="setRouterPath({path: item.path})"
         >
           <q-item-section avatar>
             <q-icon :name="item.icon" />
@@ -88,24 +88,46 @@ const links = [
   }
 ]
 
-import { defineComponent, ref } from 'vue';
+import { onMounted, computed, ref } from 'vue';
+import { useStore } from 'vuex';
+import { useQuasar } from 'quasar';
+import { useRouter } from 'vue-router'
 
-export default defineComponent({
+export default {
   name: 'MainLayout',
 
   components: {},
 
   setup () {
+    const $q = useQuasar();
+    const store = useStore();
+    const router = useRouter();
+    const darkMode = computed(() => store.state.darkMode);
     const drawer = ref(false);
+
+    // Sets Quasar dark mode plugin value based on stored mode.
+    // Used at app start.
+    function setDarkMode() {
+      $q.dark.set(darkMode.value)
+    }
+ 
+    // Make sure to set the store dark mode for app
+    onMounted(setDarkMode);
 
     return {
       menuItems: links,
+      darkMode,
       drawer,
-      
-      toggleDrawer () {
-        drawer.value = !drawer.value;
+
+      toggleDarkMode: () => {
+        store.commit('toggleDarkMode');
+        $q.dark.toggle();
+      },
+      setRouterPath: (newPath) => { 
+        store.commit('setRouterPath', newPath);
+        router.replace(newPath);
       }
     }
   }
-});
+}
 </script>

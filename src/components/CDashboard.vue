@@ -103,10 +103,11 @@
 import { ibindex, ibiAxiosOptions } from '../api/ibindex/ibindexAPI.js';
 import IbindexRebatePremium from 'components/CIbindexRebatePremium.vue';
 import AlertDialog from 'components/CAlertDialog.vue';
-import { defineComponent, ref, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
+import { useStore } from 'vuex';
 
-export default defineComponent({ 
+export default { 
   name: 'CDashboard',
   components: {
     IbindexRebatePremium
@@ -115,6 +116,7 @@ export default defineComponent({
 
   setup () {
     const $q = useQuasar();
+    const store = useStore();
     const ibiAPI = 'getCompanies';
     const gridMode = ref(true);
     const loading = ref(false);
@@ -125,20 +127,20 @@ export default defineComponent({
     const columns = ibindex[ibiAPI].columns;
 
     const rows = ref([]);
-    const visibleRows = ref([]);
 
     // Refresh data
     const refreshData = async () => {
       let watchlist = getWatchlist();
+      let visibleRows = [];
 
       window.ipc.axiosRequest( ibiAxiosOptions(ibiAPI) )
         .then( response => {
           rows.value = response.data;
           if (watchlist !== null) {
             Object.entries(watchlist).forEach(([key, value]) => {
-              visibleRows.value.push(value.product);
+              visibleRows.push(value.product);
             });
-            rows.value = rows.value.filter( item => visibleRows.value.includes( item.product ));
+            rows.value = rows.value.filter( item => visibleRows.includes( item.product ));
           }
         }).catch( error => {
           console.log(error);
@@ -148,23 +150,23 @@ export default defineComponent({
       });
     }
 
-    // Reads the watchlist from localStorage
+    // Reads the watchlist from Vuex state store.
     function getWatchlist() {
-      return $q.localStorage.getItem('watchlist');
+      return store.state.watchlist;
     }
 
-    // Updates the watchlist in localStorage
+    // Updates the watchlist in Vuex state store. The state is also store in localStorage.
     function updateWatchlist (removedItem) {
       let watchlist = getWatchlist();
       let newWatchlist = watchlist.filter(item => item.product !== removedItem);
       rows.value = rows.value.filter(item => item.product !== removedItem);
 
-      $q.localStorage.set('watchlist', newWatchlist);
+      store.commit('setWatchlist', newWatchlist);
     }
 
     // Checks if an alert has been registered for a company
     function hasAlert(companyCode) {
-      let alerts = $q.localStorage.getItem('alerts');
+      let alerts = store.state.alerts;
       return JSON.stringify(alerts).includes(companyCode);
     }
 
@@ -202,7 +204,6 @@ export default defineComponent({
       columns,
       visibleColumns,
       rows,
-      visibleRows,
       filter: ref(''),
       expandedCards: ref([]),
 
@@ -218,5 +219,5 @@ export default defineComponent({
     }
   }
 
-})
+}
 </script>

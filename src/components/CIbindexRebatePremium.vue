@@ -21,10 +21,9 @@
 <script>
 
 import { ibindex, ibiAxiosOptions } from '../api/ibindex/ibindexAPI.js';
-import { defineComponent, ref, toRef } from 'vue';
-import { useQuasar } from 'quasar';
+import { ref, toRef, onMounted } from 'vue';
 
-export default defineComponent({ 
+export default { 
   name: 'CIbindexRebatePremium',
 
   props: {
@@ -33,7 +32,6 @@ export default defineComponent({
   },
 
   setup (props) {
-    const $q = useQuasar();
     const loading = ref(false);
 
     const api = toRef(props, 'api');
@@ -57,6 +55,8 @@ export default defineComponent({
       });
     }
 
+    onMounted(refreshData);
+
     return {
       title,
 
@@ -67,12 +67,8 @@ export default defineComponent({
       
       loading
     }
-  },
-
-  mounted () {
-    this.refreshData();
   }
-})
+}
 
 </script>
 
