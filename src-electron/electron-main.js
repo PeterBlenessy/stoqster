@@ -62,12 +62,12 @@ app.on('activate', () => {
 // axios_options is the json object with 
 ipcMain.handle('axios-request', async (_, options) => {
 
-  console.log("--------------------------------------------------------------------");
-  console.log(options);
+//  console.log("--------------------------------------------------------------------");
+//  console.log(options);
 
   try { 
       let response =  await axios.request(options);
-      console.log(response);  
+      //console.log(response);  
       let data;
 
       if (response.config.responseType === 'arraybuffer') {

@@ -5,7 +5,8 @@ import {
   DARK_MODE_KEY,
   ROUTER_PATH_KEY,
   WATCHLIST_KEY,
-  ALERTS_KEY
+  ALERTS_KEY,
+  REFRESH_INTERVAL_KEY
 } from './mutations'
 
 const localStoragePlugin = store => {
@@ -24,6 +25,10 @@ const localStoragePlugin = store => {
 
   store.subscribe((mutation, {alerts }) => {
     LocalStorage.set(ALERTS_KEY, alerts);
+  }),
+  
+  store.subscribe((mutation, {refreshInterval }) => {
+    LocalStorage.set(REFRESH_INTERVAL_KEY, refreshInterval);
   })
 
 }

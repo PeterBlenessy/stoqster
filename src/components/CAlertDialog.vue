@@ -98,7 +98,8 @@ export default {
     companyCode: { type: String, required: true },
     companyName: { type: String, required: true },
     field: { type: String, required: true },
-    fieldLabel: { type: String, required: true }
+    fieldLabel: { type: String, required: true },
+    fieldValue: { type: Number, required: true }
   },
 
   emits: [
@@ -111,7 +112,7 @@ export default {
     const store = useStore();
 
     // We can do this since all props are required
-    const { companyCode, companyName, field, fieldLabel } = toRefs(props);
+    const { companyCode, companyName, field, fieldLabel, fieldValue } = toRefs(props);
     const hasAlert = ref(false);
 
     // REQUIRED; must be called inside of setup()
@@ -148,6 +149,7 @@ export default {
         companyName: companyName.value,
         field: field.value,
         fieldLabel: fieldLabel.value,
+        fieldValue: fieldValue.value,
         alert: {
           name: alertName.value,
           message: alertMessage.value,

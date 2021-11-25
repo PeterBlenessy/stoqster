@@ -8,7 +8,8 @@ import {
   DARK_MODE_KEY,
   ROUTER_PATH_KEY,
   WATCHLIST_KEY, 
-  ALERTS_KEY 
+  ALERTS_KEY,
+  REFRESH_INTERVAL_KEY
 } from './mutations'
 
 
@@ -19,7 +20,8 @@ export default createStore({
     darkMode: JSON.parse(LocalStorage.getItem(DARK_MODE_KEY) || 'false'),
     routerPath: LocalStorage.getItem(ROUTER_PATH_KEY) || '',
     watchlist: LocalStorage.getItem(WATCHLIST_KEY) || [],
-    alerts: LocalStorage.getItem(ALERTS_KEY) || []
+    alerts: LocalStorage.getItem(ALERTS_KEY) || [],
+    refreshInterval: LocalStorage.getItem(REFRESH_INTERVAL_KEY) || (60*60*1000)
   },
 
   mutations,

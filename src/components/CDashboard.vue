@@ -9,7 +9,7 @@
       :rows-per-page-options="[0]"
       :filter="filter"
       :loading="loading"
-      :grid="gridMode"
+      grid
       color="primary"
       v-model:expanded="expandedCards"
     >
@@ -43,14 +43,16 @@
                 }"
             >
               {{ props.row.netAssetValueCalculatedRebatePremium.toFixed(2) }}%
+               <q-icon :name="props.row.priceChange < 0 ? 'trending_down' : 'trending_up'" />
               </div>
+             
             </q-card-section>
             <q-separator inset />
 
             <q-card-actions>
 
               <!-- Delete item button -->
-              <q-btn color="grey" round flat dense size="sm" icon="delete_outline" @click="updateWatchlist(props.row.product)">
+              <q-btn color="grey" round flat dense size="sm" icon="delete_outline" @click="removeWatchlistItem(props.row.product)">
                 <q-tooltip transition-show="scale" transition-hide="scale">
                   {{ "Remove from dashboard" }}
                 </q-tooltip>
@@ -63,7 +65,8 @@
                   props.row.product,
                   props.row.productName,
                   props.colsMap.netAssetValueCalculatedRebatePremium.field,
-                  props.colsMap.netAssetValueCalculatedRebatePremium.label
+                  props.colsMap.netAssetValueCalculatedRebatePremium.label,
+                  props.row.netAssetValueCalculatedRebatePremium
                 )"
               >            
                 <q-tooltip transition-show="scale" transition-hide="scale">
@@ -118,7 +121,6 @@ export default {
     const $q = useQuasar();
     const store = useStore();
     const ibiAPI = 'getCompanies';
-    const gridMode = ref(true);
     const loading = ref(false);
     const refreshColor = ref('primary');
 
@@ -129,7 +131,7 @@ export default {
     const rows = ref([]);
 
     // Refresh data
-    const refreshData = async () => {
+    async function refreshData() {
       let watchlist = getWatchlist();
       let visibleRows = [];
 
@@ -141,12 +143,22 @@ export default {
               visibleRows.push(value.product);
             });
             rows.value = rows.value.filter( item => visibleRows.includes( item.product ));
+
+            setWatchlist(rows.value); // Store current values in watchlist
+            refreshColor.value = 'primary';
+            $q.notify({type: 'positive', message:'Successful dashboard refresh'});
           }
         }).catch( error => {
           console.log(error);
-        }).finally(() => { 
+          rows.value = watchlist; // Show the latest values in case we have a network error 
+          refreshColor.value = 'negative';
+          $q.notify({
+            type: 'negative', 
+            message:'Something went wrong during refresh', 
+            caption: 'Showing data from last successful refresh of ' + title
+          });
+        }).finally(() => {
           loading.value = false;
-          refreshColor.value = (rows.value.length === 0) ? 'red' : 'primary';
       });
     }
 
@@ -156,12 +168,14 @@ export default {
     }
 
     // Updates the watchlist in Vuex state store. The state is also store in localStorage.
-    function updateWatchlist (removedItem) {
-      let watchlist = getWatchlist();
-      let newWatchlist = watchlist.filter(item => item.product !== removedItem);
+    function removeWatchlistItem (removedItem) {
       rows.value = rows.value.filter(item => item.product !== removedItem);
+      store.commit('setWatchlist', rows.value);
+    }
 
-      store.commit('setWatchlist', newWatchlist);
+    // Store watchlist in Vuex store.
+    function setWatchlist( watchlist ) {
+      store.commit('setWatchlist', watchlist);
     }
 
     // Checks if an alert has been registered for a company
@@ -170,7 +184,7 @@ export default {
       return JSON.stringify(alerts).includes(companyCode);
     }
 
-    function onAddAlert(product, productName, field, fieldLabel) {
+    function onAddAlert(product, productName, field, fieldLabel, fieldValue) {
       $q.dialog({
         component: AlertDialog,
 
@@ -180,6 +194,7 @@ export default {
           companyName: productName,
           field: field,
           fieldLabel: fieldLabel,
+          fieldValue: fieldValue,
 
           title: 'Alarm: ' + productName,
           cancel: true,
@@ -197,8 +212,14 @@ export default {
       })
     }
 
-    onMounted(refreshData);
-
+    onMounted( function () {
+      refreshData();
+      
+      setInterval(function () { 
+        refreshData();
+      }, store.state.refreshInterval);
+    });
+    
     return {
       title,
       columns,
@@ -209,11 +230,9 @@ export default {
 
       loading,
       refreshColor,
-      gridMode,
 
       refreshData,
-      updateWatchlist,
-      limit: ref(''),
+      removeWatchlistItem,
       hasAlert,
       onAddAlert,
     }

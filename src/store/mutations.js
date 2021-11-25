@@ -2,6 +2,7 @@ export const DARK_MODE_KEY = 'darkMode'
 export const ROUTER_PATH_KEY = 'routerPath'
 export const WATCHLIST_KEY = 'watchlist'
 export const ALERTS_KEY = 'alerts'
+export const REFRESH_INTERVAL_KEY = 'refreshInterval'
 
 export const mutations = {
 
@@ -19,5 +20,9 @@ export const mutations = {
 
     setAlerts (state, alerts) {
         state.alerts = alerts;
+    },
+
+    setRefreshInterval (state, refreshInterval) {
+        state.refreshInterval = refreshInterval;
     }
 }

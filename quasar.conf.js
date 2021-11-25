@@ -100,7 +100,12 @@ module.exports = configure(function (ctx) {
         'Dialog',
         'LocalStorage',
         'Notify'
-      ]
+      ],
+      config: {
+        notify: {
+          position: 'bottom-right'
+        }
+      }
     },
 
     // animations: 'all', // --- includes all animations

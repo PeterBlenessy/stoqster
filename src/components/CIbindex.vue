@@ -109,6 +109,7 @@
 
 import { ibindex, ibiAxiosOptions } from '../api/ibindex/ibindexAPI.js';
 import { ref, toRef, onMounted } from 'vue';
+import { useQuasar } from 'quasar';
 import { useStore } from 'vuex';
 
 export default { 
@@ -119,6 +120,7 @@ export default {
   },
 
   setup (props) {
+    const $q = useQuasar();
     const store = useStore();
     const loading = ref(false);
     const refreshColor = ref('primary');
@@ -139,11 +141,20 @@ export default {
       window.ipc.axiosRequest( ibiAxiosOptions(api.value) )
         .then( response => { 
           rows.value = response.data;
+          refreshColor.value = 'primary';
+          $q.localStorage.set(api.value, rows.value);
+          $q.notify({type: 'positive', message:'Successful Ibindex refresh'});
         }).catch( error => {
           console.log(error);
+          rows.value = $q.localStorage.getItem(api.value) || []; // Restore the latest values in case we have a network error 
+          refreshColor.value = 'negative';
+          $q.notify({
+            type: 'negative', 
+            message:'Something went wrong during refresh', 
+            caption: 'Showing data from last successful refresh of ' + title
+          });
         }).finally(() => { 
           loading.value = false;
-          refreshColor.value = (rows.value.length === 0) ? 'red' : 'primary';
       });
     }
 

@@ -22,6 +22,8 @@
 
 import { ibindex, ibiAxiosOptions } from '../api/ibindex/ibindexAPI.js';
 import { ref, toRef, onMounted } from 'vue';
+import { useQuasar } from 'quasar';
+import { useStore } from 'vuex';
 
 export default { 
   name: 'CIbindexRebatePremium',
@@ -32,30 +34,106 @@ export default {
   },
 
   setup (props) {
+    const $q = useQuasar();
+    const store = useStore();
+
     const loading = ref(false);
 
     const api = toRef(props, 'api');
-    const company = toRef(props, 'company');
+    const companyCode = toRef(props, 'company');
     const title = ibindex[api.value].title;
     const visibleColumns = ibindex[api.value].visibleColumns;
     const columns = ibindex[api.value].columns;
     const rows = ref([]);
 
     // Fetch data from ibindex using the provided api reference
-    const refreshData = async () => {
+    async function refreshData() {
       loading.value = true;
 
-      window.ipc.axiosRequest( ibiAxiosOptions(api.value, company.value) )
-        .then( response => { 
+      window.ipc.axiosRequest( ibiAxiosOptions(api.value, companyCode.value) )
+        .then( response => {
           rows.value = response.data;
+          let debugLog = 'refresh';
+
+          debugLog += ('\t' + companyCode.value);
+          debugLog += ('\t hasAlert: ' + hasAlert(companyCode.value));
+          debugLog += (hasAlert(companyCode.value) ? ('\t ' + checkAlertTriggers(rows.value)) : '');
+          
+          console.log(debugLog);
+
+          // Store new rebate/premium values
+          $q.localStorage.set(companyCode.value, rows.value);
+          $q.notify({type: 'positive', message:'Successful refresh of watchlist details'});
         }).catch( error => {
           console.log(error);
+          rows.value = $q.localStorage.getItem(companyCode.value);
+          $q.notify({
+            type: 'negative',
+            message:'Something went wrong during refresh',
+            caption: 'Showing data from last successful refresh of ' + title
+          });
         }).finally(() => { 
           loading.value = false;
       });
     }
 
-    onMounted(refreshData);
+    // Checks if an alert has been registered for a company
+    function hasAlert(companyCode) {
+      let alerts = store.state.alerts;
+      return JSON.stringify(alerts).includes(companyCode);
+    }
+
+    function checkAlertTriggers(current) {
+
+      let previous = $q.localStorage.getItem(companyCode.value);
+
+      let prev = previous[0].calculatedRebatePremium;
+      let curr = current[0].calculatedRebatePremium;
+      let avg = current[1].calculatedRebatePremiumAverage;
+
+      // cross-down
+      if ( prev > avg && avg > curr ) {
+        $q.notify({
+          type: 'warning',
+          group: false,
+          message: 'Alert triggered for ' + companyCode.value + '!',
+          caption:'Calculated rebate/premium crosses down 30 days average',
+          timeout: 0,
+          actions: [
+            {label: 'Dismiss', color: 'white', handler: () => { /* ... */ }}
+          ]
+        });
+        return '----- cross down -----';
+      }
+
+      // cross-up
+      if ( prev < avg && avg < curr ) {
+        $q.notify({
+          type: 'warning',
+          group: false,
+          message: 'Alert triggered!',
+          caption:'Calculated rebate/premium crosses up 30 days average',
+          timeout: 0,
+          actions: [
+            {label: 'Dismiss', color: 'white', handler: () => { /* ... */ }}
+          ]
+        });
+        return '----- cross up -----';
+      }
+
+      // no-cross
+      if ( (prev < avg && curr < avg) || (prev > avg && curr > avg ) ) {
+        return '----- no-cross -----';
+      }
+    }
+
+    onMounted( function () {
+      refreshData();
+      
+      setInterval(function () { 
+        refreshData();
+      }, store.state.refreshInterval);
+    });
 
     return {
       title,
