@@ -204,7 +204,7 @@ module.exports = configure(function (ctx) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'com.electron.${productName}',
+        appId: 'com.electron.stoqster',
         afterSign: "electron-builder-notarize",
         mac: {
           artifactName: '${productName}-${version}-osx.${ext}',
