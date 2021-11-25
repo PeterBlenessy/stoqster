@@ -230,8 +230,7 @@ module.exports = configure(function (ctx) {
         publish: {
           "provider": "github",
           "owner": "PeterBlenessy",
-          "repo": "stoqster",
-          "private": true
+          "repo": "stoqster-releases"
         }
       },
 

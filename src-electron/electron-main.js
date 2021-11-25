@@ -1,5 +1,6 @@
 import { app, BrowserWindow, nativeTheme, ipcMain } from 'electron'
 import { autoUpdater } from 'electron-updater'
+import logger from 'electron-log'
 import path from 'path'
 import axios from 'axios'
 
@@ -36,13 +37,20 @@ function createWindow () {
   } else {
     // we're on production; no access to devtools pls
     mainWindow.webContents.on('devtools-opened', () => {
-      mainWindow.webContents.closeDevTools()
+//      mainWindow.webContents.closeDevTools()
     })
   }
 
   // Check for updates
   mainWindow.once('ready-to-show', () => { 
+    autoUpdater.logger = logger;
     autoUpdater.checkForUpdatesAndNotify();
+    logger.info('registered-auto-update');
+
+    setInterval(() => {
+      autoUpdater.checkForUpdatesAndNotify();
+      logger.info('registered-auto-update refresh interval');
+    }, 1000 * 60 * 60); // Check every hour
   });
 
   mainWindow.on('closed', () => {
@@ -68,12 +76,8 @@ app.on('activate', () => {
 // axios_options is the json object with 
 ipcMain.handle('axios-request', async (_, options) => {
 
-//  console.log("--------------------------------------------------------------------");
-//  console.log(options);
-
   try { 
       let response =  await axios.request(options);
-      //console.log(response);  
       let data;
 
       if (response.config.responseType === 'arraybuffer') {
@@ -87,6 +91,6 @@ ipcMain.handle('axios-request', async (_, options) => {
       // you can only return basic types and objects that can be serializable.
       return { data: data, status: response.status, statusText: response.statusText}
   } catch (error) {
-      console.log(error);
+      logger.error(error);
   }
 })
