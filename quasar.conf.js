@@ -205,10 +205,12 @@ module.exports = configure(function (ctx) {
         // https://www.electron.build/configuration/configuration
 
         appId: 'com.electron.${productName}',
+        afterSign: "electron-builder-notarize",
         mac: {
           artifactName: '${productName}-${version}-osx.${ext}',
           category: 'public.app-category.finance',
           hardenedRuntime: true,
+          entitlements: "./node_modules/electron-builder-notarize/entitlements.mac.inherit.plist",
           target: [
             "zip",
             "dmg"
