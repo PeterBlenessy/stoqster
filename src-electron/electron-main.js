@@ -1,4 +1,5 @@
 import { app, BrowserWindow, nativeTheme, ipcMain } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import axios from 'axios'
 
@@ -38,6 +39,11 @@ function createWindow () {
       mainWindow.webContents.closeDevTools()
     })
   }
+
+  // Check for updates
+  mainWindow.once('ready-to-show', () => { 
+    autoUpdater.checkForUpdatesAndNotify();
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null
