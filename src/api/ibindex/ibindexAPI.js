@@ -3,6 +3,19 @@ const getStyle = (value) => {
     return (value < 0 ? 'color:red' : 'color:green')
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat
+const formatter = new Intl.NumberFormat('se-SV', {
+  style: 'currency',
+  currency: 'SEK',
+  //notation: 'compact',
+  //compactDisplay: 'short',
+  // These options are needed to round to whole numbers if that's what you want.
+  //minimumFractionDigits: 0, // (this suffices for whole numbers, but will print 2500.10 as $2,500.1)
+  maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
+
+});
+
+
 const ibindex = {
 
   // IB companies and their reported and calculated net asset values and price
@@ -118,34 +131,42 @@ const ibindex = {
 
   // Holdings of an IB company
   getHoldings: {
+    title: 'Company holdings',
     url: 'https://ibindex.se/ibi//company/getHoldings.req',
-    fields: ['holdingProduct', 'holdingName', 'holdingValue', 'holdingValuePrevious', 'listed'],
-    header: ['Aktie', 'Bolag', 'Värde', 'Tidigare värde', 'Noterad'],
+    fields: ['holdingName', 'holdingProduct', 'holdingValue', 'holdingValuePrevious', 'listed'],
+    header: ['Bolag', 'Aktie', 'Värde', 'Tidigare värde', 'Noterad'],
     columns: [
+      { name: 'holdingName', label: 'Bolag', field: 'holdingName', align: 'left', required: true, width: '220px', type: 'string' },
       { name: 'holdingProduct', label: 'Aktiekod', field: 'holdingProduct', type: 'string' },
-      { name: 'holdingName', label: 'Bolag', field: 'holdingName', align: 'start', width: '220px', type: 'string' },
-      { name: 'holdingValue', label: 'Värde', field: 'holdingValue', type: 'currency', format: val => `${val.toFixed(2)}` },
-      { name: 'holdingValuePrevious', label: 'Tidigare värde', field: 'holdingValuePrevious', type: 'currency', format: val => `${val.toFixed(2)}` },
+      { name: 'holdingValue', label: 'Värde', field: 'holdingValue', type: 'currency', 
+        format: val => `${formatter.format(val)}`
+    },
+      { name: 'holdingValuePrevious', label: 'Tidigare värde', field: 'holdingValuePrevious', type: 'currency', 
+        format: val => `${formatter.format(val)}`
+      },
       { name: 'listed', label: 'Noterat', field: 'listed', type: 'boolean' },
     ],
-    visibleColumns: ['holdingProduct', 'holdingName', 'holdingValue', 'holdingValuePrevious', 'listed'],
+    visibleColumns: ['holdingName', 'holdingValue', 'listed'],
     payload: (company) => JSON.stringify(company),
   },
 
   // Company events
   getEvents: {
+    title: 'Calendar  ',
     url: 'https://ibindex.se/ibi//company/getEvents.req',
     fields: ['product', 'productName', 'eventDate', 'eventType', 'eventName', 'eventDetails'],
-    header: ['Aktie', 'Bolag', 'Datum', 'Händelse', 'Beskrivning'],
+    header: ['Bolag', 'Aktie', 'Datum', 'Händelse', 'Beskrivning'],
     columns: [
+      { name: 'productName', label: 'Investmentbolag', field: 'productName', align: 'left', width: '220px', type: 'string' },
       { name: 'product', label: 'Aktiekod', field: 'product', type: 'string' },
-      { name: 'productName', label: 'Investmentbolag', field: 'productName', align: 'start', width: '220px', type: 'string' },
-      { name: 'eventDate', label: 'Datum', field: 'eventDate', type: 'datum', format: val => `${new Date(val).toISOString().slice(0, 10)}` },
+      { name: 'eventDate', label: 'Datum', field: 'eventDate', type: 'datum', align: 'left',
+        format: val => `${new Date(val).toISOString().slice(0, 10)}` 
+      },
       { name: 'eventType', label: 'Typ av händelse', field: 'eventType', type: 'string' },
-      { name: 'eventName', label: 'Händelse', field: 'eventName', type: 'string' },
+      { name: 'eventName', label: 'Händelse', field: 'eventName', type: 'string', align: 'left' },
       { name: 'eventDetails', label: 'Detaljer', field: 'eventDetails', type: 'string' },
     ],
-    visibleColumns: ['product', 'productName', 'eventDate', 'eventName'],
+    visibleColumns: ['eventName', 'eventDate'],
     payload: (company) => JSON.stringify(company),
   },
 
@@ -172,7 +193,14 @@ const ibindex = {
       'FLAT B': 'https://ibindex.se/ibi//flatcapital/getRebatePremiums.req',
       'SPILTAN': 'https://ibindex.se/ibi//spiltan/getRebatePremiums.req',
       'VEFL SDB': 'https://ibindex.se/ibi//vef/getRebatePremiums.req'
-    }
+    },
+    getEvents: {
+      'AJA B': 'https://ibindex.se/ibi//aja/getEvents.req',
+      'FLAT B': 'https://ibindex.se/ibi//flatcapital/getEvents.req',
+      'SPILTAN': 'https://ibindex.se/ibi//spiltan/getEvents.req',
+      'VEFL SDB': 'https://ibindex.se/ibi//vef/getEvents.req'
+    },
+
   }
 }
 

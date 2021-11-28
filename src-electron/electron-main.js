@@ -89,8 +89,16 @@ ipcMain.handle('axios-request', async (_, options) => {
 
       // IPC does not allow you to directly return promises, 
       // you can only return basic types and objects that can be serializable.
-      return { data: data, status: response.status, statusText: response.statusText}
+      return {
+        status: response.status, 
+        statusText: response.statusText,
+        data: data
+      }
   } catch (error) {
       logger.error(error);
+      return {
+        status: error.response.status,
+        statusText: error
+      }
   }
 })

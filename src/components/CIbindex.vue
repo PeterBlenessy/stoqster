@@ -80,20 +80,21 @@
         <q-tr v-show="props.expand" :props="props" no-hover>
           <q-td :colspan="props.cols.length+1">
 
-            <div class="q-pa-xs col-6">
+            <div class="row items-start q-gutter-md">
+              <div class="col-6">
               <q-card>
                 <q-card-section> 
-                  This is expand slot for row above:
+                  <IbindexCompanyHoldings :company="props.row.product" />
                 </q-card-section>
               </q-card>
-            </div>
-
-             <div class="q-pa-xs col-6">
+              </div>
+              <div class="col-3">
               <q-card>
                 <q-card-section> 
-                  This is expand slot for row above:
+                  <IbindexCompanyEvents :company="props.row.product" />
                 </q-card-section>
               </q-card>
+             </div>
              </div>
 
           </q-td>
@@ -108,13 +109,18 @@
 <script>
 
 import { ibindex, ibiAxiosOptions } from '../api/ibindex/ibindexAPI.js';
+import IbindexCompanyHoldings from 'components/CIbindexCompanyHoldings.vue';
+import IbindexCompanyEvents from 'components/CIbindexCompanyEvents.vue';
 import { ref, toRef, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useStore } from 'vuex';
 
 export default { 
   name: 'CIbindex',
-
+  components: {
+    IbindexCompanyHoldings,
+    IbindexCompanyEvents
+  },
   props: {
     api: { type: String, required: true }
   },
@@ -149,9 +155,9 @@ export default {
           rows.value = $q.localStorage.getItem(api.value) || []; // Restore the latest values in case we have a network error 
           refreshColor.value = 'negative';
           $q.notify({
-            type: 'negative', 
-            message:'Something went wrong during refresh', 
-            caption: 'Showing data from last successful refresh of ' + title
+            type: 'warning',
+            message:'Something went wrong during refresh of ' + title,
+            caption: 'Showing data from last successful refresh of ' + companyCode.value
           });
         }).finally(() => { 
           loading.value = false;
@@ -159,7 +165,7 @@ export default {
     }
 
     // Save the selected rows to Vuex state store. These rows represent the watchlist and will also be saved to the localStorage.
-    function onUpdateSelected ( newSelection ) {   
+    function onUpdateSelected ( newSelection ) {
       store.commit('setWatchlist', newSelection);
     }
 
@@ -207,7 +213,7 @@ export default {
 
 <style scoped>
 .q-table tbody td:after{
-  background: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.0);
 }
 .q-table--dark tbody td:after{
   background: rgba(0,0,0,0.0);
