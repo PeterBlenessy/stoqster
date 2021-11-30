@@ -1,6 +1,6 @@
 {
   "name": "stoqster",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "description": "Follow your favourite stocks and fonds, and your portfolio's performance",
   "productName": "Stoqster",
   "author": "Péter Blénessy",
@@ -11,7 +11,10 @@
     "dev": "quasar dev -m electron",
     "publish:mac": "quasar build -m electron -T mac --publish always",
     "publish:all": "quasar build -m electron -T all --publish always",
-    "release": "gh release create 0.4.7 --draft --title \"v0.4.7\" --notes \"This is an alpha release of Stoqster. Testing AutoUpdate support.\""
+    "release:draft": "gh release create $npm_package_version --draft --title $npm_package_version --notes-file CHANGELOG.md",
+    "release:publish":  "gh release create $npm_package_version --draft=false --title $npm_package_version --notes-file CHANGELOG.md --repo PeterBlenessy/stoqster-releases",
+    "release:mac": "yarn release:draft && yarn publish:mac && yarn release:publish",
+    "release:all": "yarn release:draft && yarn publish:all && yarn release:publish"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",

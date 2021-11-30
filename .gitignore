@@ -33,3 +33,7 @@ yarn-error.log*
 *.sln
 
 .env
+
+
+## remove this row when ready to include capacitor files in repo
+/src-capacitor/*
