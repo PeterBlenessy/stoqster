@@ -11,7 +11,7 @@
     "dev": "quasar dev -m electron",
     "publish:mac": "quasar build -m electron -T mac --publish always",
     "publish:all": "quasar build -m electron -T all --publish always",
-    "release:private": "CHANGELOG=$(sed -n \"/^## v$npm_package_version/,/^## /p\" CHANGELOG.md | sed '1d;$d') && gh release create v$npm_package_version --draft=false --title v$npm_package_version --notes \"$RELEASE_NOTES\"",
+    "release:private": "CHANGELOG=$(sed -n \"/^## v$npm_package_version/,/^## /p\" CHANGELOG.md | sed '1d;$d') && gh release create v$npm_package_version --draft=false --title v$npm_package_version --notes \"$CHANGELOG\"",
     "release:public":  "CHANGELOG=$(sed -n \"/^## v$npm_package_version/,/^## /p\" CHANGELOG.md | sed '1d;$d') && gh release create v$npm_package_version --draft=false --title v$npm_package_version --notes \"$CHANGELOG\" --repo PeterBlenessy/stoqster-releases"
   },
   "dependencies": {
