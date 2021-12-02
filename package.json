@@ -1,6 +1,6 @@
 {
   "name": "stoqster",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Follow your favourite stocks and fonds, and your portfolio's performance",
   "productName": "Stoqster",
   "author": "Péter Blénessy",
@@ -12,7 +12,9 @@
     "publish:mac": "quasar build -m electron -T mac --publish always",
     "publish:all": "quasar build -m electron -T all --publish always",
     "release:private": "CHANGELOG=$(sed -n \"/^## v$npm_package_version/,/^## /p\" CHANGELOG.md | sed '1d;$d') && gh release create v$npm_package_version --draft=false --title v$npm_package_version --notes \"$CHANGELOG\"",
-    "release:public":  "CHANGELOG=$(sed -n \"/^## v$npm_package_version/,/^## /p\" CHANGELOG.md | sed '1d;$d') && gh release create v$npm_package_version --draft=false --title v$npm_package_version --notes \"$CHANGELOG\" --repo PeterBlenessy/stoqster-releases"
+    "release:public": "CHANGELOG=$(sed -n \"/^## v$npm_package_version/,/^## /p\" CHANGELOG.md | sed '1d;$d') && gh release create v$npm_package_version --draft=false --title v$npm_package_version --notes \"$CHANGELOG\" --repo PeterBlenessy/stoqster-releases",
+    "git:push": "CHANGELOG=$(sed -n \"/^## v$npm_package_version/,/^## /p\" CHANGELOG.md | sed '1d;$d') && git add . && git commit -m \"$CHANGELOG\" && git push -u origin main",
+    "cicd": "yarn git:push && yarn release:private && yarn publish:all"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",

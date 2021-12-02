@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.5.2 - 2021-12-03
+- Added package.json script - git:push - to do add, commit and push changes.
+- Added package.json script - cicd - push changes, build and publish artefacts, and create release in private repo.
+
 ## v0.5.1 - 2021-12-03
 - Added scripts - release:private and release:public - to extract relevant release notes from CHANGELOG.md and pass it to gh create release release-notes to the private and to teh public repo respectively.
 
