@@ -1,6 +1,6 @@
 {
   "name": "stoqster",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Follow your favourite stocks and fonds, and your portfolio's performance",
   "productName": "Stoqster",
   "author": "Péter Blénessy",
@@ -11,10 +11,8 @@
     "dev": "quasar dev -m electron",
     "publish:mac": "quasar build -m electron -T mac --publish always",
     "publish:all": "quasar build -m electron -T all --publish always",
-    "release:draft": "gh release create $npm_package_version --draft --title $npm_package_version --notes-file CHANGELOG.md",
-    "release:publish":  "gh release create $npm_package_version --draft=false --title $npm_package_version --notes-file CHANGELOG.md --repo PeterBlenessy/stoqster-releases",
-    "release:mac": "yarn release:draft && yarn publish:mac && yarn release:publish",
-    "release:all": "yarn release:draft && yarn publish:all && yarn release:publish"
+    "release:private": "CHANGELOG=$(sed -n \"/^## v$npm_package_version/,/^## /p\" CHANGELOG.md | sed '1d;$d') && gh release create v$npm_package_version --draft=false --title v$npm_package_version --notes \"$RELEASE_NOTES\"",
+    "release:public":  "CHANGELOG=$(sed -n \"/^## v$npm_package_version/,/^## /p\" CHANGELOG.md | sed '1d;$d') && gh release create v$npm_package_version --draft=false --title v$npm_package_version --notes \"$CHANGELOG\" --repo PeterBlenessy/stoqster-releases"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
