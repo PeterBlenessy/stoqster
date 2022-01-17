@@ -22,7 +22,6 @@ const { contextBridge, ipcRenderer } = require('electron')
 contextBridge.exposeInMainWorld(
     'ipc',
     {
-        axiosRequest: async ( options ) => { return await ipcRenderer.invoke('axios-request', options)},
-        fetchRequest: async ( url, options ) => { return await ipcRenderer.invoke('fetch-request', url, options)} 
+        axiosRequest: async ( options ) => { return await ipcRenderer.invoke('axios-request', options)}
     }
 );
