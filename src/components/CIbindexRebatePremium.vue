@@ -20,7 +20,7 @@
 
 <script>
 
-import { ibindex, ibiAxiosOptions } from '../api/ibindex/ibindexAPI.js';
+import { ibindex, ibiAxiosOptions } from '../api/ibindexAPI.js';
 import { ref, toRef, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useStore } from 'vuex';

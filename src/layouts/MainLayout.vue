@@ -81,6 +81,12 @@ const links = [
     icon: 'pie_chart'
   },
   {
+    title: 'Fonder',
+    caption: 'Fonder',
+    path: '/funds',
+    icon: 'business_center'
+  },
+  {
     title: 'Info',
     caption: 'Application information',
     path: '/info',

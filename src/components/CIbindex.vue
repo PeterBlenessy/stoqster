@@ -108,7 +108,7 @@
 
 <script>
 
-import { ibindex, ibiAxiosOptions } from '../api/ibindex/ibindexAPI.js';
+import { ibindex, ibiAxiosOptions } from '../api/ibindexAPI.js';
 import IbindexCompanyHoldings from 'components/CIbindexCompanyHoldings.vue';
 import IbindexCompanyEvents from 'components/CIbindexCompanyEvents.vue';
 import { ref, toRef, onMounted } from 'vue';
@@ -132,7 +132,7 @@ export default {
     const refreshColor = ref('primary');
 
     const api = toRef(props, 'api');
-    const title = ibindex[api.value].title;
+    const title = ref(ibindex[api.value].title);
     const visibleColumns = ibindex[api.value].visibleColumns;
     const columns = ibindex[api.value].columns;
     const rows = ref([]);
@@ -156,7 +156,7 @@ export default {
           refreshColor.value = 'negative';
           $q.notify({
             type: 'warning',
-            message:'Something went wrong during refresh of ' + title,
+            message:'Something went wrong during refresh of ' + title.value,
             caption: 'Showing data from last successful refresh of ' + companyCode.value
           });
         }).finally(() => { 

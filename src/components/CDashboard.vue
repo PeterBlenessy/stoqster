@@ -103,7 +103,7 @@
 
 <script>
 
-import { ibindex, ibiAxiosOptions } from '../api/ibindex/ibindexAPI.js';
+import { ibindex, ibiAxiosOptions } from '../api/ibindexAPI.js';
 import IbindexRebatePremium from 'components/CIbindexRebatePremium.vue';
 import AlertDialog from 'components/CAlertDialog.vue';
 import { ref, onMounted } from 'vue';

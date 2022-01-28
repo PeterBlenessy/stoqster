@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+- Changed webPreferences.webSecurity: false, so fetch() can be used from the renderer process.
+- Added new component: ComponentFunds.vue that will handle listing of fund information from Finansinspektionen webpage.
+- Added API: fiAPI.js - holds objects for Finansinspektionen inofficial API
+- Added dependency: unzip - to be able to unpack zip files downloaded from Finansinspektionen
+- Added dependency: x2js - to be able to convert XML files from the downloaded zip to JSON objects.
+- Added dependency: localforage - to be able to use IndexedDB with a simple(r) API.
+- Moved API: ibindexAPI.js up one folder and removed ibindex folder from api folder.
+
+- Removed dependency: axios and migrated components to use fetch() instead.
+- Cleaned up electron-preload.js and electron-main.js from axios code.
+
+## v0.5.3 - 2022-01-17
+- Upgraded Electron to v16.0.7.
+- Removed not-implemented fetch-request from preload.js.
 
 ## v0.5.2 - 2021-12-03
 - Added package.json script - git:push - to do add, commit and push changes.

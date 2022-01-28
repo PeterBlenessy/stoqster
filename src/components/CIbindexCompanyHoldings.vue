@@ -17,7 +17,7 @@
 <script>
 import { ref, toRef, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
-import { ibindex, ibiAxiosOptions } from '../api/ibindex/ibindexAPI.js';
+import { ibindex, ibiAxiosOptions } from '../api/ibindexAPI.js';
 
 export default {
   name: 'CIbindexCompanyHoldings',

@@ -1,6 +1,6 @@
 {
   "name": "stoqster",
-  "version": "0.5.2",
+  "version": "0.5.4",
   "description": "Follow your favourite stocks and fonds, and your portfolio's performance",
   "productName": "Stoqster",
   "author": "Péter Blénessy",
@@ -22,9 +22,12 @@
     "core-js": "^3.6.5",
     "electron-log": "^4.4.1",
     "electron-updater": "^4.6.1",
+    "localforage": "^1.10.0",
     "quasar": "^2.4.10",
+    "unzipit": "^1.4.0",
     "vue-i18n": "^9.0.0",
-    "vuex": "^4.0.1"
+    "vuex": "^4.0.1",
+    "x2js": "^3.4.3"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.13.14",
