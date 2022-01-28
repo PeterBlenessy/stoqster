@@ -14,12 +14,12 @@
       v-model:expanded="expandedCards"
     >
       <template v-slot:top-right>
-        <!-- Search input -->
-        <q-input dense debounce="300" v-model="filter" placeholder="Search">
-          <template v-slot:append>
-            <q-icon name="search" />
-          </template>
-        </q-input>
+            <!-- Filter input -->
+            <q-input dense debounce="300" v-model="filter" placeholder="Filter" style="width: 250px">
+                <template v-slot:append>
+                    <q-icon name="filter_list" />
+                </template>
+            </q-input>
 
         <!-- Refresh button -->
         <q-btn flat round dense class="q-ml-md" icon="refresh" :color="refreshColor" @click="refreshData()">

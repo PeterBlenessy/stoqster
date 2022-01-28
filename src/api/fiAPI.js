@@ -64,22 +64,32 @@ const funds = {
         columns: [
             { name: 'Fond_namn', label: 'Fondnamn', field: 'Fond_namn', align: 'left', required: true, sortable: true },
             { name: 'Fond_ISIN-kod', label: 'ISIN-kod', field: 'Fond_ISIN-kod', align: 'left', required: false },
-            { name: 'Fondförmögenhet', label: 'Fondförmögenhet', field: 'Fondförmögenhet', align: 'right', required: true, sortable: true,
-              format: val => `${isValidNumber(val) ? formatter.format(val) : ''}`,
+            { 
+                name: 'Fondförmögenhet', label: 'Fondförmögenhet', field: 'Fondförmögenhet', align: 'right', required: false, sortable: true,
+                sort: (a, b) => parseFloat(a) - parseFloat(b),
+                format: val => `${isValidNumber(val) ? formatter.format(val) : ''}`,
             },
-            { name: 'Förvaltningsavgift', label: 'Förvaltningsavgift', field: 'Förvaltningsavgift', align: 'right', required: false, sortable: true,
-              format: val => `${isValidNumber(val) ? formatter.format(val) : ''}`,
+            { 
+                name: 'Förvaltningsavgift', label: 'Förvaltningsavgift', field: 'Förvaltningsavgift', align: 'right', required: false, sortable: true,
+                sort: (a, b) => parseFloat(a) - parseFloat(b),
+                format: val => `${isValidNumber(val) ? formatter.format(val) : ''}`,
             },
-            { name: 'Jämförelseindex', label: 'Jämförelseindex', field: 'Jämförelseindex', align: 'left', required: false },
-            { name: 'Likvida_medel', label: 'Likvida medel', field: 'Likvida_medel', align: 'right', required: true, sortable: true,
-              format: val => `${isValidNumber(val) ? formatter.format(val) : ''}`,
+            { name: 'Jämförelseindex', label: 'Jämförelseindex', field: 'Jämförelseindex', align: 'left', required: false, sortable: true },
+            { 
+                name: 'Likvida_medel', label: 'Likvida medel', field: 'Likvida_medel', align: 'right', required: false, sortable: true,
+                sort: (a, b) => parseFloat(a) - parseFloat(b),
+                format: val => `${isValidNumber(val) ? formatter.format(val) : ''}`,
             },
-            { name: 'Standardavvikelse_24_månader', label: 'Standardavvikelse 24 månader', field: 'Standardavvikelse_24_månader', align: 'right', required: true, sortable: true,
-              format: val => `${ isValidNumber(val) ? Number.parseFloat(val) : '' }`
+            {
+                name: 'Standardavvikelse_24_månader', label: 'Standardavvikelse 24 månader', field: 'Standardavvikelse_24_månader', align: 'right', required: false, sortable: true,
+                sort: (a, b) => parseFloat(a) - parseFloat(b),
+                format: val => `${ isValidNumber(val) ? Number.parseFloat(val) : '' }`
             },
-            { name: 'Övriga_tillgångar_och_skulder', label: 'Övriga tillgångar och skulder', field: 'Övriga_tillgångar_och_skulder', align: 'right', required: true, sortable: true,
-              format: val => `${isValidNumber(val) ? formatter.format(val) : ''}`,
-              style: val => setStyle(val['Övriga_tillgångar_och_skulder'])
+            { 
+                name: 'Övriga_tillgångar_och_skulder', label: 'Övriga tillgångar och skulder', field: 'Övriga_tillgångar_och_skulder', align: 'right', required: false, sortable: true,
+                sort: (a, b) => parseFloat(a) - parseFloat(b),
+                format: val => `${isValidNumber(val) ? formatter.format(val) : ''}`,
+                style: val => setStyle(val['Övriga_tillgångar_och_skulder'])
             },
         ],
         visibleColumns: ['Fond_namn', 'Fond_ISIN-kod', 'Fondförmögenhet', 'Likvida_medel', 'Standardavvikelse_24_månader', 'Övriga_tillgångar_och_skulder']

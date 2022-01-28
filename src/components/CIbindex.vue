@@ -6,7 +6,6 @@
       :columns="columns"
       :filter="filter"
       row-key="product"
-      v-model:expanded="expandedRows"
       :visible-columns="visibleColumns"
       :rows-per-page-options="[0]"
       :loading="loading"
@@ -17,12 +16,12 @@
 
       <!-- Configure top-right part of the data table component -->
       <template v-slot:top-right>
-        <!-- Search input -->
-        <q-input dense debounce="300" v-model="filter" placeholder="Search">
-          <template v-slot:append>
-            <q-icon name="search" />
-          </template>
-        </q-input>
+            <!-- Filter input -->
+            <q-input dense debounce="300" v-model="filter" placeholder="Filter list" style="width: 250px">
+                <template v-slot:append>
+                    <q-icon name="filter_list" />
+                </template>
+            </q-input>
         
         <!-- Refresh data -->
         <q-btn dense flat round icon="refresh" :color="refreshColor" @click="refreshData()">
@@ -137,8 +136,6 @@ export default {
     const columns = ibindex[api.value].columns;
     const rows = ref([]);
     const selectedRows = ref([]);
-    const expandedRows = ref([]);
-    const expand = ref(false);
 
     // Fetch data from ibindex using the provided api reference
     const refreshData = async () => {
@@ -174,12 +171,6 @@ export default {
       selectedRows.value = store.state.watchlist;
     }
 
-    // Toggle expand / collaps of row with more company details.
-    // More than one row can be expanded.
-    function toggleExpandMoreDetails (rowKey) {
-      expand.value = !expand.value;
-    }
-
     onMounted(refreshData);
     onMounted(restoreSelectedRows);
 
@@ -193,9 +184,6 @@ export default {
       
       filter: ref(''),
       
-      expand,
-      expandedRows,
-      toggleExpandMoreDetails,
       
       selectedRows,
       restoreSelectedRows,

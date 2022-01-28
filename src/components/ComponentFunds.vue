@@ -7,8 +7,9 @@
             :visible-columns="visibleColumns"
             :filter="filter"
             :pagination="initialPagination"
+            :binary-state-sort="true"
 
-            row-key="label"
+            row-key="Fond_namn"
             :rows-per-page-options="[0]"
             :loading="loading"
         >
@@ -17,9 +18,9 @@
         <template v-slot:top-right>
 
             <!-- Search input -->
-            <q-input dense debounce="300" v-model="filter" placeholder="Search">
+            <q-input dense debounce="300" v-model="filter" placeholder="Filter list" style="width: 250px">
                 <template v-slot:append>
-                    <q-icon name="search" />
+                    <q-icon name="filter_list" />
                 </template>
             </q-input>
         
@@ -29,6 +30,76 @@
                     {{ "Refresh data" }}
                 </q-tooltip>
             </q-btn>
+
+        </template>
+
+        <!-- Table header row -->
+        <template v-slot:header="props">
+            <q-tr :props="props">
+                <q-th v-for="col in props.cols"  :key="col.name" :props="props">
+                    {{ col.label }}
+                </q-th>
+
+                <!-- Column selection  -->
+                <q-th auto-width>
+                    <q-select multiple dense options-dense borderless dropdown-icon="more_vert"
+                        v-model="visibleColumns"
+                        display-value=""
+                        emit-value
+                        map-options
+                        :options="columns"
+                        option-value="name"
+                    >
+                        <template v-slot:option="{ itemProps, opt, selected, toggleOption }">
+                            <q-item v-bind="itemProps" dense>
+                                <q-item-section>
+                                    <q-item-label v-html="opt.label" />
+                                </q-item-section>
+                                <q-item-section side>
+                                    <q-toggle size="xs" :model-value="selected" @update:model-value="toggleOption(opt)" />
+                                </q-item-section>
+                            </q-item>
+                        </template>
+                        <q-tooltip transition-show="scale" transition-hide="scale">
+                            {{ "Show/hide columns" }}
+                        </q-tooltip>
+
+                    </q-select>
+                </q-th>
+            </q-tr>
+        </template>
+
+        <template v-slot:body="props">
+            <q-tr :props="props">
+                <!-- Column values -->
+                <q-td 
+                    v-for="col in props.cols" 
+                    :key="col.name" 
+                    :props="props"
+                >
+                    {{ col.value }}
+                </q-td>
+
+                <!-- Action buttons -->
+                <q-td auto-width>
+
+                    <!-- Expand more details -->
+                    <q-btn size="sm" color="primary" flat round dense @click="props.expand = !props.expand" icon="expand_more">
+                        <q-tooltip transition-show="scale" transition-hide="scale">
+                            {{ "Show holdings " }}
+                        </q-tooltip>
+                    </q-btn>
+
+                </q-td>
+            </q-tr>
+
+            <!--  Expanded row. Displays additional insights about the company.  -->
+            <q-tr v-show="props.expand" :props="props" no-hover>
+                <q-td :colspan="props.cols.length+1">
+                    <pre>{{ JSON.stringify(props.row.FinansiellaInstrument.FinansielltInstrument, null, 4) }}</pre>
+                </q-td>
+            </q-tr>
+
         </template>
  
     </q-table>
@@ -51,8 +122,9 @@ export default {
 
         const title = funds.title;
         const columns = funds.qTableConfig.columns;
-        const visibleColumns = funds.qTableConfig.visibleColumns;
+        const visibleColumns = ref(funds.qTableConfig.visibleColumns);
         const rows = ref([]);
+
         const loading = ref(false);
         const refreshColor = ref('primary');
 
@@ -161,8 +233,7 @@ export default {
                 descending: false,
                 page: 1,
                 rowsPerPage: 49
-            },
-
+            }
         }
     }
 }

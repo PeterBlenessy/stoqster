@@ -4,8 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [BACKLOG]
+- Refactoring: removed dependency to axios and migrated components to use fetch() instead.
+- Refactoring: cleaned up electron-preload.js and electron-main.js from axios code.
+- New feature: sorting in ibindex components.
+- New feature: add ComponentFundHoldings component to list the holdings of a fund.
 
-## [Unreleased]
+## [IN-PROGRESS]
+
+## [UNRELEASED]
+
+## v0,5,4 - 2022-01-28
+- Fixed bug: sorting of columns in fund listing was based on string value, not floating number.
+- New feature: selectable columns in table in ComponentFunds component.
+- New feature: expand fund table row when clicked, and list fund holdings.
+
+## v0.5.4 - 2022-01-28
 - Changed webPreferences.webSecurity: false, so fetch() can be used from the renderer process.
 - Added new component: ComponentFunds.vue that will handle listing of fund information from Finansinspektionen webpage.
 - Added API: fiAPI.js - holds objects for Finansinspektionen inofficial API
@@ -13,9 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added dependency: x2js - to be able to convert XML files from the downloaded zip to JSON objects.
 - Added dependency: localforage - to be able to use IndexedDB with a simple(r) API.
 - Moved API: ibindexAPI.js up one folder and removed ibindex folder from api folder.
-
-- Removed dependency: axios and migrated components to use fetch() instead.
-- Cleaned up electron-preload.js and electron-main.js from axios code.
 
 ## v0.5.3 - 2022-01-17
 - Upgraded Electron to v16.0.7.

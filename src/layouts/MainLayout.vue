@@ -3,8 +3,11 @@
     <q-header elevated>
       <!--  Top toolbar -->
       <q-toolbar >
-        <q-btn flat dense round icon="menu" aria-label="Menu" @click="drawer = !drawer"/>
-
+        <q-btn flat dense round icon="menu" aria-label="Menu" @click="drawer = !drawer">
+          <q-tooltip transition-show="scale" transition-hide="scale">
+            {{ "Show/hide drawer" }}
+          </q-tooltip>
+        </q-btn>
         <q-toolbar-title>Stoqster</q-toolbar-title>
 
         <!-- Toggle dark / light mode -->
@@ -64,7 +67,7 @@
 const links = [
   {
     title: 'Dashboard ',
-    caption: 'Display the dashboard of watchlisted companies',
+    caption: 'Dashboard',
     icon: 'apps',
     path: '/'
   },
@@ -81,8 +84,8 @@ const links = [
     icon: 'pie_chart'
   },
   {
-    title: 'Fonder',
-    caption: 'Fonder',
+    title: 'Funds',
+    caption: 'Funds',
     path: '/funds',
     icon: 'business_center'
   },
