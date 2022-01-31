@@ -8,12 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactoring: removed dependency to axios and migrated components to use fetch() instead.
 - Refactoring: cleaned up electron-preload.js and electron-main.js from axios code.
 - New feature: sorting in ibindex components.
-- New feature: add ComponentFundHoldings component to list the holdings of a fund, and show it in the expanded row of a fund.
 - New feature: adjust number of rows based on window height.
+- Fix: handle dB version change when app is upgraded.
 
 ## [IN-PROGRESS]
 
 ## [UNRELEASED]
+
+## v0.5.8 - 2022-01-31
+- Fix: column format and sorting in fund holdings table
+- Fix: removed currency symbol in currency columns as it is not always SEK.
+- Fix: negative numbers are now red in the "likvida medel" column.
 
 ## v0.5.7 - 2022-01-31
 - Removed yarn.lock from version control and added it to .gitignore.

@@ -8,9 +8,9 @@ const setStyle = (number, ifNegative='red', ifPositive='green') => {
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat
 //const locale = new Intl.locale("se-SV", { language: 'sv'});
 const formatter = new Intl.NumberFormat('sv-SE', {
-  style: 'currency',
-  currency: 'SEK',
-  currencyDisplay: 'narrowSymbol',
+//   style: 'currency',
+//   currency: 'SEK',
+//   currencyDisplay: 'code',
   //notation: 'compact',
   //compactDisplay: 'short',
   // These options are needed to round to whole numbers if that's what you want.
@@ -85,7 +85,8 @@ const funds = {
             { 
                 name: 'Likvida_medel', label: 'Likvida medel', field: 'Likvida_medel', align: 'right', required: false, sortable: true,
                 sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: val => isValidNumber(val) ? formatter.format(val, 'red', 'primary') : '',
+                format: val => isValidNumber(val) ? formatter.format(val) : '',
+                style: val => setStyle(val['Likvida_medel'], 'red', 'primary')
             },
             {
                 name: 'Standardavvikelse_24_månader', label: 'Standardavvikelse 24 månader', field: 'Standardavvikelse_24_månader', align: 'right', required: false, sortable: true,
@@ -96,7 +97,7 @@ const funds = {
                 name: 'Övriga_tillgångar_och_skulder', label: 'Övriga tillgångar och skulder', field: 'Övriga_tillgångar_och_skulder', align: 'right', required: false, sortable: true,
                 sort: (a, b) => parseFloat(a) - parseFloat(b),
                 format: val => isValidNumber(val) ? formatter.format(val) : '',
-                style: val => setStyle(val['Övriga_tillgångar_och_skulder'])
+                style: val => setStyle(val['Övriga_tillgångar_och_skulder'], 'red', 'primary')
             },
         ],
         visibleColumns: ['Fond_namn', 'Fond_ISIN-kod', 'Fondförmögenhet', 'Likvida_medel', 'Standardavvikelse_24_månader', 'Övriga_tillgångar_och_skulder']
@@ -121,8 +122,16 @@ const fundHoldings = {
         columns: [
             { name: 'Instrumentnamn', label: 'Instrumentnamn', field: 'Instrumentnamn', align: 'left', required: true, sortable: true },
             { name: 'ISIN-kod_instrument', label: 'ISIN-kod', field: 'ISIN-kod_instrument', align: 'right', required: true, sortable: true },
-            { name: 'Marknadsvärde_instrument', label: 'Marknadsvärde', field: 'Marknadsvärde_instrument', align: 'right', required: false, sortable: true },
-            { name: 'Antal', label: 'Antal', field: 'Antal', align: 'right', required: false, sortable: true },
+            { 
+                name: 'Marknadsvärde_instrument', label: 'Marknadsvärde', field: 'Marknadsvärde_instrument', align: 'right', required: false, sortable: true, 
+                sort: (a, b) => parseFloat(a) - parseFloat(b),
+                format: val => isValidNumber(val) ? formatter.format(val) : '',
+            },
+            { 
+                name: 'Antal', label: 'Antal', field: 'Antal', align: 'right', required: false, sortable: true,
+                sort: (a, b) => parseFloat(a) - parseFloat(b),
+                format: val => isValidNumber(val) ? formatter.format(val) : ''
+             },
             { name: 'Valuta', label: 'Valuta', field: 'Valuta', align: 'right', required: false, sortable: true },
             { name: 'Andel_av_fondförmögenhet_instrument', label: 'Andel av fondförmögenhet', field: 'Andel_av_fondförmögenhet_instrument', align: 'right', required: true, sortable: true }
         ],
