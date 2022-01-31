@@ -62,12 +62,10 @@ export default {
     }
 
     onMounted( function () {
-      refreshData();
-      
+      refreshData();      
     });
 
     return {
-      refreshData,
       title,
       columns,
       visibleColumns,

@@ -46,6 +46,14 @@ const fiDownload = {
     }
 };
 
+/**
+ * Fields:
+ *  - Förvaltningsavgift
+ *      - Alt-1: 'UtanAndelsklasser': Object(Number)
+ *                  - 'Förvaltningsavgift_fast': Number
+ *      - Alt-2: 'MedAndelsklasser': Object( Array(Objects) )
+ *                  - 'Förvaltningsavgift': [{'Andelsklass_namn': String, 'Förvaltningsavgift_typ':{'Förvaltningsavgift_fast': Number}}, ...]
+ */
 const funds = {
     title: 'Quarterly reported funds and their holdings',
     url: '',
@@ -70,25 +78,24 @@ const funds = {
                 format: val => `${isValidNumber(val) ? formatter.format(val) : ''}`,
             },
             { 
-                name: 'Förvaltningsavgift', label: 'Förvaltningsavgift', field: 'Förvaltningsavgift', align: 'right', required: false, sortable: true,
-                sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: val => `${isValidNumber(val) ? formatter.format(val) : ''}`,
+                name: 'Jämförelseindex', label: 'Jämförelseindex', 
+                field: (val) => val['Jämförelseindex']['Jämförelseindex'],
+                align: 'left', required: false, sortable: true 
             },
-            { name: 'Jämförelseindex', label: 'Jämförelseindex', field: 'Jämförelseindex', align: 'left', required: false, sortable: true },
             { 
                 name: 'Likvida_medel', label: 'Likvida medel', field: 'Likvida_medel', align: 'right', required: false, sortable: true,
                 sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: val => `${isValidNumber(val) ? formatter.format(val) : ''}`,
+                format: val => isValidNumber(val) ? formatter.format(val, 'red', 'primary') : '',
             },
             {
                 name: 'Standardavvikelse_24_månader', label: 'Standardavvikelse 24 månader', field: 'Standardavvikelse_24_månader', align: 'right', required: false, sortable: true,
                 sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: val => `${ isValidNumber(val) ? Number.parseFloat(val) : '' }`
+                format: val => isValidNumber(val) ? Number.parseFloat(val) : ''
             },
             { 
                 name: 'Övriga_tillgångar_och_skulder', label: 'Övriga tillgångar och skulder', field: 'Övriga_tillgångar_och_skulder', align: 'right', required: false, sortable: true,
                 sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: val => `${isValidNumber(val) ? formatter.format(val) : ''}`,
+                format: val => isValidNumber(val) ? formatter.format(val) : '',
                 style: val => setStyle(val['Övriga_tillgångar_och_skulder'])
             },
         ],
@@ -96,6 +103,12 @@ const funds = {
     }
 };
 
+/**
+ * Fields
+ *  - Bransch
+ *      - Alt-1: Present if 'Tillgångsslag_enligt_LVF_5_kap' = 'ÖverlåtbartVärdepapper' or 'Fondandel' or 'Penningmarknadsinstrument'
+ *      - Alt-2: Missing if 'Tillgångsslag_enligt_LVF_5_kap' = 'DerivatinstrumentSamtTeknikerOchInstrument'
+ */
 const fundHoldings = {
     title: 'Fund holdings',
     url: '',
@@ -105,8 +118,15 @@ const fundHoldings = {
     fields: [ 'Andel_av_fondförmögenhet_instrument', 'Antal', 'Bransch/Bransch_namn_instrument', 'Bransch/Branschkod_instrument', 'ISIN-kod_instrument', 'Instrumentnamn', 'Kurs_som_använts_vid_värdering_av_instrumentet', 
         'Landkod_Emittent', 'Marknadsvärde_instrument', 'Nominellt_belopp', 'Tillgångsslag_enligt_LVF_5_kap', 'Valuta', 'Valutakurs_instrument' ],
     qTableConfig: {
-        columns: [],
-        visibleColumns: ['Instrumentnamn', 'ISIN-kod_instrument', 'Andel_av_fondförmögenhet_instrument', 'Antal', 'Valuta', 'Valutakurs_instrument']
+        columns: [
+            { name: 'Instrumentnamn', label: 'Instrumentnamn', field: 'Instrumentnamn', align: 'left', required: true, sortable: true },
+            { name: 'ISIN-kod_instrument', label: 'ISIN-kod', field: 'ISIN-kod_instrument', align: 'right', required: true, sortable: true },
+            { name: 'Marknadsvärde_instrument', label: 'Marknadsvärde', field: 'Marknadsvärde_instrument', align: 'right', required: false, sortable: true },
+            { name: 'Antal', label: 'Antal', field: 'Antal', align: 'right', required: false, sortable: true },
+            { name: 'Valuta', label: 'Valuta', field: 'Valuta', align: 'right', required: false, sortable: true },
+            { name: 'Andel_av_fondförmögenhet_instrument', label: 'Andel av fondförmögenhet', field: 'Andel_av_fondförmögenhet_instrument', align: 'right', required: true, sortable: true }
+        ],
+        visibleColumns: ['Instrumentnamn', 'Bransch', 'ISIN-kod_instrument', 'Marknadsvärde_instrument', 'Andel_av_fondförmögenhet_instrument', 'Antal', 'Valuta']
     }
 };
 

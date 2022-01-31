@@ -42,7 +42,7 @@
 
                 <!-- Column selection  -->
                 <q-th auto-width>
-                    <q-select multiple dense options-dense borderless dropdown-icon="more_vert"
+                    <q-select multiple dense options-dense borderless dropdown-icon="more_vert" style="size: 300px"
                         v-model="visibleColumns"
                         display-value=""
                         emit-value
@@ -55,6 +55,7 @@
                                 <q-item-section>
                                     <q-item-label v-html="opt.label" />
                                 </q-item-section>
+
                                 <q-item-section side>
                                     <q-toggle size="xs" :model-value="selected" @update:model-value="toggleOption(opt)" />
                                 </q-item-section>
@@ -96,7 +97,9 @@
             <!--  Expanded row. Displays additional insights about the company.  -->
             <q-tr v-show="props.expand" :props="props" no-hover>
                 <q-td :colspan="props.cols.length+1">
-                    <pre>{{ JSON.stringify(props.row.FinansiellaInstrument.FinansielltInstrument, null, 4) }}</pre>
+                    <ComponentFundHoldings :fund-name="props.row['Fond_namn']" />
+
+<!--                    <pre>{{ JSON.stringify(props.row.FinansiellaInstrument.FinansielltInstrument[0], null, 4) }}</pre> -->
                 </q-td>
             </q-tr>
 
@@ -113,9 +116,13 @@ import { ref, onMounted } from 'vue';
 import { unzip } from 'unzipit'
 import X2JS from 'x2js'//'../libs/xml2json.js'
 import localforage from 'localforage'
+import ComponentFundHoldings from 'components/ComponentFundHoldings.vue';
 
 export default {
     name: 'ComponentFunds',
+    components: {
+        ComponentFundHoldings
+    },
     setup() {
         const fundsStore = localforage.createInstance({ name: 'stoqster', storeName: funds.localForageConfig.storeName });
         const fundHoldingsStore = localforage.createInstance({ name: 'stoqster', storeName: fundHoldings.localForageConfig.storeName });
@@ -153,7 +160,12 @@ export default {
                         fundsStore.setItem( fundName, fundInformation );
 
                         let fundHoldings = fundInformation.FinansiellaInstrument.FinansielltInstrument;
-                        fundHoldingsStore.setItem( fundName, fundHoldings);
+                        
+                        if (Array.isArray(fundHoldings)) {
+                            fundHoldingsStore.setItem( fundName, fundHoldings);
+                        } else {
+                            fundHoldingsStore.setItem( fundName, [fundHoldings]);
+                        }
                     }
                 }
             });
@@ -202,13 +214,13 @@ export default {
             } else {
                 //if (fiQuarterlyHoldingsUrl === url) {
                 // Key for FI quarterly holdings exists in dB -> already downloaded and stored.
-                let keys = await fundsStore.keys();
-                keys.forEach( key => {
-                    if (key != 'fi-quarterly-holdings-url') {
-                        fundsStore.getItem(key).then( value => rows.value.push(value));
+                fundsStore.iterate( (value, key, interationNumber) => {
+                    if ( key != 'fi-quarterly-holdings-url') {
+                        rows.value.push(value);
                     }
-                });
-                loading.value = false;
+                })
+                .then( () => loading.value = false)
+                .catch( (error) => console.log(error));
             }
             // else {
                 // Key for FI quarterly holdings exists, but is different than the one we need.
