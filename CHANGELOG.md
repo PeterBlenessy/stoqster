@@ -8,13 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactoring: removed dependency to axios and migrated components to use fetch() instead.
 - Refactoring: cleaned up electron-preload.js and electron-main.js from axios code.
 - New feature: sorting in ibindex components.
-- New feature: add ComponentFundHoldings component to list the holdings of a fund.
+- New feature: add ComponentFundHoldings component to list the holdings of a fund, and show it in the expanded row of a fund.
+- New feature: adjust number of rows based on window height.
 
 ## [IN-PROGRESS]
 
 ## [UNRELEASED]
 
-## v0,5,4 - 2022-01-28
+## v0.5.7 - 2022-01-31
+- Removed yarn.lock from version control and added it to .gitignore.
+- Upgraded electron-builder@^22.14.5 & electron-builder-notarize@^1.4.0 to fix Apple notarization issue.
+- Upgraded quasar, quasar/cli and quasar/app to latest.
+- Added vue@^3.0.0 and vue-router@^4.0.0
+
+## v0.5.6 - 2022-01-31
+- New feature: add ComponentFundHoldings component to list the holdings of a fund, and show it in the expanded row of a fund.
+
+## v0.5.5 - 2022-01-28
 - Fixed bug: sorting of columns in fund listing was based on string value, not floating number.
 - New feature: selectable columns in table in ComponentFunds component.
 - New feature: expand fund table row when clicked, and list fund holdings.
