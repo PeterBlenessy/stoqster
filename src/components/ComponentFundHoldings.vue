@@ -4,7 +4,7 @@
         :columns="columns"
         :rows="rows"
         :visible-columns="visibleColumns"
-        row-key="ISIN-kod_instrument"
+        row-key="index"
         :rows-per-page-options="[0]"
         :binary-state-sort="true"
         :loading="loading"
@@ -37,6 +37,9 @@ export default {
             loading.value = true;
             fundHoldingsStore.getItem(fundName.value).then( (holdings) => {
                 rows.value = holdings;
+                rows.value.forEach((row, index) => {
+                    rows.value.index = index;
+                });
             })
             .catch( (error) => {
                 console.log(error);

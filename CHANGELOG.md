@@ -14,13 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Refactoring: change from localforage -> Dexie
 - Fix: handle dB version change when app is upgraded.
-- Fix: keys are not unique in downloaded data, 
-        e.g., in "Handelsbanken Brasilien Tema", "SE0003299999", "Öhman Sweden Micro Cap", "AMF Aktiefond Asien Stilla Havet", "Infosys", "AP7 Aktiefond", ...
 
 
 ## [IN-PROGRESS]
 
 ## [UNRELEASED]
+
+## v0.5.10 - 2022-02-01
+- Fix: keys are not unique in downloaded data causing warnings when sorting columns. Fixed by adding unique index property to rows.
 
 ## v0.5.9 - 2022-02-01
 - Fix: sorting in "Andel av fondförmögenhet" column in fund holdings table.
