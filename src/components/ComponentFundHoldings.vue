@@ -4,7 +4,7 @@
         :columns="columns"
         :rows="rows"
         :visible-columns="visibleColumns"
-        row-key="Instrumentnamn"
+        row-key="ISIN-kod_instrument"
         :rows-per-page-options="[0]"
         :binary-state-sort="true"
         :loading="loading"
@@ -33,7 +33,7 @@ export default {
 
         const fundHoldingsStore = localforage.createInstance({ name: 'stoqster', storeName: fundHoldings.localForageConfig.storeName });
 
-        const loadData = async () => {
+        async function loadData() {
             loading.value = true;
             fundHoldingsStore.getItem(fundName.value).then( (holdings) => {
                 rows.value = holdings;
@@ -42,7 +42,6 @@ export default {
                 console.log(error);
             })
             .finally( () => loading.value = false);
-
         }
 
         onMounted(loadData());

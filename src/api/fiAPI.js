@@ -114,7 +114,7 @@ const fundHoldings = {
     title: 'Fund holdings',
     url: '',
     localForageConfig: {
-        storeName: 'fi-fund-holdings',
+        storeName: 'fi-funds-holdings',
     },
     fields: [ 'Andel_av_fondförmögenhet_instrument', 'Antal', 'Bransch/Bransch_namn_instrument', 'Bransch/Branschkod_instrument', 'ISIN-kod_instrument', 'Instrumentnamn', 'Kurs_som_använts_vid_värdering_av_instrumentet', 
         'Landkod_Emittent', 'Marknadsvärde_instrument', 'Nominellt_belopp', 'Tillgångsslag_enligt_LVF_5_kap', 'Valuta', 'Valutakurs_instrument' ],
@@ -133,7 +133,11 @@ const fundHoldings = {
                 format: val => isValidNumber(val) ? formatter.format(val) : ''
              },
             { name: 'Valuta', label: 'Valuta', field: 'Valuta', align: 'right', required: false, sortable: true },
-            { name: 'Andel_av_fondförmögenhet_instrument', label: 'Andel av fondförmögenhet', field: 'Andel_av_fondförmögenhet_instrument', align: 'right', required: true, sortable: true }
+            { 
+                name: 'Andel_av_fondförmögenhet_instrument', label: 'Andel av fondförmögenhet', field: 'Andel_av_fondförmögenhet_instrument', align: 'right', required: true, sortable: true,
+                sort: (a, b) => parseFloat(a) - parseFloat(b),
+                format: val => isValidNumber(val) ? Number.parseFloat(val) : ''
+            }
         ],
         visibleColumns: ['Instrumentnamn', 'Bransch', 'ISIN-kod_instrument', 'Marknadsvärde_instrument', 'Andel_av_fondförmögenhet_instrument', 'Antal', 'Valuta']
     }

@@ -25,7 +25,7 @@
             </q-input>
         
             <!-- Refresh data -->
-            <q-btn dense flat round icon="refresh" :color="refreshColor" @click="refreshData()">
+            <q-btn dense flat round icon="refresh" :color="refreshColor" @click="loadData()">
                 <q-tooltip transition-show="scale" transition-hide="scale">
                     {{ "Refresh data" }}
                 </q-tooltip>
@@ -124,11 +124,14 @@ export default {
         ComponentFundHoldings
     },
     setup() {
+        // IndexedDB stores used by this component
+        const fiCommonStore = localforage.createInstance({ name: 'stoqster', storeName: 'fi-common' });
         const fundsStore = localforage.createInstance({ name: 'stoqster', storeName: funds.localForageConfig.storeName });
         const fundHoldingsStore = localforage.createInstance({ name: 'stoqster', storeName: fundHoldings.localForageConfig.storeName });
+        const fiQuarterlyHoldingsUrl = 'fi-quarterly-holdings-url';
 
-        const title = funds.title;
-        const columns = funds.qTableConfig.columns;
+        const title = ref(funds.title);
+        const columns = ref(funds.qTableConfig.columns);
         const visibleColumns = ref(funds.qTableConfig.visibleColumns);
         const rows = ref([]);
 
@@ -136,31 +139,39 @@ export default {
         const refreshColor = ref('primary');
 
         async function fetchZipAndImportToDB(url) {
-
+            console.time("fetchZipAndImportToDB()");
             const { entries } = await unzip(url);
+            let data = [];
 
-            // Running syncronously, i.e. waiting for all promisses to resolve takes ~10s - await Promisses.all()
-            // Running asyncronously takes ~2.5s
-            Object.values(entries).forEach( async(entry) => {
+            // Running asyncronously gives a better user experience. Loading a usable first page takes ~2.5s. Syncronously is > 10s.
+            await Promise.all(Object.values(entries).map( async (entry) => {
                 if ( entry != '' && !entry.isDirectory) {
 
                     let xml = await entry.text();
                     let x2js = new X2JS();
-                    let json = x2js.xml2js( xml );
+                    let json = x2js.xml2js(xml);
 
                     // let fundManagerInformation = json['VärdepappersfondInnehav'].Bolagsinformation;
                     // let fundManagerName = fundManagerInformation.Fondbolag_namn;
 
-                    // Handle fund top information
+                    // Handle to the fund's top level information
                     let fundInformation = json['VärdepappersfondInnehav'].Fondinformation[0];
                     let fundName = fundInformation.Fond_namn;
 
                     if (fundInformation.Fond_status != "Ej aktiv fond") {
-                        rows.value.push( fundInformation );
-                        fundsStore.setItem( fundName, fundInformation );
+                        data.push( fundInformation );
 
+                        // Handle to the fund's holdings information
                         let fundHoldings = fundInformation.FinansiellaInstrument.FinansielltInstrument;
                         
+                        // Removing array/object of holdings from fund object avoids storing funds holdings twice.
+                        // Reduces storage need in dB from ~70 -> 38 MB.
+                        delete fundInformation.FinansiellaInstrument;
+
+                        // Store top level fund information in dB
+                        fundsStore.setItem( fundName, fundInformation );
+
+                        // Store fund holdings details in dB
                         if (Array.isArray(fundHoldings)) {
                             fundHoldingsStore.setItem( fundName, fundHoldings);
                         } else {
@@ -168,71 +179,72 @@ export default {
                         }
                     }
                 }
-            });
-            fundsStore.setItem('fi-quarterly-holdings-url', url);
+            }));
+            fiCommonStore.setItem(fiQuarterlyHoldingsUrl, url);
+            console.timeEnd("fetchZipAndImportToDB()");
+            return data;
         }
 
-        const refreshData = async () => {
-            loading.value = true;
-            rows.value = [];
+        async function loadDataFromWeb() {
+            console.time("loadDataFromWeb()");
+            let url = await fundsStore.getItem(fiQuarterlyHoldingsUrl);
+            if (url === null) {
+                // Scrape FI web page to get url to the zip file
+                let response = await fetch(fiFunds.url, fiFunds.options);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.headers}`);
+                }
+                let text = await response.text();
+                let parser = new DOMParser();
+                let doc = parser.parseFromString(text, "text/html");
+                let table = doc.getElementsByTagName('table')[0];
+                let aList = table.querySelectorAll(('tr td:first-child a'));
 
-            let fiQuarterlyHoldingsUrl = await fundsStore.getItem('fi-quarterly-holdings-url');
-            if (fiQuarterlyHoldingsUrl === null) {
-                // FI quarterly holdings is not found in the dB.
-                // We should download it and store values in dB
+                // The first item in the list of links is the latest.
+                // This could be easily confirmed by checking the 2nd and 3rd columns, year and quarter respectively, 
+                //      or by spliting the filename with ' ' and comparing the dates in the 3rd position in the arrays, [2].
+                let a = aList[0];
+                url = fiDownload.url + a.pathname + a.search;
 
-                // Fetch the list of zip files that are published each quarter and contain fund information
-                fetch(fiFunds.url, fiFunds.options).then( (response) => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.headers}`);
-                    }
-                    return response.text();
-                })
-                .then( (text) => {
-                    let parser = new DOMParser();
-                    let doc = parser.parseFromString(text, "text/html");
-                    let table = doc.getElementsByTagName('table')[0];
-                    let aList = table.querySelectorAll(('tr td:first-child a'));
-
-                    // The first item in the list of links is the latest.
-                    // This could be easily confirmed by checking the 2nd and 3rd columns, year and quarter respectively, 
-                    //      or by spliting the filename with ' ' and comparing the dates in the 3rd position in the arrays, [2].
-                    let a = aList[0];
-                    let url = fiDownload.url + a.pathname + a.search;
-
-                    console.time("fetchZipAndImportToDB()");
-                    fetchZipAndImportToDB(url).then( (url) => {
-                        loading.value = false;
-                        console.timeEnd("fetchZipAndImportToDB()");
-                    });
-                })
-                .catch( (error) => {
-                    console.log('Request failed', error)
-                    refreshColor.value = 'negative';
-                });
-
-            } else {
-                //if (fiQuarterlyHoldingsUrl === url) {
-                // Key for FI quarterly holdings exists in dB -> already downloaded and stored.
-                fundsStore.iterate( (value, key, interationNumber) => {
-                    if ( key != 'fi-quarterly-holdings-url') {
-                        rows.value.push(value);
-                    }
-                })
-                .then( () => loading.value = false)
-                .catch( (error) => console.log(error));
+                // Now fetch, unpack and import the zip file
+                rows.value = await fetchZipAndImportToDB(url);
+                console.timeEnd("loadDataFromWeb()");
             }
-            // else {
-                // Key for FI quarterly holdings exists, but is different than the one we need.
-                // Stored key is probably older and we should confirm that by comparing the dates in the strings.
-                // ...
-            //}
         }
 
-        onMounted(refreshData);
+        async function loadDataFromDB() {
+            console.time("loadDataFromDB()");
+            loading.value = true;
+            let data = [];
+            fundsStore.iterate( (value, key, iterationNumber) => {
+                data.push(value);
+            })
+            .then( () => rows.value = data)
+            .catch( (error) => throw new Error(error))
+            .finally( () => console.timeEnd("loadDataFromDB()"));
+        }
+
+        // Load funds holdings
+        async function loadData() {
+            loading.value = true;
+            let numberOfFunds = await fundsStore.length();
+            if (numberOfFunds === 0) {
+                loadDataFromWeb().then(() => {
+                    loading.value = false;
+                })
+            } else {
+                loadDataFromDB().then( () => {
+                    loading.value = false; 
+                });
+            }
+        }
+
+        onMounted( () => {
+            loadData();
+        });
 
         return {
-            refreshData,
+            loadData,
             loading,
             refreshColor,
             filter: ref(''),
@@ -244,7 +256,7 @@ export default {
                 sortBy: 'desc',
                 descending: false,
                 page: 1,
-                rowsPerPage: 49
+                rowsPerPage: 30
             }
         }
     }

@@ -7,13 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [BACKLOG]
 - Refactoring: removed dependency to axios and migrated components to use fetch() instead.
 - Refactoring: cleaned up electron-preload.js and electron-main.js from axios code.
-- New feature: sorting in ibindex components.
-- New feature: adjust number of rows based on window height.
+
+- Feature: sorting in ibindex components.
+- Feature: adjust number of rows based on window height.
+- Feature: selectable rows in funds holdings tables.
+
+- Refactoring: change from localforage -> Dexie
 - Fix: handle dB version change when app is upgraded.
+- Fix: keys are not unique in downloaded data, 
+        e.g., in "Handelsbanken Brasilien Tema", "SE0003299999", "Öhman Sweden Micro Cap", "AMF Aktiefond Asien Stilla Havet", "Infosys", "AP7 Aktiefond", ...
+
 
 ## [IN-PROGRESS]
 
 ## [UNRELEASED]
+
+## v0.5.9 - 2022-02-01
+- Fix: sorting in "Andel av fondförmögenhet" column in fund holdings table.
+- Refactoring: new load data code for significant loading time improvement from local storag. From ~4 s -> 100 ms
+- Refactoring: created specific store for general FI stuff, e.g., for storing the zip file url, moved out from fundsStore.
 
 ## v0.5.8 - 2022-01-31
 - Fix: column format and sorting in fund holdings table
