@@ -5,8 +5,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [BACKLOG]
-- Refactoring: removed dependency to axios and migrated components to use fetch() instead.
-- Refactoring: cleaned up electron-preload.js and electron-main.js from axios code.
 
 - Feature: sorting in ibindex components.
 - Feature: adjust number of rows based on window height.
@@ -15,10 +13,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactoring: change from localforage -> Dexie
 - Fix: handle dB version change when app is upgraded.
 
+- Fix: catch and handle fetch() POST errors, e.g., Failed to load resource: the server responded with a status of 500 ()
+- Fix: check network availability and load from dB if not available.
+- Fix: Successful IB company calendar events not saved in dB and hence can not be loaded from dB if no-network
+- Fix: Successful IB company holdings not saved in dB and hence can not be loaded from dB if no-network or other error
+- Fix: refresh does not seem to propagate to child components on ibindex pages
+- Fix: dashboard refreshed when alarm trigger is saved and refresh success nitification is shown
 
 ## [IN-PROGRESS]
 
+
 ## [UNRELEASED]
+
+
+## v0.5.11 - 2022-02-02
+- Refactoring: migrated component to use fetch() - CIbindexCompanyHoldings.vue
+- Refactoring: migrated component to use fetch() - CIbindexCompanyEvents.vue
+- Refactoring: migrated component to use fetch() - CIbindexRebatePremium.vue
+- Refactoring: migrated component to use fetch() - CIbindex.vue
+- Refactoring: migrated component to use fetch() - CDashboard.vue
+- Refactoring: cleaned up electron-preload.js and electron-main.js from axios code.
+- Formatting: changed indentation in the files changed in this commit to 4 spaces
 
 ## v0.5.10 - 2022-02-01
 - Fix: keys are not unique in downloaded data causing warnings when sorting columns. Fixed by adding unique index property to rows.

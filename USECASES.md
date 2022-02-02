@@ -27,8 +27,10 @@ Ibindex is a web page presenting information about investment companies in Swede
 Fund managers report their holdings to Finansinspektionen, Sweden's financial supervisory authority, on a quarterly basis and holdings is available for download as a zip archive of XML files at https://www.fi.se/sv/vara-register/fondinnehav-per-kvartal/
 
 - [x] Display fund information in a table. Searchable.
-- [] Selectable visible columns.
-- [] Display fund holdings.
+- [x] Selectable visible columns.
+- [x] Display fund holdings.
+- [] Display all instruments in one big list
+- [] Make fund holdings table filterable
 
 #### Flowchart
 

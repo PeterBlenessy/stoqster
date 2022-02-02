@@ -11,7 +11,9 @@
 
             row-key="Fond_namn"
             :rows-per-page-options="[0]"
+            virtual-scroll
             :loading="loading"
+            style="height:100%"
         >
 
         <!-- Configure top-right part of the data table component -->
@@ -220,7 +222,7 @@ export default {
                 data.push(value);
             })
             .then( () => rows.value = data)
-            .catch( (error) => throw new Error(error))
+            .catch( (error) => console.log(error))
             .finally( () => console.timeEnd("loadDataFromDB()"));
         }
 
@@ -256,7 +258,7 @@ export default {
                 sortBy: 'desc',
                 descending: false,
                 page: 1,
-                rowsPerPage: 30
+                rowsPerPage: 29
             }
         }
     }

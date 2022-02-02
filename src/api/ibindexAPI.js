@@ -18,6 +18,22 @@ const formatter = new Intl.NumberFormat('sv-SE', {
 });
 
 
+// Returns the url and request options object to be passed to fetch() for the specified ibi api and company, if available
+function ibiRequestOptions(ibiRequest, company = '') {
+    let url = company !== '' ? ibindex.getSpecialURL[ibiRequest][company] : undefined;
+    return {
+        url: url !== undefined ? url : ibindex[ibiRequest].url,
+        options: {
+            method: 'post',
+            responseType: 'arraybuffer',
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8'
+            },
+            body: company !== '' ? JSON.stringify(company) : ''
+        }
+    }
+}
+
 const ibindex = {
 
     // IB companies and their reported and calculated net asset values and price
@@ -219,24 +235,9 @@ const ibindex = {
     }
 }
 
-// Axios options object
-function ibiAxiosOptions(ibiRequest, company = '') {
-    let url = company !== '' ? ibindex.getSpecialURL[ibiRequest][company] : undefined;
-    return {
-        method: 'post',
-        url: url !== undefined ? url : ibindex[ibiRequest].url,
-        responseType: 'arraybuffer',
-        headers: {
-            'Content-Type': 'application/json;charset=UTF-8'
-        },
-        data: company !== '' ? JSON.stringify(company) : ''
-    }
-}
-
 module.exports = {
     ibindex,
-    ibiAxiosOptions,
-
+    ibiRequestOptions
 }
 
 /*

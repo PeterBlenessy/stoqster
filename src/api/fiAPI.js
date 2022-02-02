@@ -24,6 +24,7 @@ const isValidNumber = (val) => {
 
 const baseUrl = 'https://www.fi.se';
 
+// Return an object for fi scraping holding the url and fetch() request options
 const fiFunds = {
     url: baseUrl + '/sv/vara-register/fondinnehav-per-kvartal/',
     options: {
@@ -32,7 +33,7 @@ const fiFunds = {
     }
 };
 
-// Return an Axios options object for file download
+// Return an object for file download holding the url and fetch() request options
 const fiDownload = {
     url: baseUrl,
     options: {
