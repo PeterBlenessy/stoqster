@@ -7,8 +7,8 @@ const setStyle = (number, ifNegative = 'red', ifPositive = 'green') => {
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat
 const formatter = new Intl.NumberFormat('sv-SE', {
-    style: 'currency',
-    currency: 'SEK',
+    // style: 'currency',
+    // currency: 'SEK',
     //notation: 'compact',
     //compactDisplay: 'short',
     // These options are needed to round to whole numbers if that's what you want.
@@ -42,43 +42,43 @@ const ibindex = {
         url: 'https://ibindex.se/ibi//index/getProducts.req',
         fields: ['productName', 'product', 'netAssetValue', 'netAssetValueCalculated', 'netAssetValueCalculatedRebatePremium', 'netAssetValueRebatePremium', 'netAssetValueChangeDate', 'price', 'previousPrice', 'priceChange'],
         columns: [
-            { name: 'productName', label: 'Investmentbolag', field: 'productName', align: 'left', required: true },
-            { name: 'product', label: 'Aktiekod', field: 'product' },
+            { name: 'productName', label: 'Investmentbolag', field: 'productName', align: 'left', required: true, sortable: true },
+            { name: 'product', label: 'Aktiekod', field: 'product', sortable: true },
             {
-                name: 'netAssetValue', label: 'Substansvärde', field: 'netAssetValue',
+                name: 'netAssetValue', label: 'Substansvärde', field: 'netAssetValue', sortable: true,
                 format: val => `${val.toFixed(2)}`,
                 style: val => setStyle(val.netAssetValue, 'red', 'primary')
             },
             {
-                name: 'netAssetValueCalculated', label: 'Beräknat substansvärde', field: 'netAssetValueCalculated',
+                name: 'netAssetValueCalculated', label: 'Beräknat substansvärde', field: 'netAssetValueCalculated', sortable: true,
                 format: val => `${val.toFixed(2)}`
             },
             {
-                name: 'netAssetValueCalculatedRebatePremium', label: 'Beräknad Rabatt/Premie', field: 'netAssetValueCalculatedRebatePremium',
+                name: 'netAssetValueCalculatedRebatePremium', label: 'Beräknad Rabatt/Premie', field: 'netAssetValueCalculatedRebatePremium', sortable: true,
                 format: val => `${val.toFixed(2)}%`,
                 style: val => setStyle(val.netAssetValueCalculatedRebatePremium),
                 required: true
             },
             {
-                name: 'netAssetValueRebatePremium', label: 'Rabatt/Premie', field: 'netAssetValueRebatePremium',
+                name: 'netAssetValueRebatePremium', label: 'Rabatt/Premie', field: 'netAssetValueRebatePremium', sortable: true,
                 format: val => `${val.toFixed(2)}%`,
                 style: val => setStyle(val.netAssetValueRebatePremium),
                 required: true
             },
             {
-                name: 'netAssetValueChangeDate', label: 'Ändrat', field: 'netAssetValueChangeDate',
+                name: 'netAssetValueChangeDate', label: 'Ändrat', field: 'netAssetValueChangeDate', sortable: true,
                 format: val => `${new Date(val).toISOString().slice(0, 10)}`
             },
             {
-                name: 'price', label: 'Pris', field: 'price',
+                name: 'price', label: 'Pris', field: 'price', sortable: true,
                 format: val => `${val.toFixed(2)}`
             },
             {
-                name: 'previousPrice', label: 'Tidigare pris', field: 'previousPrice',
+                name: 'previousPrice', label: 'Tidigare pris', field: 'previousPrice', sortable: true,
                 format: val => `${val.toFixed(2)}`
             },
             {
-                name: 'priceChange', label: 'Prisändring', field: 'priceChange',
+                name: 'priceChange', label: 'Prisändring', field: 'priceChange', sortable: true,
                 format: val => `${val.toFixed(2)}%`,
                 style: val => setStyle(val.priceChange)
             },
@@ -89,7 +89,10 @@ const ibindex = {
             'netAssetValueRebatePremium', 'netAssetValueCalculatedRebatePremium',
             'netAssetValueChangeDate',
             'price', 'priceChange'
-        ]
+        ],
+        localForageConfig: {
+            storeName: 'ibi-companies',
+        },
     },
 
     // Index and market weights of IB companies
@@ -98,18 +101,22 @@ const ibindex = {
         url: 'https://ibindex.se/ibi//companies/getCompanies.req',
         fields: ['product', 'productName', 'indexWeight', 'marketWeight'],
         columns: [
-            { name: 'product', label: 'Aktiekod', field: 'product' },
-            { name: 'productName', label: 'Investmentbolag', field: 'productName', align: 'left', required: true },
+            { name: 'product', label: 'Aktiekod', field: 'product', sortable: true },
+            { name: 'productName', label: 'Investmentbolag', field: 'productName', align: 'left', required: true, sortable: true },
             {
-                name: 'indexWeight', label: 'Indexvikt', field: 'indexWeight', required: true,
+                name: 'indexWeight', label: 'Indexvikt', field: 'indexWeight', required: true, sortable: true,
                 format: val => `${val.toFixed(2)}%`
             },
             {
-                name: 'marketWeight', label: 'Marknadsvikt', field: 'marketWeight', required: true,
+                name: 'marketWeight', label: 'Marknadsvikt', field: 'marketWeight', required: true, sortable: true,
                 format: val => `${val.toFixed(2)}%`
             },
         ],
-        visibleColumns: ['productName', 'indexWeight', 'marketWeight']
+        visibleColumns: ['productName', 'indexWeight', 'marketWeight'],
+        localForageConfig: {
+            storeName: 'ibi-companies-weights',
+        },
+
     },
 
     // Price and net asset value trends
@@ -133,7 +140,11 @@ const ibindex = {
             { name: 'oneYearNavChange', label: '1 år', field: 'oneYearNavChange', type: 'percentage' },
             { name: 'threeYearNavChange', label: '3 år', field: 'threeYearNavChange', type: 'percentage' },
             { name: 'fiveYearNavChange', label: '5 år', field: 'fiveYearNavChange', type: 'percentage' },
-        ]
+        ],
+        localForageConfig: {
+            storeName: 'ibi-companies-trends',
+        },
+
     },
 
     // Net asset value rebate / premium over time
@@ -154,7 +165,11 @@ const ibindex = {
             { name: 'calculatedRebatePremiumAverage', label: 'Medel', field: 'calculatedRebatePremiumAverage', format: val => `${val.toFixed(2)}%`, style: val => setStyle(val.calculatedRebatePremiumAverage) }
         ],
         visibleColumns: ['label', 'calculatedRebatePremiumMax', 'calculatedRebatePremiumMin', 'calculatedRebatePremiumAverage'],
-        payload: (company) => JSON.stringify(company)
+        payload: (company) => JSON.stringify(company),
+        localForageConfig: {
+            storeName: 'ibi-companies-rebate',
+        },
+
     },
 
     // Holdings of an IB company
@@ -164,20 +179,23 @@ const ibindex = {
         fields: ['holdingName', 'holdingProduct', 'holdingValue', 'holdingValuePrevious', 'listed'],
         header: ['Bolag', 'Aktie', 'Värde', 'Tidigare värde', 'Noterad'],
         columns: [
-            { name: 'holdingName', label: 'Bolag', field: 'holdingName', align: 'left', required: true, width: '220px', type: 'string' },
-            { name: 'holdingProduct', label: 'Aktiekod', field: 'holdingProduct', type: 'string' },
+            { name: 'holdingName', label: 'Bolag', field: 'holdingName', align: 'left', required: true, width: '220px', type: 'string', sortable: true },
+            { name: 'holdingProduct', label: 'Aktiekod', field: 'holdingProduct', type: 'string', sortable: true },
             {
-                name: 'holdingValue', label: 'Värde', field: 'holdingValue', type: 'currency',
+                name: 'holdingValue', label: 'Värde', field: 'holdingValue', type: 'currency', sortable: true,
                 format: val => `${formatter.format(val)}`
             },
             {
-                name: 'holdingValuePrevious', label: 'Tidigare värde', field: 'holdingValuePrevious', type: 'currency',
+                name: 'holdingValuePrevious', label: 'Tidigare värde', field: 'holdingValuePrevious', type: 'currency', sortable: true,
                 format: val => `${formatter.format(val)}`
             },
-            { name: 'listed', label: 'Noterat', field: 'listed', type: 'boolean' },
+            { name: 'listed', label: 'Noterat', field: 'listed', type: 'boolean', sortable: true },
         ],
         visibleColumns: ['holdingName', 'holdingValue', 'listed'],
         payload: (company) => JSON.stringify(company),
+        localForageConfig: {
+            storeName: 'ibi-companies-holdings',
+        },
     },
 
     // Company events
@@ -199,6 +217,9 @@ const ibindex = {
         ],
         visibleColumns: ['eventName', 'eventDate'],
         payload: (company) => JSON.stringify(company),
+        localForageConfig: {
+            storeName: 'ibi-companies-events',
+        },
     },
 
 
@@ -207,6 +228,9 @@ const ibindex = {
         'header': '[]',
         'fields': '[]',
         payload: (company) => JSON.stringify(company),
+        localForageConfig: {
+            storeName: 'ibi-companies-nav',
+        },
     },
 
 

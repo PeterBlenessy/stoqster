@@ -6,7 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [BACKLOG]
 
-- Feature: sorting in ibindex components.
 - Feature: adjust number of rows based on window height.
 - Feature: selectable rows in funds holdings tables.
 
@@ -14,17 +13,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix: handle dB version change when app is upgraded.
 
 - Fix: catch and handle fetch() POST errors, e.g., Failed to load resource: the server responded with a status of 500 ()
-- Fix: check network availability and load from dB if not available.
-- Fix: Successful IB company calendar events not saved in dB and hence can not be loaded from dB if no-network
-- Fix: Successful IB company holdings not saved in dB and hence can not be loaded from dB if no-network or other error
 - Fix: refresh does not seem to propagate to child components on ibindex pages
 - Fix: dashboard refreshed when alarm trigger is saved and refresh success nitification is shown
+- Feature: add q.notify to FI components
+- Feature: add column selection to IBI components
+- Refactoring: migrate vuex store to localForage
 
 ## [IN-PROGRESS]
+- Refactoring: migrate ibindex components to localforage
+- Feature: Store IBI dashboard in IndexedDB. Try loading from dB first when refreshing.
+- Feature: Store IBI RebatePremium in IndexedDB. Try loading from dB first when refreshing.
 
 
 ## [UNRELEASED]
 
+## v0.5.12 - 2022-02-02
+- Fix: Unable to load preload script: /Users/peter/Development/stoqster/.quasar/electron/electron-preload.js
+- Formatting: cleaned up arrow functions to increase readability
+- Feature: sorting in ibindex components
+- Fix: components in expanded rows get mixed up when sorting due to no unique key set in components. Fix triggers reload of components and affects performance if data not in dB.
+- Feature: Store IBI companies holdings in IndexedDB. Try loading from dB first when refreshing.
+- Feature: Store IBI companies events in IndexedDB. Try loading from dB first when refreshing.
+- Feature: Store IBI companies in IndexedDB. Try loading from dB first when refreshing.
 
 ## v0.5.11 - 2022-02-02
 - Refactoring: migrated component to use fetch() - CIbindexCompanyHoldings.vue

@@ -14,6 +14,7 @@
             selection="multiple"
             v-model:selected="selectedRows"
             @update:selected="onUpdateSelected"
+            :binary-state-sort="true"
         >
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
@@ -91,14 +92,14 @@
                             <div class="col-6">
                                 <q-card>
                                     <q-card-section>
-                                        <IbindexCompanyHoldings :company="props.row.product" />
+                                        <IbindexCompanyHoldings :company="props.row.product" :key="props.row.product" />
                                     </q-card-section>
                                 </q-card>
                             </div>
                             <div class="col-3">
                                 <q-card>
                                     <q-card-section>
-                                        <IbindexCompanyEvents :company="props.row.product" />
+                                        <IbindexCompanyEvents :company="props.row.product" :key="props.row.product" />
                                     </q-card-section>
                                 </q-card>
                             </div>
@@ -118,6 +119,7 @@ import IbindexCompanyEvents from 'components/CIbindexCompanyEvents.vue';
 import { ref, toRef, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useStore } from 'vuex';
+import localforage from 'localforage';
 
 export default {
     name: 'CIbindex',
@@ -142,34 +144,35 @@ export default {
         const refreshColor = ref('primary');
 
         const requestOptions = ibiRequestOptions(api.value);
+        const ibiStore = localforage.createInstance({ name: 'stoqster', storeName: ibindex[api.value].localForageConfig.storeName });
 
         // Fetch data from ibindex using the provided api reference
         async function refreshData() {
             loading.value = true;
-            fetch(requestOptions.url, requestOptions.options).then((response) => {
+            fetch(requestOptions.url, requestOptions.options).then( response => {
                 if (!response.ok) {
-                    //throw new Error(`HTTP error! status: ${response.headers}`);
+                    return Promise.reject( `Error - fetch() status code: ${response.status}` );
                 }
                 return response.arrayBuffer();
             })
-                .then((buffer) => {
-                    rows.value = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
+                .then( buffer => {
+                    let data = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
+                    rows.value = data;
+                    data.forEach(item => {
+                        ibiStore.setItem( item.product, item );
+                    });
 
-                    $q.localStorage.set(api.value, rows.value);
                     refreshColor.value = 'primary';
                     $q.notify({ type: 'positive', message: 'Successful refresh' });
-                }).catch(error => {
+                }).catch( error => {
                     console.log(error);
-                    rows.value = $q.localStorage.getItem(api.value) || []; // Restore the latest values in case we have a network error 
                     refreshColor.value = 'negative';
                     $q.notify({
                         type: 'warning',
-                        message: 'Something went wrong during refresh of ' + title.value,
-                        caption: 'Showing data from last successful refresh of ' + companyCode.value
+                        message: 'Something went wrong during refresh',
+                        caption: 'Showing data from local storage'
                     });
-                }).finally(() => {
-                    loading.value = false;
-                });
+                }).finally( () => loading.value = false );
         }
 
         // Save the selected rows to Vuex state store. These rows represent the watchlist and will also be saved to the localStorage.
@@ -182,8 +185,29 @@ export default {
             selectedRows.value = store.state.watchlist;
         }
 
+        async function loadData() {
+            loading.value = true;
+
+            let data = [];
+            ibiStore.iterate( (value, key, iterationNumber) => {
+                data.push(value);
+            })
+            .then( () => {
+                if (data.length === 0) {
+                    return refreshData();
+                }
+                rows.value = data
+                // Make sure we have a unique index for each row
+                rows.value.forEach((row, index) => {
+                    rows.value.index = index;
+                });
+            })
+            .catch( error => console.log(error) )
+            .finally( () => loading.value = false );
+        }
+
         onMounted( () => {
-            refreshData();
+            loadData();
             restoreSelectedRows();
         });
 

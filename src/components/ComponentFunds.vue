@@ -99,7 +99,7 @@
             <!--  Expanded row. Displays additional insights about the company.  -->
             <q-tr v-show="props.expand" :props="props" no-hover>
                 <q-td :colspan="props.cols.length+1">
-                    <ComponentFundHoldings :fund-name="props.row['Fond_namn']" />
+                    <ComponentFundHoldings :fund-name="props.row['Fond_namn']" :key="props.row['Fond_namn']" />
 
 <!--                    <pre>{{ JSON.stringify(props.row.FinansiellaInstrument.FinansielltInstrument[0], null, 4) }}</pre> -->
                 </q-td>
@@ -194,7 +194,7 @@ export default {
                 // Scrape FI web page to get url to the zip file
                 let response = await fetch(fiFunds.url, fiFunds.options);
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.headers}`);
+                    return Promise.reject( `Error - fetch() status code: ${response.status}` );
                 }
                 let text = await response.text();
                 let parser = new DOMParser();
@@ -222,8 +222,8 @@ export default {
                 data.push(value);
             })
             .then( () => rows.value = data)
-            .catch( (error) => console.log(error))
-            .finally( () => console.timeEnd("loadDataFromDB()"));
+            .catch( error => console.log(error))
+            .finally( console.timeEnd("loadDataFromDB()"));
         }
 
         // Load funds holdings
@@ -231,13 +231,11 @@ export default {
             loading.value = true;
             let numberOfFunds = await fundsStore.length();
             if (numberOfFunds === 0) {
-                loadDataFromWeb().then(() => {
-                    loading.value = false;
-                })
+                loadDataFromWeb()
+                .then( () => loading.value = false )
+                .catch( error => console.log(error) )
             } else {
-                loadDataFromDB().then( () => {
-                    loading.value = false; 
-                });
+                loadDataFromDB().then( () => loading.value = false );
             }
         }
 
@@ -264,4 +262,3 @@ export default {
     }
 }
 </script>
-

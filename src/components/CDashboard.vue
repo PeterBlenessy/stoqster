@@ -173,13 +173,13 @@ export default {
             let watchlist = getWatchlist();
             let visibleRows = [];
 
-            fetch(requestOptions.url, requestOptions.options).then((response) => {
+            fetch(requestOptions.url, requestOptions.options).then( response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.headers}`);
+                    return Promise.reject( `Error - fetch() status code: ${response.status}` );
                 }
                 return response.arrayBuffer();
             })
-            .then((buffer) => {
+            .then( buffer => {
                 rows.value = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
                 if (watchlist !== null) {
                     Object.entries(watchlist).forEach(([key, value]) => {
@@ -191,7 +191,7 @@ export default {
                     refreshColor.value = 'primary';
                     $q.notify({ type: 'positive', message: 'Successful refresh' });
                 }
-            }).catch(error => {
+            }).catch( error => {
                 console.log(error);
                 rows.value = watchlist; // Show the latest values in case we have a network error 
                 refreshColor.value = 'negative';
@@ -200,9 +200,7 @@ export default {
                     message: 'Something went wrong during refresh',
                     caption: 'Showing data from last successful refresh of ' + title
                 });
-            }).finally(() => {
-                loading.value = false;
-            });
+            }).finally( () => loading.value = false );
         }
 
         // Reads the watchlist from Vuex state store.

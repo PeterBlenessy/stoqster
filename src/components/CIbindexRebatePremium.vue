@@ -52,26 +52,26 @@ export default {
         async function refreshData() {
             loading.value = true;
 
-            fetch(requestOptions.url, requestOptions.options).then( (response) => {
+            fetch(requestOptions.url, requestOptions.options).then( response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.headers}`);
+                    return Promise.reject( `Error - fetch() status code: ${response.status}` );
                 }
                 return response.arrayBuffer();
             })
-            .then( (buffer) => {
+            .then( buffer => {
                 rows.value = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
                 // Store new rebate/premium values
                 $q.localStorage.set(companyCode.value, rows.value);
-            }).catch(error => {
+            })
+            .catch( error => {
                 rows.value = $q.localStorage.getItem(companyCode.value);
                 $q.notify({
                     type: 'negative',
                     message: 'Something went wrong during refresh',
                     caption: 'Showing data from last successful refresh of ' + title
                 });
-            }).finally(() => {
-                loading.value = false;
-            });
+            })
+            .finally( () => loading.value = false );
         }
 
         // Checks if an alert has been registered for a company
@@ -124,10 +124,10 @@ export default {
             }
         }
 
-        onMounted(function () {
+        onMounted( () => {
             refreshData();
 
-            setInterval(function () {
+            setInterval( () => {
                 refreshData();
             }, store.state.refreshInterval);
         });

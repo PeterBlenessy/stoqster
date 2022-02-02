@@ -20,8 +20,8 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld(
-    // 'ipc',
-    // {
+    'ipc',
+    {
     //     myMessage: async ( options ) => { return await ipcRenderer.invoke('my-message', options)}
-    // }
+    }
 );

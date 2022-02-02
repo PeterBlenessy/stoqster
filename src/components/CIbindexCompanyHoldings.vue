@@ -11,6 +11,7 @@
         :rows-per-page-options="[0]"
         :loading="loading"
         hide-bottom
+        :binary-state-sort="true"
     ></q-table>
 </template>
 
@@ -18,6 +19,7 @@
 import { ref, toRef, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.js';
+import localforage from 'localforage';
 
 export default {
     name: 'CIbindexCompanyHoldings',
@@ -39,38 +41,53 @@ export default {
 
         const requestOptions = ibiRequestOptions(api.value, companyCode.value);
 
+        const ibiHoldingsStore = localforage.createInstance({ name: 'stoqster', storeName: ibindex[api.value].localForageConfig.storeName });
+
         // Fetch data from ibindex using the provided api reference
         async function refreshData() {
             loading.value = true;
             
-            fetch(requestOptions.url, requestOptions.options).then( (response) => {
+            fetch(requestOptions.url, requestOptions.options).then( response => {
                 if (!response.ok) {
-                    //throw new Error(`HTTP error! status: ${response.headers}`);
+                    return Promise.reject( `Error - fetch() status code: ${response.status}` );
                 }
                 return response.arrayBuffer();
             })
-            .then( (buffer) => {
-                rows.value = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
+            .then( buffer => {
+                let data = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
+                rows.value = data;
+                ibiHoldingsStore.setItem( companyCode.value, data );
                 //$q.notify({ type: 'positive', message: 'Successful refresh' });
-                // TODO: store in IndexDB
             })
-            .catch((error) => {
+            .catch( error => {
                 // TODO: rows.value = load data from dB
                 $q.notify({
                     type: 'warning',
-                    message: 'Something went wrong during refresh of',
+                    message: 'Something went wrong during refresh',
                     caption: title + ' loaded from local storage for ' + companyCode.value
                 });
                 console.log(error);
             })
-            .finally(() => { 
-                loading.value = false;
-            });
+            .finally( () => loading.value = false );
         }
 
-        onMounted( () => {
-            refreshData();
-        });
+        async function loadData() {
+            loading.value = true;
+            ibiHoldingsStore.getItem(companyCode.value).then( data => {
+                if (data === null) {
+                    return refreshData();
+                }
+                rows.value = data;
+                // Make sure we have a unique index for each row
+                rows.value.forEach((row, index) => {
+                    rows.value.index = index;
+                });
+            })
+            .catch( error => console.log(error) )
+            .finally( () => loading.value = false );
+        }
+
+        onMounted( () => loadData() );
 
         return {
             title,
