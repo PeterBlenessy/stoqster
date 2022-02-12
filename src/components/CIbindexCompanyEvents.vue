@@ -45,8 +45,12 @@ export default {
         async function refreshData() {
             loading.value = true;
 
+            // Dirty fix for companies with no events registered triggering status code 500 which for some reason cannot be cought and triggers warnings.
+            // We do not want to make a fetch() for these companies so url is set to null in ibindexAPI.js.
+            if (requestOptions.url === null) return;
+
             fetch(requestOptions.url, requestOptions.options).then( response => {
-                if (!response.ok) {
+                if (!response.ok || response.status === 500) {
                     //console.log(await response.text());
                     return Promise.reject( `Error - fetch() status code: ${response.status}` );
                 }

@@ -116,7 +116,6 @@ const ibindex = {
         localForageConfig: {
             storeName: 'ibi-companies-weights',
         },
-
     },
 
     // Price and net asset value trends
@@ -141,10 +140,10 @@ const ibindex = {
             { name: 'threeYearNavChange', label: '3 år', field: 'threeYearNavChange', type: 'percentage' },
             { name: 'fiveYearNavChange', label: '5 år', field: 'fiveYearNavChange', type: 'percentage' },
         ],
+
         localForageConfig: {
             storeName: 'ibi-companies-trends',
         },
-
     },
 
     // Net asset value rebate / premium over time
@@ -166,10 +165,10 @@ const ibindex = {
         ],
         visibleColumns: ['label', 'calculatedRebatePremiumMax', 'calculatedRebatePremiumMin', 'calculatedRebatePremiumAverage'],
         payload: (company) => JSON.stringify(company),
-        localForageConfig: {
-            storeName: 'ibi-companies-rebate',
-        },
 
+        localForageConfig: {
+            storeName: 'ibi-companies-rebatepremium',
+        },
     },
 
     // Holdings of an IB company
@@ -217,22 +216,22 @@ const ibindex = {
         ],
         visibleColumns: ['eventName', 'eventDate'],
         payload: (company) => JSON.stringify(company),
+
         localForageConfig: {
             storeName: 'ibi-companies-events',
         },
     },
-
 
     getNetAssetValue: {
         'url': 'https://ibindex.se/ibi//company/getNetAssetValue.req',
         'header': '[]',
         'fields': '[]',
         payload: (company) => JSON.stringify(company),
+
         localForageConfig: {
             storeName: 'ibi-companies-nav',
         },
     },
-
 
 
     // -----------------------------
@@ -250,12 +249,11 @@ const ibindex = {
             'VEFL SDB': 'https://ibindex.se/ibi//vef/getRebatePremiums.req'
         },
         getEvents: {
-            'AJA B': 'https://ibindex.se/ibi//aja/getEvents.req',
-            'FLAT B': 'https://ibindex.se/ibi//flatcapital/getEvents.req',
-            'SPILTAN': 'https://ibindex.se/ibi//spiltan/getEvents.req',
-            'VEFL SDB': 'https://ibindex.se/ibi//vef/getEvents.req'
-        },
-
+            'AJA B': null, //'https://ibindex.se/ibi//aja/getEvents.req',
+            'FLAT B': null, //'https://ibindex.se/ibi//flatcapital/getEvents.req',
+            'SPILTAN': null, //'https://ibindex.se/ibi//spiltan/getEvents.req',
+            'VEFL SDB': null //'https://ibindex.se/ibi//vef/getEvents.req'
+        }
     }
 }
 

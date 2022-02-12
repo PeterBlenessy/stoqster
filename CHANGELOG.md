@@ -8,24 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Feature: adjust number of rows based on window height.
 - Feature: selectable rows in funds holdings tables.
+- Feature: add column selection to IBI components
 
 - Refactoring: change from localforage -> Dexie
 - Fix: handle dB version change when app is upgraded.
 
-- Fix: catch and handle fetch() POST errors, e.g., Failed to load resource: the server responded with a status of 500 ()
 - Fix: refresh does not seem to propagate to child components on ibindex pages
 - Fix: dashboard refreshed when alarm trigger is saved and refresh success nitification is shown
-- Feature: add q.notify to FI components
-- Feature: add column selection to IBI components
+- Fix: Sticky table headers.
+- New featrue: Adapt number of table rows to available window size.
 - Refactoring: migrate vuex store to localForage
+- Refactoring: Migrate Vuex -> Pine
+- Refactoring: create a boot file or plugin for localForage (https://medium.com/@m.jerome.diaz/indexedbd-localforage-vuejs2-vuex-quasar-cordova-créer-une-app-offline-c40253837172)
+
+### [Low prio]
+- Fix: catch and handle fetch() POST errors, e.g., Failed to load resource: the server responded with a status of 500.
+- Feature: show progress dialog with steps when refreshing FI data. It takes too long. Also, immediate page load takes long time, so dB is not ready.
+- Fix: there are dupplicates in the data from FI and we get 605 items when refreshing, vs 600 when loading from dB. Refactor download-import flow?
 
 ## [IN-PROGRESS]
-- Refactoring: migrate ibindex components to localforage
-- Feature: Store IBI dashboard in IndexedDB. Try loading from dB first when refreshing.
-- Feature: Store IBI RebatePremium in IndexedDB. Try loading from dB first when refreshing.
 
 
 ## [UNRELEASED]
+
+
+
+## v0.5.13 - 2022-02-12
+- Feature: add q.notify to FI component ComponentFunds.vue
+- Fix: don't do fetch() if url === null. Dirty fix for companies with no events triggering warnings due to status code 500 which cannot be caught for some reason.
+- Feature: Store IBI RebatePremium in IndexedDB.
 
 ## v0.5.12 - 2022-02-02
 - Fix: Unable to load preload script: /Users/peter/Development/stoqster/.quasar/electron/electron-preload.js

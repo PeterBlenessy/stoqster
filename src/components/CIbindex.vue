@@ -163,7 +163,7 @@ export default {
                     });
 
                     refreshColor.value = 'primary';
-                    $q.notify({ type: 'positive', message: 'Successful refresh' });
+                    $q.notify({ type: 'positive', message: 'Successful refreshcc' });
                 }).catch( error => {
                     console.log(error);
                     refreshColor.value = 'negative';
@@ -185,6 +185,7 @@ export default {
             selectedRows.value = store.state.watchlist;
         }
 
+        // Load data. Try local storage first and online download if that fails.
         async function loadData() {
             loading.value = true;
 
@@ -213,22 +214,17 @@ export default {
 
         return {
             title,
-
-            refreshData,
             columns,
             visibleColumns,
             rows,
-
+            selectedRows,
             filter: ref(''),
 
-
-            selectedRows,
-            restoreSelectedRows,
-            onUpdateSelected,
-
             loading,
-            refreshColor
-
+            refreshColor,
+            refreshData,
+            restoreSelectedRows,
+            onUpdateSelected
         }
     }
 

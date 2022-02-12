@@ -27,7 +27,7 @@
             </q-input>
         
             <!-- Refresh data -->
-            <q-btn dense flat round icon="refresh" :color="refreshColor" @click="loadData()">
+            <q-btn dense flat round icon="refresh" :color="refreshColor" @click="loadDataFromWeb()">
                 <q-tooltip transition-show="scale" transition-hide="scale">
                     {{ "Refresh data" }}
                 </q-tooltip>
@@ -115,6 +115,7 @@
 <script>
 import { fiFunds, fiDownload, funds, fundHoldings } from '../api/fiAPI.js';
 import { ref, onMounted } from 'vue';
+import { useQuasar } from 'quasar';
 import { unzip } from 'unzipit'
 import X2JS from 'x2js'//'../libs/xml2json.js'
 import localforage from 'localforage'
@@ -131,6 +132,8 @@ export default {
         const fundsStore = localforage.createInstance({ name: 'stoqster', storeName: funds.localForageConfig.storeName });
         const fundHoldingsStore = localforage.createInstance({ name: 'stoqster', storeName: fundHoldings.localForageConfig.storeName });
         const fiQuarterlyHoldingsUrl = 'fi-quarterly-holdings-url';
+
+        const $q = useQuasar();
 
         const title = ref(funds.title);
         const columns = ref(funds.qTableConfig.columns);
@@ -189,6 +192,7 @@ export default {
 
         async function loadDataFromWeb() {
             console.time("loadDataFromWeb()");
+            loading.value = true;
             let url = await fundsStore.getItem(fiQuarterlyHoldingsUrl);
             if (url === null) {
                 // Scrape FI web page to get url to the zip file
@@ -210,6 +214,8 @@ export default {
 
                 // Now fetch, unpack and import the zip file
                 rows.value = await fetchZipAndImportToDB(url);
+                loading.value = false
+                $q.notify({ type: 'positive', message: 'Successful refresh' });
                 console.timeEnd("loadDataFromWeb()");
             }
         }
@@ -244,7 +250,7 @@ export default {
         });
 
         return {
-            loadData,
+            loadDataFromWeb,
             loading,
             refreshColor,
             filter: ref(''),

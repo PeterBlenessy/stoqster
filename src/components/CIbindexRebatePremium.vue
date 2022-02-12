@@ -25,6 +25,7 @@ import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.js';
 import { ref, toRef, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useStore } from 'vuex';
+import localforage from 'localforage';
 
 export default {
     name: 'CIbindexRebatePremium',
@@ -47,6 +48,7 @@ export default {
         const loading = ref(false);
 
         const requestOptions = ibiRequestOptions(api.value, companyCode.value);
+        const ibiRebatePremiumStore = localforage.createInstance({ name: 'stoqster', storeName: ibindex[api.value].localForageConfig.storeName });
 
         // Fetch data from ibindex using the provided api reference
         async function refreshData() {
@@ -59,12 +61,13 @@ export default {
                 return response.arrayBuffer();
             })
             .then( buffer => {
-                rows.value = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
+                let data = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
+                rows.value = data;
                 // Store new rebate/premium values
-                $q.localStorage.set(companyCode.value, rows.value);
+                ibiRebatePremiumStore.setItem( companyCode.value, data );
             })
             .catch( error => {
-                rows.value = $q.localStorage.getItem(companyCode.value);
+                rows.value = ibiRebatePremiumStore.getItem(companyCode.value);
                 $q.notify({
                     type: 'negative',
                     message: 'Something went wrong during refresh',
@@ -82,7 +85,8 @@ export default {
 
         function checkAlertTriggers(current) {
 
-            let previous = $q.localStorage.getItem(companyCode.value);
+            // let previous = $q.localStorage.getItem(companyCode.value);
+            let previous = ibiRebatePremiumStore.getItem(companyCode.value);
 
             let prev = previous[0].calculatedRebatePremium;
             let curr = current[0].calculatedRebatePremium;
