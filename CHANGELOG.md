@@ -29,9 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [IN-PROGRESS]
 
-## v0.5.16 - [UNRELEASED]
-- DevEnv: Import environment variables from .env file
+## v0.5.17 - [UNRELEASED]
 
+
+## v0.5.16 - 2022-02-13
+- DevEnv: Import environment variables from .env file
 
 ## v0.5.15 - 2022-02-13
 - Fix: Typo in successful refresh notification text in CIbindex component.
