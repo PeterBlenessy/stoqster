@@ -47,7 +47,7 @@
             </template>
 
             <template v-slot:body="props">
-                <q-tr :props="props">
+                <q-tr :props="props" @click="props.expand = !props.expand">
                     <!-- Column values -->
                     <q-td v-for="col in props.cols" :key="col.name" :props="props">{{ col.value }}</q-td>
 
@@ -68,19 +68,13 @@
                         </q-toggle>
 
                         <!-- Expand more details -->
-                        <q-btn
-                            size="sm"
-                            color="primary"
-                            flat
-                            round
-                            dense
-                            @click="props.expand = !props.expand"
-                            icon="insights"
+                        <q-btn size="sm" color="primary" flat round dense 
+                            @click="props.expand = !props.expand" 
+                            :icon="props.expand ? 'expand_less' : 'expand_more'"
                         >
-                            <q-tooltip
-                                transition-show="scale"
-                                transition-hide="scale"
-                            >{{ "Show more info sbout " + props.row.productName }}</q-tooltip>
+                            <q-tooltip transition-show="scale" transition-hide="scale">
+                                {{ "Show more info sbout " + props.row.productName }}
+                            </q-tooltip>
                         </q-btn>
                     </q-td>
                 </q-tr>
@@ -92,14 +86,14 @@
                             <div class="col-6">
                                 <q-card>
                                     <q-card-section>
-                                        <IbindexCompanyHoldings :company="props.row.product" :key="props.row.product" />
+                                        <ComponentIbindexCompanyHoldings :company="props.row.product" :key="props.row.product" />
                                     </q-card-section>
                                 </q-card>
                             </div>
                             <div class="col-3">
                                 <q-card>
                                     <q-card-section>
-                                        <IbindexCompanyEvents :company="props.row.product" :key="props.row.product" />
+                                        <ComponentIbindexCompanyEvents :company="props.row.product" :key="props.row.product" />
                                     </q-card-section>
                                 </q-card>
                             </div>
@@ -114,18 +108,18 @@
 <script>
 
 import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.js';
-import IbindexCompanyHoldings from 'components/CIbindexCompanyHoldings.vue';
-import IbindexCompanyEvents from 'components/CIbindexCompanyEvents.vue';
+import ComponentIbindexCompanyHoldings from 'src/components/ComponentIbindexCompanyHoldings.vue';
+import ComponentIbindexCompanyEvents from 'src/components/ComponentIbindexCompanyEvents.vue';
 import { ref, toRef, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useStore } from 'vuex';
 import localforage from 'localforage';
 
 export default {
-    name: 'CIbindex',
+    name: 'ComponentIbindex',
     components: {
-        IbindexCompanyHoldings,
-        IbindexCompanyEvents
+        ComponentIbindexCompanyHoldings,
+        ComponentIbindexCompanyEvents
     },
     props: {
         api: { type: String, required: true }
@@ -163,7 +157,7 @@ export default {
                     });
 
                     refreshColor.value = 'primary';
-                    $q.notify({ type: 'positive', message: 'Successful refreshcc' });
+                    $q.notify({ type: 'positive', message: 'Successful refresh' });
                 }).catch( error => {
                     console.log(error);
                     refreshColor.value = 'negative';

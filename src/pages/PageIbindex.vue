@@ -1,18 +1,18 @@
 <template>
   <q-page padding>
-    <Ibindex api="getWeights" />
+    <ComponentIbindex api="getCompanies" />
   </q-page>
 </template>
 
 <script>
-import Ibindex from 'components/CIbindex.vue'
+import ComponentIbindex from 'src/components/ComponentIbindex.vue'
 
 import { defineComponent } from 'vue';
 
 export default defineComponent({
   name: 'PageIndex',
   components: {
-    Ibindex,
+    ComponentIbindex,
   },
 })
 </script>

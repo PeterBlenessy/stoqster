@@ -73,7 +73,7 @@
         </template>
 
         <template v-slot:body="props">
-            <q-tr :props="props">
+            <q-tr :props="props" @click="props.expand = !props.expand">
                 <!-- Column values -->
                 <q-td 
                     v-for="col in props.cols" 
@@ -87,7 +87,10 @@
                 <q-td auto-width>
 
                     <!-- Expand more details -->
-                    <q-btn size="sm" color="primary" flat round dense @click="props.expand = !props.expand" icon="expand_more">
+                    <q-btn size="sm" color="primary" flat round dense 
+                        @click="props.expand = !props.expand" 
+                        :icon="props.expand ? 'expand_less' : 'expand_more'"
+                    >
                         <q-tooltip transition-show="scale" transition-hide="scale">
                             {{ "Show holdings " }}
                         </q-tooltip>

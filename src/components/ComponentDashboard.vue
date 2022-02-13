@@ -109,14 +109,9 @@
                             <q-space />
 
                             <!-- Expand more info button -->
-                            <q-btn
-                                color="grey"
-                                round
-                                flat
-                                dense
-                                size="sm"
-                                :icon="props.expand ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
-                                @click="props.expand = !props.expand"
+                            <q-btn size="sm" color="primary" flat round dense 
+                                @click="props.expand = !props.expand" 
+                                :icon="props.expand ? 'expand_less' : 'expand_more'"
                             >
                                 <q-tooltip
                                     transition-show="scale"
@@ -127,7 +122,7 @@
 
                         <!-- Expandable historical info about Rebate/Premiums -->
                         <div class="q-pa-md" v-show="props.expand">
-                            <IbindexRebatePremium
+                            <ComponentIbindexRebatePremium
                                 api="getRebatePremiums"
                                 :company="props.row.product"
                             />
@@ -142,16 +137,16 @@
 <script>
 
 import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.js';
-import IbindexRebatePremium from 'components/CIbindexRebatePremium.vue';
-import AlertDialog from 'components/CAlertDialog.vue';
+import ComponentIbindexRebatePremium from 'src/components/ComponentIbindexRebatePremium.vue';
+import AlertDialog from 'src/components/ComponentAlertDialog.vue';
 import { ref, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useStore } from 'vuex';
 
 export default {
-    name: 'CDashboard',
+    name: 'ComponentDashboard',
     components: {
-        IbindexRebatePremium
+        ComponentIbindexRebatePremium
     },
     props: {},
 
@@ -208,7 +203,7 @@ export default {
             return store.state.watchlist;
         }
 
-        // Updates the watchlist in Vuex state store. The state is also store in localStorage.
+        // Updates the watchlist in Vuex state store. The state is also stored in localStorage.
         function removeWatchlistItem(removedItem) {
             rows.value = rows.value.filter(item => item.product !== removedItem);
             store.commit('setWatchlist', rows.value);

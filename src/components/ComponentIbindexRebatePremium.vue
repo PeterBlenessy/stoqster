@@ -28,7 +28,7 @@ import { useStore } from 'vuex';
 import localforage from 'localforage';
 
 export default {
-    name: 'CIbindexRebatePremium',
+    name: 'ComponentIbindexRebatePremium',
 
     props: {
         api: { type: String, required: true },

@@ -92,7 +92,7 @@ import { useDialogPluginComponent } from 'quasar'
 import { useStore } from 'vuex';
 
 export default { 
-  name: 'AlertDialog',
+  name: 'ComponentAlertDialog',
 
   props: {
     companyCode: { type: String, required: true },

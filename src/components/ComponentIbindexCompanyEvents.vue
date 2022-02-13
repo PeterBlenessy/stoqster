@@ -21,7 +21,7 @@ import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.js';
 import localforage from 'localforage';
 
 export default {
-    name: 'CIbindexCompanyEvents',
+    name: 'ComponentIbindexCompanyEvents',
 
     props: {
         company: { type: String, required: true }
@@ -51,7 +51,6 @@ export default {
 
             fetch(requestOptions.url, requestOptions.options).then( response => {
                 if (!response.ok || response.status === 500) {
-                    //console.log(await response.text());
                     return Promise.reject( `Error - fetch() status code: ${response.status}` );
                 }
                 return response.arrayBuffer();

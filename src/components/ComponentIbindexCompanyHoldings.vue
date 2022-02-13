@@ -22,7 +22,7 @@ import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.js';
 import localforage from 'localforage';
 
 export default {
-    name: 'CIbindexCompanyHoldings',
+    name: 'ComponentIbindexCompanyHoldings',
 
     props: {
         company: { type: String, required: true }

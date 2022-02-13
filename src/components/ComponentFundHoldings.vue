@@ -18,7 +18,7 @@ import { fundHoldings } from '../api/fiAPI.js';
 import localforage from 'localforage'
 
 export default {
-    // name: 'ComponentName',
+    name: 'ComponentFundHoldings',
     props: {
         fundName: { type: String, required: true }
     },

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactoring: change from localforage -> Dexie
 - Fix: handle dB version change when app is upgraded.
 
+
 - Fix: refresh does not seem to propagate to child components on ibindex pages
 - Fix: dashboard refreshed when alarm trigger is saved and refresh success nitification is shown
 - Fix: Sticky table headers.
@@ -27,9 +28,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix: there are dupplicates in the data from FI and we get 605 items when refreshing, vs 600 when loading from dB. Refactor download-import flow?
 
 ## [IN-PROGRESS]
-
+- DevEnv: Import environment variables from .env file
 
 ## [UNRELEASED]
+
+
+## v0.5.15 - 2022-02-13
+- Fix: Typo in successful refresh notification text in CIbindex component.
+- Refactoring: Change name of Ibindex components - add Component prefix instead of just a C.
+- Refactoring: Change name of Ibindex pages - add Page prefix instead of just a P.
+- Change: Align ComponentIbindex and ComponentDashboard components' expand icon with ComponentFunds, and add expand_less icon for collapsing the expanded row.
+- Change: Expand row on click.
 
 ## v0.5.14 - 2022-02-13
 - Change: Added separate mac build targets for Intel based (x64) and M1 Apple silicon (arm64) macs
