@@ -47,6 +47,7 @@ module.exports = configure(function (ctx) {
 
         // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
         build: {
+            env: require('dotenv').config().parsed,
             vueRouterMode: 'hash', // available values: 'hash', 'history'
 
             // transpile: false,
@@ -212,7 +213,7 @@ module.exports = configure(function (ctx) {
                     hardenedRuntime: true,
                     entitlements: './node_modules/electron-builder-notarize/entitlements.mac.inherit.plist',
                     target: {
-                        target: 'default',
+                        target: 'dmg',
                         arch: [
                             'x64',
                             'arm64'

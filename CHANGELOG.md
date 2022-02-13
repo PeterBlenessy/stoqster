@@ -28,9 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix: there are dupplicates in the data from FI and we get 605 items when refreshing, vs 600 when loading from dB. Refactor download-import flow?
 
 ## [IN-PROGRESS]
-- DevEnv: Import environment variables from .env file
 
-## [UNRELEASED]
+## v0.5.16 - [UNRELEASED]
+- DevEnv: Import environment variables from .env file
 
 
 ## v0.5.15 - 2022-02-13
