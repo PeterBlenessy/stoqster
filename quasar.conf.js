@@ -205,16 +205,19 @@ module.exports = configure(function (ctx) {
                 // https://www.electron.build/configuration/configuration
 
                 appId: 'com.electron.stoqster',
-                afterSign: "electron-builder-notarize",
+                afterSign: 'electron-builder-notarize',
+                artifactName: '${productName}-${version}-${os}-${arch}.${ext}',
                 mac: {
-                    artifactName: '${productName}-${version}-osx.${ext}',
                     category: 'public.app-category.finance',
                     hardenedRuntime: true,
-                    entitlements: "./node_modules/electron-builder-notarize/entitlements.mac.inherit.plist",
-                    target: [
-                        "zip",
-                        "dmg"
-                    ]
+                    entitlements: './node_modules/electron-builder-notarize/entitlements.mac.inherit.plist',
+                    target: {
+                        target: 'default',
+                        arch: [
+                            'x64',
+                            'arm64'
+                        ]
+                    }
                 },
                 linux: {
                     category: 'public.app-category.finance',
@@ -228,9 +231,9 @@ module.exports = configure(function (ctx) {
                     ]
                 },
                 publish: {
-                    "provider": "github",
-                    "owner": "PeterBlenessy",
-                    "repo": "stoqster-releases"
+                    'provider': 'github',
+                    'owner': 'PeterBlenessy',
+                    'repo': 'stoqster-releases'
                 }
             },
 

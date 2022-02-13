@@ -31,7 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
-
+## v0.5.14 - 2022-02-13
+- Change: Added separate mac build targets for Intel based (x64) and M1 Apple silicon (arm64) macs
+- Change: electron-build artifactName med common for all platforms and set to '${productName}-${version}-${os}-${arch}.${ext}'
 
 ## v0.5.13 - 2022-02-12
 - Feature: add q.notify to FI component ComponentFunds.vue
