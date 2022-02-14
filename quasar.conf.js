@@ -213,7 +213,7 @@ module.exports = configure(function (ctx) {
                     hardenedRuntime: true,
                     entitlements: './node_modules/electron-builder-notarize/entitlements.mac.inherit.plist',
                     target: {
-                        target: 'dmg',
+                        target: 'default',
                         arch: [
                             'x64',
                             'arm64'
