@@ -15,6 +15,7 @@
             v-model:selected="selectedRows"
             @update:selected="onUpdateSelected"
             :binary-state-sort="true"
+            class="my-sticky-header-table"
         >
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
@@ -24,7 +25,7 @@
                     debounce="300"
                     v-model="filter"
                     placeholder="Filter list"
-                    style="width: 250px"
+                    style="width: 500px"
                 >
                     <template v-slot:append>
                         <q-icon name="filter_list" />
@@ -68,13 +69,18 @@
                         </q-toggle>
 
                         <!-- Expand more details -->
-                        <q-btn size="sm" color="primary" flat round dense 
-                            @click="props.expand = !props.expand" 
+                        <q-btn
+                            size="sm"
+                            color="primary"
+                            flat
+                            round
+                            dense
                             :icon="props.expand ? 'expand_less' : 'expand_more'"
                         >
-                            <q-tooltip transition-show="scale" transition-hide="scale">
-                                {{ "Show more info sbout " + props.row.productName }}
-                            </q-tooltip>
+                            <q-tooltip
+                                transition-show="scale"
+                                transition-hide="scale"
+                            >{{ "Show more info sbout " + props.row.productName }}</q-tooltip>
                         </q-btn>
                     </q-td>
                 </q-tr>
@@ -86,14 +92,20 @@
                             <div class="col-6">
                                 <q-card>
                                     <q-card-section>
-                                        <ComponentIbindexCompanyHoldings :company="props.row.product" :key="props.row.product" />
+                                        <ComponentIbindexCompanyHoldings
+                                            :company="props.row.product"
+                                            :key="props.row.product"
+                                        />
                                     </q-card-section>
                                 </q-card>
                             </div>
                             <div class="col-3">
                                 <q-card>
                                     <q-card-section>
-                                        <ComponentIbindexCompanyEvents :company="props.row.product" :key="props.row.product" />
+                                        <ComponentIbindexCompanyEvents
+                                            :company="props.row.product"
+                                            :key="props.row.product"
+                                        />
                                     </q-card-section>
                                 </q-card>
                             </div>
@@ -143,22 +155,22 @@ export default {
         // Fetch data from ibindex using the provided api reference
         async function refreshData() {
             loading.value = true;
-            fetch(requestOptions.url, requestOptions.options).then( response => {
+            fetch(requestOptions.url, requestOptions.options).then(response => {
                 if (!response.ok) {
-                    return Promise.reject( `Error - fetch() status code: ${response.status}` );
+                    return Promise.reject(`Error - fetch() status code: ${response.status}`);
                 }
                 return response.arrayBuffer();
             })
-                .then( buffer => {
+                .then(buffer => {
                     let data = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
                     rows.value = data;
                     data.forEach(item => {
-                        ibiStore.setItem( item.product, item );
+                        ibiStore.setItem(item.product, item);
                     });
 
                     refreshColor.value = 'primary';
                     $q.notify({ type: 'positive', message: 'Successful refresh' });
-                }).catch( error => {
+                }).catch(error => {
                     console.log(error);
                     refreshColor.value = 'negative';
                     $q.notify({
@@ -166,7 +178,7 @@ export default {
                         message: 'Something went wrong during refresh',
                         caption: 'Showing data from local storage'
                     });
-                }).finally( () => loading.value = false );
+                }).finally(() => loading.value = false);
         }
 
         // Save the selected rows to Vuex state store. These rows represent the watchlist and will also be saved to the localStorage.
@@ -184,24 +196,24 @@ export default {
             loading.value = true;
 
             let data = [];
-            ibiStore.iterate( (value, key, iterationNumber) => {
+            ibiStore.iterate((value, key, iterationNumber) => {
                 data.push(value);
             })
-            .then( () => {
-                if (data.length === 0) {
-                    return refreshData();
-                }
-                rows.value = data
-                // Make sure we have a unique index for each row
-                rows.value.forEach((row, index) => {
-                    rows.value.index = index;
-                });
-            })
-            .catch( error => console.log(error) )
-            .finally( () => loading.value = false );
+                .then(() => {
+                    if (data.length === 0) {
+                        return refreshData();
+                    }
+                    rows.value = data
+                    // Make sure we have a unique index for each row
+                    rows.value.forEach((row, index) => {
+                        rows.value.index = index;
+                    });
+                })
+                .catch(error => console.log(error))
+                .finally(() => loading.value = false);
         }
 
-        onMounted( () => {
+        onMounted(() => {
             loadData();
             restoreSelectedRows();
         });
@@ -235,9 +247,34 @@ export default {
 }
 
 .q-table tbody td:before {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.04);
 }
 .q-table--dark tbody td:before {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.04);
 }
 </style>
+<style lang="sass">
+
+.my-sticky-header-table
+    /* height or max-height is important */
+    height: calc(100vh - 115px)
+
+    .q-table__top,
+    .q-table__bottom,
+    thead tr:first-child th
+        /* bg color is important for th; just specify one */
+        background-color: #ffffff
+
+    thead tr th
+        position: sticky
+        z-index: 1
+    thead tr:first-child th
+        top: 0
+
+    /* this is when the loading indicator appears */
+    &.q-table--loading thead tr:last-child th
+        /* height of all previous header rows */
+        top: 48px
+
+</style>
+

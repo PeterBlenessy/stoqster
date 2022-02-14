@@ -1,118 +1,131 @@
 <template>
     <div class="q-pa-sm">
-        <q-table dense color="primary"
+        <q-table
+            dense
+            color="primary"
             :title="title"
             :rows="rows"
             :columns="columns"
             :visible-columns="visibleColumns"
             :filter="filter"
-            :pagination="initialPagination"
-            :binary-state-sort="true"
-
-            row-key="Fond_namn"
             :rows-per-page-options="[0]"
+            :binary-state-sort="true"
+            row-key="Fond_namn"
             virtual-scroll
             :loading="loading"
-            style="height:100%"
+            class="my-sticky-header-table"
         >
-
-        <!-- Configure top-right part of the data table component -->
-        <template v-slot:top-right>
-
-            <!-- Search input -->
-            <q-input dense debounce="300" v-model="filter" placeholder="Filter list" style="width: 250px">
-                <template v-slot:append>
-                    <q-icon name="filter_list" />
-                </template>
-            </q-input>
-        
-            <!-- Refresh data -->
-            <q-btn dense flat round icon="refresh" :color="refreshColor" @click="loadDataFromWeb()">
-                <q-tooltip transition-show="scale" transition-hide="scale">
-                    {{ "Refresh data" }}
-                </q-tooltip>
-            </q-btn>
-
-        </template>
-
-        <!-- Table header row -->
-        <template v-slot:header="props">
-            <q-tr :props="props">
-                <q-th v-for="col in props.cols"  :key="col.name" :props="props">
-                    {{ col.label }}
-                </q-th>
-
-                <!-- Column selection  -->
-                <q-th auto-width>
-                    <q-select multiple dense options-dense borderless dropdown-icon="more_vert" style="size: 300px"
-                        v-model="visibleColumns"
-                        display-value=""
-                        emit-value
-                        map-options
-                        :options="columns"
-                        option-value="name"
-                    >
-                        <template v-slot:option="{ itemProps, opt, selected, toggleOption }">
-                            <q-item v-bind="itemProps" dense>
-                                <q-item-section>
-                                    <q-item-label v-html="opt.label" />
-                                </q-item-section>
-
-                                <q-item-section side>
-                                    <q-toggle size="xs" :model-value="selected" @update:model-value="toggleOption(opt)" />
-                                </q-item-section>
-                            </q-item>
-                        </template>
-                        <q-tooltip transition-show="scale" transition-hide="scale">
-                            {{ "Show/hide columns" }}
-                        </q-tooltip>
-
-                    </q-select>
-                </q-th>
-            </q-tr>
-        </template>
-
-        <template v-slot:body="props">
-            <q-tr :props="props" @click="props.expand = !props.expand">
-                <!-- Column values -->
-                <q-td 
-                    v-for="col in props.cols" 
-                    :key="col.name" 
-                    :props="props"
+            <!-- Configure top-right part of the data table component -->
+            <template v-slot:top-right>
+                <!-- Search input -->
+                <q-input
+                    dense
+                    debounce="300"
+                    v-model="filter"
+                    placeholder="Filter list"
+                    style="width: 500px"
                 >
-                    {{ col.value }}
-                </q-td>
+                    <template v-slot:append>
+                        <q-icon name="filter_list" />
+                    </template>
+                </q-input>
 
-                <!-- Action buttons -->
-                <q-td auto-width>
+                <!-- Refresh data -->
+                <q-btn
+                    dense
+                    flat
+                    round
+                    icon="refresh"
+                    :color="refreshColor"
+                    @click="loadDataFromWeb()"
+                >
+                    <q-tooltip transition-show="scale" transition-hide="scale">{{ "Refresh data" }}</q-tooltip>
+                </q-btn>
+            </template>
 
-                    <!-- Expand more details -->
-                    <q-btn size="sm" color="primary" flat round dense 
-                        @click="props.expand = !props.expand" 
-                        :icon="props.expand ? 'expand_less' : 'expand_more'"
-                    >
-                        <q-tooltip transition-show="scale" transition-hide="scale">
-                            {{ "Show holdings " }}
-                        </q-tooltip>
-                    </q-btn>
+            <!-- Table header row -->
+            <template v-slot:header="props">
+                <q-tr :props="props">
+                    <q-th v-for="col in props.cols" :key="col.name" :props="props">{{ col.label }}</q-th>
 
-                </q-td>
-            </q-tr>
+                    <!-- Column selection  -->
+                    <q-th auto-width>
+                        <q-select
+                            multiple
+                            dense
+                            options-dense
+                            borderless
+                            dropdown-icon="more_vert"
+                            style="size: 300px"
+                            v-model="visibleColumns"
+                            display-value
+                            emit-value
+                            map-options
+                            :options="columns"
+                            option-value="name"
+                        >
+                            <template v-slot:option="{ itemProps, opt, selected, toggleOption }">
+                                <q-item v-bind="itemProps" dense>
+                                    <q-item-section>
+                                        <q-item-label v-html="opt.label" />
+                                    </q-item-section>
 
-            <!--  Expanded row. Displays additional insights about the company.  -->
-            <q-tr v-show="props.expand" :props="props" no-hover>
-                <q-td :colspan="props.cols.length+1">
-                    <ComponentFundHoldings :fund-name="props.row['Fond_namn']" :key="props.row['Fond_namn']" />
+                                    <q-item-section side>
+                                        <q-toggle
+                                            size="xs"
+                                            :model-value="selected"
+                                            @update:model-value="toggleOption(opt)"
+                                        />
+                                    </q-item-section>
+                                </q-item>
+                            </template>
+                            <q-tooltip
+                                transition-show="scale"
+                                transition-hide="scale"
+                            >{{ "Show/hide columns" }}</q-tooltip>
+                        </q-select>
+                    </q-th>
+                </q-tr>
+            </template>
 
-<!--                    <pre>{{ JSON.stringify(props.row.FinansiellaInstrument.FinansielltInstrument[0], null, 4) }}</pre> -->
-                </q-td>
-            </q-tr>
+            <template v-slot:body="props">
+                <q-tr :props="props" @click="props.expand = !props.expand">
+                    <!-- Column values -->
+                    <q-td v-for="col in props.cols" :key="col.name" :props="props">{{ col.value }}</q-td>
 
-        </template>
- 
-    </q-table>
-  </div>
+                    <!-- Action buttons -->
+                    <q-td auto-width>
+                        <!-- Expand more details -->
+                        <q-btn
+                            size="sm"
+                            color="primary"
+                            flat
+                            round
+                            dense
+                            :icon="props.expand ? 'expand_less' : 'expand_more'"
+                        >
+                            <q-tooltip
+                                transition-show="scale"
+                                transition-hide="scale"
+                            >{{ "Show holdings " }}</q-tooltip>
+                        </q-btn>
+                    </q-td>
+                </q-tr>
 
+                <!--  Expanded row. Displays additional insights about the company.  -->
+                <q-tr v-show="props.expand" :props="props" no-hover>
+                    <q-td :colspan="props.cols.length + 1">
+                        <ComponentFundHoldings
+                            :fund-name="props.row['Fond_namn']"
+                            :key="props.row['Fond_namn']"
+                        />
+
+                        <!--                    <pre>{{ JSON.stringify(props.row.FinansiellaInstrument.FinansielltInstrument[0], null, 4) }}</pre> -->
+                    </q-td>
+                </q-tr>
+            </template>
+        </q-table>
+    </div>
 </template>
 
 <script>
@@ -152,8 +165,8 @@ export default {
             let data = [];
 
             // Running asyncronously gives a better user experience. Loading a usable first page takes ~2.5s. Syncronously is > 10s.
-            await Promise.all(Object.values(entries).map( async (entry) => {
-                if ( entry != '' && !entry.isDirectory) {
+            await Promise.all(Object.values(entries).map(async (entry) => {
+                if (entry != '' && !entry.isDirectory) {
 
                     let xml = await entry.text();
                     let x2js = new X2JS();
@@ -167,23 +180,23 @@ export default {
                     let fundName = fundInformation.Fond_namn;
 
                     if (fundInformation.Fond_status != "Ej aktiv fond") {
-                        data.push( fundInformation );
+                        data.push(fundInformation);
 
                         // Handle to the fund's holdings information
                         let fundHoldings = fundInformation.FinansiellaInstrument.FinansielltInstrument;
-                        
+
                         // Removing array/object of holdings from fund object avoids storing funds holdings twice.
                         // Reduces storage need in dB from ~70 -> 38 MB.
                         delete fundInformation.FinansiellaInstrument;
 
                         // Store top level fund information in dB
-                        fundsStore.setItem( fundName, fundInformation );
+                        fundsStore.setItem(fundName, fundInformation);
 
                         // Store fund holdings details in dB
                         if (Array.isArray(fundHoldings)) {
-                            fundHoldingsStore.setItem( fundName, fundHoldings);
+                            fundHoldingsStore.setItem(fundName, fundHoldings);
                         } else {
-                            fundHoldingsStore.setItem( fundName, [fundHoldings]);
+                            fundHoldingsStore.setItem(fundName, [fundHoldings]);
                         }
                     }
                 }
@@ -201,7 +214,7 @@ export default {
                 // Scrape FI web page to get url to the zip file
                 let response = await fetch(fiFunds.url, fiFunds.options);
                 if (!response.ok) {
-                    return Promise.reject( `Error - fetch() status code: ${response.status}` );
+                    return Promise.reject(`Error - fetch() status code: ${response.status}`);
                 }
                 let text = await response.text();
                 let parser = new DOMParser();
@@ -227,12 +240,12 @@ export default {
             console.time("loadDataFromDB()");
             loading.value = true;
             let data = [];
-            fundsStore.iterate( (value, key, iterationNumber) => {
+            fundsStore.iterate((value, key, iterationNumber) => {
                 data.push(value);
             })
-            .then( () => rows.value = data)
-            .catch( error => console.log(error))
-            .finally( console.timeEnd("loadDataFromDB()"));
+                .then(() => rows.value = data)
+                .catch(error => console.log(error))
+                .finally(console.timeEnd("loadDataFromDB()"));
         }
 
         // Load funds holdings
@@ -241,14 +254,14 @@ export default {
             let numberOfFunds = await fundsStore.length();
             if (numberOfFunds === 0) {
                 loadDataFromWeb()
-                .then( () => loading.value = false )
-                .catch( error => console.log(error) )
+                    .then(() => loading.value = false)
+                    .catch(error => console.log(error))
             } else {
-                loadDataFromDB().then( () => loading.value = false );
+                loadDataFromDB().then(() => loading.value = false);
             }
         }
 
-        onMounted( () => {
+        onMounted(() => {
             loadData();
         });
 
@@ -271,3 +284,43 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+.q-table tbody td:after {
+    background: rgba(255, 255, 255, 0);
+}
+.q-table--dark tbody td:after {
+    background: rgba(0, 0, 0, 0);
+}
+
+.q-table tbody td:before {
+    background: rgba(0, 0, 0, 0.04);
+}
+.q-table--dark tbody td:before {
+    background: rgba(255, 255, 255, 0.04);
+}
+</style>
+
+<style lang="sass">
+
+.my-sticky-header-table
+    /* height or max-height is important */
+    height: calc(100vh - 115px)
+
+    .q-table__top,
+    .q-table__bottom,
+    thead tr:first-child th
+        /* bg color is important for th; just specify one */
+        background-color: #ffffff
+
+    thead tr th
+        position: sticky
+        z-index: 1
+    thead tr:first-child th
+        top: 0
+
+    /* this is when the loading indicator appears */
+    &.q-table--loading thead tr:last-child th
+        /* height of all previous header rows */
+        top: 48px
+</style>

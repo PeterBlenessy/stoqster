@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [BACKLOG]
 
-- Added: adjust number of rows based on window height.
 - Added: selectable rows in funds holdings tables.
 - Added: add column selection to IBI components
 
@@ -25,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed: refresh does not seem to propagate to child components on ibindex pages
 - Fixed: dashboard refreshed when alarm trigger is saved and refresh success notification is shown
-- Fixed: Sticky table headers.
 - Added: Adapt number of table rows to available window size.
 
 - Change yarn from v1 -> v2 (https://yarnpkg.com/getting-started/migration)
@@ -39,9 +37,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed storage backend in vuex from localStorage -> localForage
 - Changed state Vuex -> Pine
 
-## v0.5.18 - [UNRELEASED]
+## v0.5.19 - [UNRELEASED]
 
 
+## v0.5.18 - 2022-02-14
+- Changed table headers to be sticky and table to fill entire view port making it also dynamic when app window is resized.
+- Removed pagination from ComponentFunds.
+- Changed row highlight to be more transparent when hovering.
+- Changed width of filter input to 500px, to make it more prominent.
+- Changed app window start and minimum width and height.
+- Changed indentation to 4 spaces in some files.
 
 ## v0.5.17 - 2022-02-14
 - Added support for electron-updater events and logging of update steps to console

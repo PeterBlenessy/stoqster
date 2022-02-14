@@ -20,7 +20,7 @@
                     debounce="300"
                     v-model="filter"
                     placeholder="Filter"
-                    style="width: 250px"
+                    style="width: 500px"
                 >
                     <template v-slot:append>
                         <q-icon name="filter_list" />
@@ -109,8 +109,13 @@
                             <q-space />
 
                             <!-- Expand more info button -->
-                            <q-btn size="sm" color="primary" flat round dense 
-                                @click="props.expand = !props.expand" 
+                            <q-btn
+                                size="sm"
+                                color="primary"
+                                flat
+                                round
+                                dense
+                                @click="props.expand = !props.expand"
                                 :icon="props.expand ? 'expand_less' : 'expand_more'"
                             >
                                 <q-tooltip
@@ -168,34 +173,34 @@ export default {
             let watchlist = getWatchlist();
             let visibleRows = [];
 
-            fetch(requestOptions.url, requestOptions.options).then( response => {
+            fetch(requestOptions.url, requestOptions.options).then(response => {
                 if (!response.ok) {
-                    return Promise.reject( `Error - fetch() status code: ${response.status}` );
+                    return Promise.reject(`Error - fetch() status code: ${response.status}`);
                 }
                 return response.arrayBuffer();
             })
-            .then( buffer => {
-                rows.value = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
-                if (watchlist !== null) {
-                    Object.entries(watchlist).forEach(([key, value]) => {
-                        visibleRows.push(value.product);
-                    });
-                    rows.value = rows.value.filter(item => visibleRows.includes(item.product));
+                .then(buffer => {
+                    rows.value = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
+                    if (watchlist !== null) {
+                        Object.entries(watchlist).forEach(([key, value]) => {
+                            visibleRows.push(value.product);
+                        });
+                        rows.value = rows.value.filter(item => visibleRows.includes(item.product));
 
-                    setWatchlist(rows.value); // Store current values in watchlist
-                    refreshColor.value = 'primary';
-                    $q.notify({ type: 'positive', message: 'Successful refresh' });
-                }
-            }).catch( error => {
-                console.log(error);
-                rows.value = watchlist; // Show the latest values in case we have a network error 
-                refreshColor.value = 'negative';
-                $q.notify({
-                    type: 'negative',
-                    message: 'Something went wrong during refresh',
-                    caption: 'Showing data from last successful refresh of ' + title
-                });
-            }).finally( () => loading.value = false );
+                        setWatchlist(rows.value); // Store current values in watchlist
+                        refreshColor.value = 'primary';
+                        $q.notify({ type: 'positive', message: 'Successful refresh' });
+                    }
+                }).catch(error => {
+                    console.log(error);
+                    rows.value = watchlist; // Show the latest values in case we have a network error 
+                    refreshColor.value = 'negative';
+                    $q.notify({
+                        type: 'negative',
+                        message: 'Something went wrong during refresh',
+                        caption: 'Showing data from last successful refresh of ' + title
+                    });
+                }).finally(() => loading.value = false);
         }
 
         // Reads the watchlist from Vuex state store.
@@ -248,10 +253,10 @@ export default {
             })
         }
 
-        onMounted( () => {
+        onMounted(() => {
             refreshData();
 
-            setInterval( () => {
+            setInterval(() => {
                 refreshData();
             }, store.state.refreshInterval);
         });

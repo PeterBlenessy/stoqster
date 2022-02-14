@@ -1,5 +1,8 @@
 <template>
-    <q-table dense flat color="primary"
+    <q-table
+        dense
+        flat
+        color="primary"
         :title="title"
         :columns="columns"
         :rows="rows"
@@ -8,8 +11,7 @@
         :rows-per-page-options="[0]"
         :binary-state-sort="true"
         :loading="loading"
-    >
-    </q-table>
+    ></q-table>
 </template>
 
 <script>
@@ -35,15 +37,15 @@ export default {
 
         async function loadData() {
             loading.value = true;
-            fundHoldingsStore.getItem(fundName.value).then( holdings => {
+            fundHoldingsStore.getItem(fundName.value).then(holdings => {
                 rows.value = holdings;
                 // Make sure we have a unique index for each row
                 rows.value.forEach((row, index) => {
                     rows.value.index = index;
                 });
             })
-            .catch( error => console.log(error) )
-            .finally( () => loading.value = false );
+                .catch(error => console.log(error))
+                .finally(() => loading.value = false);
         }
 
         onMounted(loadData());
