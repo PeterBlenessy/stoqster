@@ -13,11 +13,4 @@ export default boot(async (/* { app, router, ... } */) => {
         name: dbName
     });
 
-    const tableCommon = localforage.createInstance({ name: dbName, storeName: 'common', description: '...' });
-    const tableFunds = localforage.createInstance({ name: dbName, storeName: 'funds', description: '...' });
-    const tableFundsHoldings = localforage.createInstance({ name: dbName, storeName: 'funds-holdings', description: '...' });
-
-    const tableCompanies = localforage.createInstance({ name: dbName, storeName: 'companies', description: '...' });
-
-
-})
+});

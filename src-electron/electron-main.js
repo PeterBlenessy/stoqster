@@ -61,6 +61,38 @@ function createWindow() {
     })
 }
 
+//---------------------------------------------------------
+// Auto updater events
+//
+//---------------------------------------------------------
+autoUpdater.on('checking-for-update', () => {
+    logger.info('Checking for update...');
+})
+
+autoUpdater.on('update-available', (ev, info) => {
+    logger.info('Update available.');
+})
+
+autoUpdater.on('update-not-available', (ev, info) => {
+    logger.info('Update not available.');
+})
+
+autoUpdater.on('error', (ev, err) => {
+    logger.info('Error in auto-updater:');
+    logger.info(err);
+})
+
+autoUpdater.on('download-progress', (ev, progressObj) => {
+    logger.info('Download progress...');
+})
+
+autoUpdater.on('update-downloaded', (ev, info) => {
+    logger.info('Update downloaded; will install in 5 seconds');
+})
+//---------------------------------------------------------
+// App events
+//
+//---------------------------------------------------------
 app.on('ready', createWindow)
 
 app.on('window-all-closed', () => {

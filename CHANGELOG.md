@@ -1,86 +1,103 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## Changelog format guideline
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## vMAJOR.MINOR.PATCH - YYYY-MM-DD
+
+- Added new features.
+- Changed existing functionality.
+- Deprecated soon-to-be removed features.
+- Removed features.
+- Fixed bugs.
+- Security in case of vulnerabilities.
+
 ## [BACKLOG]
 
-- Feature: adjust number of rows based on window height.
-- Feature: selectable rows in funds holdings tables.
-- Feature: add column selection to IBI components
+- Added: adjust number of rows based on window height.
+- Added: selectable rows in funds holdings tables.
+- Added: add column selection to IBI components
 
-- Refactoring: change from localforage -> Dexie
-- Fix: handle dB version change when app is upgraded.
+- Changed: change from localforage -> Dexie
+- Fixed: handle dB version change when app is upgraded.
 
+- Fixed: refresh does not seem to propagate to child components on ibindex pages
+- Fixed: dashboard refreshed when alarm trigger is saved and refresh success notification is shown
+- Fixed: Sticky table headers.
+- Added: Adapt number of table rows to available window size.
 
-- Fix: refresh does not seem to propagate to child components on ibindex pages
-- Fix: dashboard refreshed when alarm trigger is saved and refresh success nitification is shown
-- Fix: Sticky table headers.
-- New featrue: Adapt number of table rows to available window size.
-- Refactoring: migrate vuex store to localForage
-- Refactoring: Migrate Vuex -> Pine
-- Refactoring: create a boot file or plugin for localForage (https://medium.com/@m.jerome.diaz/indexedbd-localforage-vuejs2-vuex-quasar-cordova-créer-une-app-offline-c40253837172)
+- Change yarn from v1 -> v2 (https://yarnpkg.com/getting-started/migration)
 
 ### [Low prio]
-- Fix: catch and handle fetch() POST errors, e.g., Failed to load resource: the server responded with a status of 500.
-- Feature: show progress dialog with steps when refreshing FI data. It takes too long. Also, immediate page load takes long time, so dB is not ready.
-- Fix: there are dupplicates in the data from FI and we get 605 items when refreshing, vs 600 when loading from dB. Refactor download-import flow?
+- Fixed: catch and handle fetch() POST errors, e.g., Failed to load resource: the server responded with a status of 500.
+- Added: show progress dialog with steps when refreshing FI data. It takes too long. Also, immediate page load takes long time, so dB is not ready.
+- Fixed: there are dupplicates in the data from FI and we get 605 items when refreshing, vs 600 when loading from dB. Refactor download-import flow?
 
 ## [IN-PROGRESS]
+- Changed storage backend in vuex from localStorage -> localForage
+- Changed state Vuex -> Pine
 
-## v0.5.17 - [UNRELEASED]
+## v0.5.18 - [UNRELEASED]
 
 
+
+## v0.5.17 - 2022-02-14
+- Added support for electron-updater events and logging of update steps to console
+- Changed (back) mac build target to default (= dmg + zip) from only dmg to fix auto-updater issue caused by zip target being required but excluded in config
+- Changed all app and dev dependencies to latest
+- Removed store names from localForage boot file.
+ 
 ## v0.5.16 - 2022-02-13
-- DevEnv: Import environment variables from .env file
+- Added import of environment variables from .env file
 
 ## v0.5.15 - 2022-02-13
-- Fix: Typo in successful refresh notification text in CIbindex component.
-- Refactoring: Change name of Ibindex components - add Component prefix instead of just a C.
-- Refactoring: Change name of Ibindex pages - add Page prefix instead of just a P.
-- Change: Align ComponentIbindex and ComponentDashboard components' expand icon with ComponentFunds, and add expand_less icon for collapsing the expanded row.
-- Change: Expand row on click.
+- Fixed typo in successful refresh notification text in CIbindex component.
+- Changed name of Ibindex components - add Component prefix instead of just a C.
+- Changed name of Ibindex pages - add Page prefix instead of just a P.
+- Changed ComponentIbindex and ComponentDashboard components' expand icon to align with ComponentFunds, and add expand_less icon for collapsing the expanded row.
+- Changed row expands on click.
 
 ## v0.5.14 - 2022-02-13
-- Change: Added separate mac build targets for Intel based (x64) and M1 Apple silicon (arm64) macs
-- Change: electron-build artifactName med common for all platforms and set to '${productName}-${version}-${os}-${arch}.${ext}'
+- Added separate mac build targets for Intel based (x64) and M1 Apple silicon (arm64) macs
+- Changed electron-build artifactName med common for all platforms and set to '${productName}-${version}-${os}-${arch}.${ext}'
 
 ## v0.5.13 - 2022-02-12
-- Feature: add q.notify to FI component ComponentFunds.vue
-- Fix: don't do fetch() if url === null. Dirty fix for companies with no events triggering warnings due to status code 500 which cannot be caught for some reason.
-- Feature: Store IBI RebatePremium in IndexedDB.
+- Added q.notify to FI component ComponentFunds.vue
+- Fixed fetch() if url === null. Dirty fix for companies with no events triggering warnings due to status code 500 which cannot be caught for some reason.
+- Changed store IBI RebatePremium in IndexedDB.
 
 ## v0.5.12 - 2022-02-02
-- Fix: Unable to load preload script: /Users/peter/Development/stoqster/.quasar/electron/electron-preload.js
-- Formatting: cleaned up arrow functions to increase readability
-- Feature: sorting in ibindex components
-- Fix: components in expanded rows get mixed up when sorting due to no unique key set in components. Fix triggers reload of components and affects performance if data not in dB.
-- Feature: Store IBI companies holdings in IndexedDB. Try loading from dB first when refreshing.
-- Feature: Store IBI companies events in IndexedDB. Try loading from dB first when refreshing.
-- Feature: Store IBI companies in IndexedDB. Try loading from dB first when refreshing.
+- Fixed error: unable to load preload script: /Users/peter/Development/stoqster/.quasar/electron/electron-preload.js
+- Changed - cleaned up arrow functions to increase readability
+- Added sorting in ibindex components
+- Fixed components in expanded rows get mixed up when sorting due to no unique key set in components. The fix triggers reload of components and affects performance if data not in dB.
+- Changed store IBI companies holdings in IndexedDB. Try loading from dB first when refreshing.
+- Changed store IBI companies events in IndexedDB. Try loading from dB first when refreshing.
+- Changed store IBI companies in IndexedDB. Try loading from dB first when refreshing.
 
 ## v0.5.11 - 2022-02-02
-- Refactoring: migrated component to use fetch() - CIbindexCompanyHoldings.vue
-- Refactoring: migrated component to use fetch() - CIbindexCompanyEvents.vue
-- Refactoring: migrated component to use fetch() - CIbindexRebatePremium.vue
-- Refactoring: migrated component to use fetch() - CIbindex.vue
-- Refactoring: migrated component to use fetch() - CDashboard.vue
-- Refactoring: cleaned up electron-preload.js and electron-main.js from axios code.
-- Formatting: changed indentation in the files changed in this commit to 4 spaces
+- Changed - migrated component to use fetch() - CIbindexCompanyHoldings.vue
+- Changed - migrated component to use fetch() - CIbindexCompanyEvents.vue
+- Changed - migrated component to use fetch() - CIbindexRebatePremium.vue
+- Changed - migrated component to use fetch() - CIbindex.vue
+- Changed - migrated component to use fetch() - CDashboard.vue
+- Removed axios references from electron-preload.js and electron-main.js
+- Changed indentation in the files changed in this commit to 4 spaces
 
 ## v0.5.10 - 2022-02-01
-- Fix: keys are not unique in downloaded data causing warnings when sorting columns. Fixed by adding unique index property to rows.
+- Fixed: keys are not unique in downloaded data causing warnings when sorting columns. Fixed by adding unique index property to rows.
 
 ## v0.5.9 - 2022-02-01
-- Fix: sorting in "Andel av fondförmögenhet" column in fund holdings table.
-- Refactoring: new load data code for significant loading time improvement from local storag. From ~4 s -> 100 ms
-- Refactoring: created specific store for general FI stuff, e.g., for storing the zip file url, moved out from fundsStore.
+- Fixed sorting in "Andel av fondförmögenhet" column in fund holdings table.
+- Changed load data code for significant loading time improvement from local storag. From ~4 s -> 100 ms
+- Added specific store for general FI stuff, e.g., for storing the zip file url, moved out from fundsStore.
 
 ## v0.5.8 - 2022-01-31
-- Fix: column format and sorting in fund holdings table
-- Fix: removed currency symbol in currency columns as it is not always SEK.
-- Fix: negative numbers are now red in the "likvida medel" column.
+- Fixed column format and sorting in fund holdings table
+- Fixed currency error - removed currency symbol in currency columns as it is not always SEK.
+- Fixed negative numbers are now red in the "likvida medel" column.
 
 ## v0.5.7 - 2022-01-31
 - Removed yarn.lock from version control and added it to .gitignore.
@@ -89,12 +106,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added vue@^3.0.0 and vue-router@^4.0.0
 
 ## v0.5.6 - 2022-01-31
-- New feature: add ComponentFundHoldings component to list the holdings of a fund, and show it in the expanded row of a fund.
+- Added ComponentFundHoldings component to list the holdings of a fund, and show it in the expanded row of a fund.
 
 ## v0.5.5 - 2022-01-28
 - Fixed bug: sorting of columns in fund listing was based on string value, not floating number.
-- New feature: selectable columns in table in ComponentFunds component.
-- New feature: expand fund table row when clicked, and list fund holdings.
+- Added selectable columns in table in ComponentFunds component.
+- Added expand fund table row when clicked, and list fund holdings.
 
 ## v0.5.4 - 2022-01-28
 - Changed webPreferences.webSecurity: false, so fetch() can be used from the renderer process.
@@ -106,8 +123,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved API: ibindexAPI.js up one folder and removed ibindex folder from api folder.
 
 ## v0.5.3 - 2022-01-17
-- Upgraded Electron to v16.0.7.
-- Removed not-implemented fetch-request from preload.js.
+- Changed: Upgraded Electron to v16.0.7.
+- Removed: not-implemented fetch-request from preload.js.
 
 ## v0.5.2 - 2021-12-03
 - Added package.json script - git:push - to do add, commit and push changes.
@@ -177,7 +194,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added more comments to code, both to html and js.
 
 ## v0.1.0 - 2021-11-03
-- Cleaned up application drawer (will need more refactoring).
+- Cleaned up application drawer (will need more Change).
 - Added first iteration of dashboard.
 
 ## v0.0.2 - 2021-11-01
@@ -189,13 +206,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.0.1 - 2021-10-31
 - First commit to github of Stoqster
 
-# Changelog format guideline
-
-## vMAJOR.MINOR.PATCH - YYYY-MM-DD
-
-- Added new features.
-- Changed existing functionality.
-- Deprecated soon-to-be removed features.
-- Removed features.
-- Fixed bugs.
-- Security in case of vulnerabilities.
