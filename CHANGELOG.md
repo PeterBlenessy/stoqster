@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## vMAJOR.MINOR.PATCH - YYYY-MM-DD
+### vMAJOR.MINOR.PATCH - YYYY-MM-DD
 
 - Added new features.
 - Changed existing functionality.
@@ -32,13 +32,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed: catch and handle fetch() POST errors, e.g., Failed to load resource: the server responded with a status of 500.
 - Added: show progress dialog with steps when refreshing FI data. It takes too long. Also, immediate page load takes long time, so dB is not ready.
 - Fixed: there are dupplicates in the data from FI and we get 605 items when refreshing, vs 600 when loading from dB. Refactor download-import flow?
+- Fix table heading of child component in expanded row covers parent component table heading during scrolling.
 
 ## [IN-PROGRESS]
 - Changed storage backend in vuex from localStorage -> localForage
 - Changed state Vuex -> Pine
 
-## v0.5.19 - [UNRELEASED]
+## v0.5.20 - [UNRELEASED]
 
+## v0.5.19 - 2022-02-15
+- Changed scoped style in parent components to regular and removed same style setting from child components to fix alternating white/grey background in expanded rows.
+- Changed column headers to upper case.
+- Added column selection menu in ComponentIbindex.
 
 ## v0.5.18 - 2022-02-14
 - Changed table headers to be sticky and table to fill entire view port making it also dynamic when app window is resized.

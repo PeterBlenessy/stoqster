@@ -46,7 +46,9 @@
             <!-- Table header row -->
             <template v-slot:header="props">
                 <q-tr :props="props">
-                    <q-th v-for="col in props.cols" :key="col.name" :props="props">{{ col.label }}</q-th>
+                    <q-th v-for="col in props.cols" :key="col.name" :props="props">
+                        {{ col.label }}
+                    </q-th>
 
                     <!-- Column selection  -->
                     <q-th auto-width>
@@ -273,19 +275,13 @@ export default {
             title,
             columns,
             visibleColumns,
-            rows,
-            initialPagination: {
-                sortBy: 'desc',
-                descending: false,
-                page: 1,
-                rowsPerPage: 29
-            }
+            rows
         }
     }
 }
 </script>
 
-<style scoped>
+<style>
 .q-table tbody td:after {
     background: rgba(255, 255, 255, 0);
 }
@@ -316,6 +312,7 @@ export default {
     thead tr th
         position: sticky
         z-index: 1
+        text-transform: uppercase
     thead tr:first-child th
         top: 0
 

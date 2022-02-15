@@ -6,15 +6,15 @@
             :title="title"
             :rows="rows"
             :columns="columns"
-            :filter="filter"
-            row-key="product"
             :visible-columns="visibleColumns"
+            :filter="filter"
             :rows-per-page-options="[0]"
+            :binary-state-sort="true"
+            row-key="product"
             :loading="loading"
             selection="multiple"
             v-model:selected="selectedRows"
             @update:selected="onUpdateSelected"
-            :binary-state-sort="true"
             class="my-sticky-header-table"
         >
             <!-- Configure top-right part of the data table component -->
@@ -41,9 +41,47 @@
             <!-- Table header row -->
             <template v-slot:header="props">
                 <q-tr :props="props">
-                    <q-th v-for="col in props.cols" :key="col.name" :props="props">{{ col.label }}</q-th>
+                    <q-th v-for="col in props.cols" :key="col.name" :props="props">
+                        {{ col.label }}
+                    </q-th>
 
-                    <q-th auto-width />
+                    <!-- Column selection  -->
+                    <q-th auto-width>
+                        <q-select
+                            multiple
+                            dense
+                            options-dense
+                            borderless
+                            dropdown-icon="more_vert"
+                            style="size: 300px"
+                            v-model="visibleColumns"
+                            display-value
+                            emit-value
+                            map-options
+                            :options="columns"
+                            option-value="name"
+                        >
+                            <template v-slot:option="{ itemProps, opt, selected, toggleOption }">
+                                <q-item v-bind="itemProps" dense>
+                                    <q-item-section>
+                                        <q-item-label v-html="opt.label" />
+                                    </q-item-section>
+
+                                    <q-item-section side>
+                                        <q-toggle
+                                            size="xs"
+                                            :model-value="selected"
+                                            @update:model-value="toggleOption(opt)"
+                                        />
+                                    </q-item-section>
+                                </q-item>
+                            </template>
+                            <q-tooltip
+                                transition-show="scale"
+                                transition-hide="scale"
+                            >{{ "Show/hide columns" }}</q-tooltip>
+                        </q-select>
+                    </q-th>
                 </q-tr>
             </template>
 
@@ -142,7 +180,7 @@ export default {
         const store = useStore();
         const api = toRef(props, 'api');
         const title = ref(ibindex[api.value].title);
-        const visibleColumns = ibindex[api.value].visibleColumns;
+        const visibleColumns = ref(ibindex[api.value].visibleColumns);
         const columns = ibindex[api.value].columns;
         const rows = ref([]);
         const selectedRows = ref([]);
@@ -238,7 +276,7 @@ export default {
 
 </script>
 
-<style scoped>
+<style >
 .q-table tbody td:after {
     background: rgba(255, 255, 255, 0);
 }
@@ -253,6 +291,7 @@ export default {
     background: rgba(255, 255, 255, 0.04);
 }
 </style>
+
 <style lang="sass">
 
 .my-sticky-header-table
@@ -268,6 +307,7 @@ export default {
     thead tr th
         position: sticky
         z-index: 1
+        text-transform: uppercase
     thead tr:first-child th
         top: 0
 
