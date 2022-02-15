@@ -11,6 +11,7 @@
         :rows-per-page-options="[0]"
         :binary-state-sort="true"
         :loading="loading"
+        class="my-sticky-header-table-expanded"
     ></q-table>
 </template>
 
@@ -60,3 +61,37 @@ export default {
     }
 }
 </script>
+
+<style lang="sass">
+
+.my-sticky-header-table-expanded
+    /* height or max-height is important */
+    height: calc(50vh)
+
+    .q-table__top,
+    .q-table__bottom,
+    thead tr:first-child th
+        /* bg color is important for th; just specify one */
+        background-color: #ffffff
+
+    thead tr th
+        position: sticky
+        z-index: 1
+        text-transform: uppercase
+    thead tr:first-child th
+        top: 0
+
+    /* this is when the loading indicator appears */
+    &.q-table--loading thead tr:last-child th
+        /* height of all previous header rows */
+        top: 48px
+
+.q-table--dark 
+    .q-table__top,
+    .q-table__bottom,
+    thead tr:first-child th
+        /* bg color is important for th; just specify one */
+        background-color: #1d1d1d
+
+
+</style>

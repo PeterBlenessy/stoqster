@@ -316,5 +316,12 @@ export default {
         /* height of all previous header rows */
         top: 48px
 
+.q-table--dark 
+    .q-table__top,
+    .q-table__bottom,
+    thead tr:first-child th
+        /* bg color is important for th; just specify one */
+        background-color: #1d1d1d
+
 </style>
 

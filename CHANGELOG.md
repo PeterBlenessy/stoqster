@@ -38,7 +38,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed storage backend in vuex from localStorage -> localForage
 - Changed state Vuex -> Pine
 
-## v0.5.20 - [UNRELEASED]
+## v0.5.21 - [UNRELEASED]
+
+## v0.5.20 - 2022-02-15
+- Fixed table top/bottom/header background color white also in dark mode.
+- Added sticky headers to table in expanded row in ComponentFunds and using 50hv for the table to make it more user friendly.
 
 ## v0.5.19 - 2022-02-15
 - Changed scoped style in parent components to regular and removed same style setting from child components to fix alternating white/grey background in expanded rows.
