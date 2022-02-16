@@ -16,22 +16,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [BACKLOG]
 
-- Added: selectable rows in funds holdings tables.
-- Added: add column selection to IBI components
+- Add: selectable rows in funds holdings tables.
 
-- Changed: change from localforage -> Dexie
-- Fixed: handle dB version change when app is upgraded.
+- Change: change from localforage -> Dexie
+- Fix: handle dB version change when app is upgraded.
 
-- Fixed: refresh does not seem to propagate to child components on ibindex pages
-- Fixed: dashboard refreshed when alarm trigger is saved and refresh success notification is shown
-- Added: Adapt number of table rows to available window size.
+- Fix: refresh does not seem to propagate to child components on ibindex pages
+- Fix: dashboard refreshed when alarm trigger is saved and refresh success notification is shown
+- Add: Adapt number of table rows to available window size.
 
 - Change yarn from v1 -> v2 (https://yarnpkg.com/getting-started/migration)
 
 ### [Low prio]
-- Fixed: catch and handle fetch() POST errors, e.g., Failed to load resource: the server responded with a status of 500.
-- Added: show progress dialog with steps when refreshing FI data. It takes too long. Also, immediate page load takes long time, so dB is not ready.
-- Fixed: there are dupplicates in the data from FI and we get 605 items when refreshing, vs 600 when loading from dB. Refactor download-import flow?
+- Fix: catch and handle fetch() POST errors, e.g., Failed to load resource: the server responded with a status of 500.
+- Add: show progress dialog with steps when refreshing FI data. It takes too long. Also, immediate page load takes long time, so dB is not ready.
+- Fix: there are dupplicates in the data from FI and we get 605 items when refreshing, vs 600 when loading from dB. Refactor download-import flow?
 - Fix table heading of child component in expanded row covers parent component table heading during scrolling.
 
 ## [IN-PROGRESS]
