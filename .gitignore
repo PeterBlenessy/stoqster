@@ -33,6 +33,7 @@ yarn-error.log*
 *.sln
 
 .env
+*.env
 
 .yarn/*
 yarn.lock

@@ -37,7 +37,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed storage backend in vuex from localStorage -> localForage
 - Changed state Vuex -> Pine
 
-## v0.5.21 - [UNRELEASED]
+## v0.5.22 - [UNRELEASED]
+
+
+## v0.5.21 - 2022-02-22
+- Added windows build target for x64 architecture
 
 ## v0.5.20 - 2022-02-15
 - Fixed table top/bottom/header background color white also in dark mode.

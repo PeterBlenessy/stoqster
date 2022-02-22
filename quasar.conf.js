@@ -227,9 +227,13 @@ module.exports = configure(function (ctx) {
                     ]
                 },
                 win: {
-                    target: [
-                        'portable'
-                    ]
+                    target: {
+                        target: 'portable',
+                        arch: [
+                            'x64', 
+                            'arm64'
+                        ]
+                    }
                 },
                 publish: {
                     'provider': 'github',
