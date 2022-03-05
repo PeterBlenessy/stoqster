@@ -11,7 +11,6 @@
             :rows-per-page-options="[0]"
             :binary-state-sort="true"
             row-key="Fond_namn"
-            virtual-scroll
             :loading="loading"
             class="my-sticky-header-table"
         >

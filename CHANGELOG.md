@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [BACKLOG]
 
 - Add: selectable rows in funds holdings tables.
+- Add: info about the funds' manager
+- Add: latest price info for the funds and for the funds' holdings
 
 - Change: change from localforage -> Dexie
 - Fix: handle dB version change when app is upgraded.
@@ -37,7 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed storage backend in vuex from localStorage -> localForage
 - Changed state Vuex -> Pine
 
-## v0.5.23 - [UNRELEASED]
+## v0.5.24 - [UNRELEASED]
+
+## v0.5.23 - 2022-02-05
+- Fixed scrolling in funds component being reset to beginning after scrolling up and down a few times, by removing support for virtual scrolling.
 
 ## v0.5.22 - 2022-02-22
 - Added Ibindex API for First Venture and Nordic Asia Investment Group.
