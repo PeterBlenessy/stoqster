@@ -16,30 +16,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [BACKLOG]
 
+### [MAJOR]
+- Add info about the funds' manager
+- Add latest price info for the funds and for the funds' holdings
+- Add support for handling dB version changes when app is upgraded.
+- Add support for connecting Avanza account.
+- Add support for creating a manually uppdated portfolio.
+
+### [MINOR]
+- Change: Refactor components. (1). Create composables, abstracting getting data from dB. (2). Move fetch() operations to pine store layer.
+- Change: Downloading FI data takes too long time, and immediately loading data from dB after refresh hangs, it seems that dB is not ready.
+- Fix: there are dupplicates in the data from FI and we get 605 items when refreshing, vs 600 when loading from dB. Refactor download-import flow?
 - Add: selectable rows in funds holdings tables.
-- Add: info about the funds' manager
-- Add: latest price info for the funds and for the funds' holdings
-
-- Change: change from localforage -> Dexie
-- Fix: handle dB version change when app is upgraded.
-
-- Fix: refresh does not seem to propagate to child components on ibindex pages
-- Fix: dashboard refreshed when alarm trigger is saved and refresh success notification is shown
-- Add: Adapt number of table rows to available window size.
+- Add support for user settings and app configuration.
+- Add historical rebate/premioum to expanded row in ibindex component.
 
 - Change yarn from v1 -> v2 (https://yarnpkg.com/getting-started/migration)
 
-### [Low prio]
+### [PATCH]
 - Fix: catch and handle fetch() POST errors, e.g., Failed to load resource: the server responded with a status of 500.
-- Add: show progress dialog with steps when refreshing FI data. It takes too long. Also, immediate page load takes long time, so dB is not ready.
-- Fix: there are dupplicates in the data from FI and we get 605 items when refreshing, vs 600 when loading from dB. Refactor download-import flow?
-- Fix table heading of child component in expanded row covers parent component table heading during scrolling.
+- Fix: refresh does not seem to propagate to child components on ibindex pages
+- Fix: dashboard refreshed when alarm trigger is saved and refresh success notification is shown
+
+### [FUTURE]
+- Change: change from localforage -> Dexie
 
 ## [IN-PROGRESS]
 - Changed storage backend in vuex from localStorage -> localForage
 - Changed state Vuex -> Pine
 
-## v0.5.24 - [UNRELEASED]
+## v0.5.25 - [UNRELEASED]
+
+## v0.5.24 - 2022-03-15
+- Fixed table heading of child component in expanded row covers parent component table heading during scrolling.
+- Added filter support to fund holdings component.
 
 ## v0.5.23 - 2022-02-05
 - Fixed scrolling in funds component being reset to beginning after scrolling up and down a few times, by removing support for virtual scrolling.

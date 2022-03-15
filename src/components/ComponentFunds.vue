@@ -296,7 +296,7 @@ export default {
 }
 </style>
 
-<style lang="sass">
+<style lang="sass" scoped>
 
 .my-sticky-header-table
     /* height or max-height is important */
@@ -310,7 +310,7 @@ export default {
 
     thead tr th
         position: sticky
-        z-index: 1
+        z-index: 2
         text-transform: uppercase
     thead tr:first-child th
         top: 0

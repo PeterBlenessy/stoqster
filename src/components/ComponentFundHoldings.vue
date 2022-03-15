@@ -7,12 +7,32 @@
         :columns="columns"
         :rows="rows"
         :visible-columns="visibleColumns"
+        :filter="filter"
         row-key="index"
         :rows-per-page-options="[0]"
         :binary-state-sort="true"
         :loading="loading"
         class="my-sticky-header-table-expanded"
-    ></q-table>
+    >
+    
+        <!-- Configure top-right part of the data table component -->
+        <template v-slot:top-right>
+            <!-- Search input -->
+            <q-input
+                dense
+                debounce="300"
+                v-model="filter"
+                placeholder="Filter list"
+                style="width: 500px"
+            >
+                <template v-slot:append>
+                    <q-icon name="filter_list" />
+                </template>
+            </q-input>
+        </template>
+
+    
+    </q-table>
 </template>
 
 <script>
@@ -56,6 +76,7 @@ export default {
             rows,
             columns,
             visibleColumns,
+            filter: ref(''),
             loading
         }
     }
