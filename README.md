@@ -59,3 +59,10 @@ In case notarization fails due to `Error: Failed to upload app to Apple's notari
 ```bash
 sudo xcode-select -r
 ```
+
+### Keeping packages up to date
+```bash
+yarn outdated
+yarn upgrade
+```
+

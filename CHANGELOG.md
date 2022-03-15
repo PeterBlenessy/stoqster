@@ -45,7 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed storage backend in vuex from localStorage -> localForage
 - Changed state Vuex -> Pine
 
-## v0.5.25 - [UNRELEASED]
+## v0.5.26 - [UNRELEASED]
+
+## v0.5.25 - 2022-03-15
+- Fixed build issues due to MacOS 12.3 removing Python 2 support. Upgraded electron-builder to version 23.0.2.
 
 ## v0.5.24 - 2022-03-15
 - Fixed table heading of child component in expanded row covers parent component table heading during scrolling.
