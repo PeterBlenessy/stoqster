@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add: selectable rows in funds holdings tables.
 - Add support for user settings and app configuration.
 - Add historical rebate/premioum to expanded row in ibindex component.
+- Add support for displaying release notes in application.
 
 - Change yarn from v1 -> v2 (https://yarnpkg.com/getting-started/migration)
 
@@ -45,7 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed storage backend in vuex from localStorage -> localForage
 - Changed state Vuex -> Pine
 
-## v0.5.26 - [UNRELEASED]
+## v0.5.27 - [UNRELEASED]
+
+## v0.5.26 - 2022-03-31
+- Changed package dependencies to latest versions, especially electron to ^18.0.0 to get newer Chromium version with fix for CVE-2022-1096.
 
 ## v0.5.25 - 2022-03-15
 - Fixed build issues due to MacOS 12.3 removing Python 2 support. Upgraded electron-builder to version 23.0.2.
