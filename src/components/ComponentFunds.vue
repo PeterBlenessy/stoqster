@@ -25,7 +25,7 @@
                     style="width: 500px"
                 >
                     <template v-slot:append>
-                        <q-icon name="filter_list" />
+                        <q-icon name="mdi-filter-variant" />
                     </template>
                 </q-input>
 
@@ -34,7 +34,7 @@
                     dense
                     flat
                     round
-                    icon="refresh"
+                    icon="mdi-refresh"
                     :color="refreshColor"
                     @click="loadDataFromWeb()"
                 >
@@ -56,7 +56,7 @@
                             dense
                             options-dense
                             borderless
-                            dropdown-icon="more_vert"
+                            dropdown-icon="mdi-dots-vertical"
                             style="size: 300px"
                             v-model="visibleColumns"
                             display-value
@@ -103,7 +103,7 @@
                             flat
                             round
                             dense
-                            :icon="props.expand ? 'expand_less' : 'expand_more'"
+                            :icon="props.expand ? 'mdi-chevron-up' : 'mdi-chevron-down'"
                         >
                             <q-tooltip
                                 transition-show="scale"
@@ -136,7 +136,7 @@ import { useQuasar } from 'quasar';
 import { unzip } from 'unzipit'
 import X2JS from 'x2js'//'../libs/xml2json.js'
 import localforage from 'localforage'
-import ComponentFundHoldings from 'components/ComponentFundHoldings.vue';
+import ComponentFundHoldings from './ComponentFundHoldings.vue';
 
 export default {
     name: 'ComponentFunds',

@@ -18,8 +18,9 @@
 <script>
 import { ref, toRef, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
-import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.js';
+import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.mjs';
 import localforage from 'localforage';
+import { fetch } from "@tauri-apps/api/http";
 
 export default {
     name: 'ComponentIbindexCompanyHoldings',
@@ -46,16 +47,17 @@ export default {
         // Fetch data from ibindex using the provided api reference
         async function refreshData() {
             loading.value = true;
-            
-            fetch(requestOptions.url, requestOptions.options).then( response => {
+            fetch(requestOptions.url, requestOptions.options)
+            .then( response => {
                 if (!response.ok) {
                     return Promise.reject( `Error - fetch() status code: ${response.status}` );
                 }
-                return response.arrayBuffer();
+
+                return response.data;
             })
-            .then( buffer => {
-                let data = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
-                rows.value = data;
+            .then( data => {
+                console.log(data);
+                rows.value = [...data];
                 ibiHoldingsStore.setItem( companyCode.value, data );
                 //$q.notify({ type: 'positive', message: 'Successful refresh' });
             })
@@ -99,3 +101,4 @@ export default {
     }
 }
 </script>
+../api/ibindexAPI.jsm../api/ibindexAPI.mjs

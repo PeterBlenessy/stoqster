@@ -17,8 +17,9 @@
 <script>
 import { ref, toRef, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
-import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.js';
+import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.mjs';
 import localforage from 'localforage';
+import { fetch } from "@tauri-apps/api/http";
 
 export default {
     name: 'ComponentIbindexCompanyEvents',
@@ -49,15 +50,18 @@ export default {
             // We do not want to make a fetch() for these companies so url is set to null in ibindexAPI.js.
             if (requestOptions.url === null) return;
 
-            fetch(requestOptions.url, requestOptions.options).then( response => {
+            fetch(requestOptions.url, requestOptions.options)
+            .then( response => {
                 if (!response.ok || response.status === 500) {
                     return Promise.reject( `Error - fetch() status code: ${response.status}` );
                 }
-                return response.arrayBuffer();
+
+                return response.data;
             })
-            .then( buffer  => {
-                let data = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
-                rows.value = data;
+            .then( data => {
+                console.log(data);
+                rows.value = [...data];
+                // Store data in localforage
                 ibiEventsStore.setItem( companyCode.value, data );
                 //$q.notify({ type: 'positive', message: 'Successful refresh' });
             })
@@ -102,3 +106,4 @@ export default {
 }
 </script>
 
+../api/ibindexAPI.jsm../api/ibindexAPI.mjs

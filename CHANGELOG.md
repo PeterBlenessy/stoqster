@@ -46,7 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed storage backend in vuex from localStorage -> localForage
 - Changed state Vuex -> Pine
 
-## v0.5.27 - [UNRELEASED]
+## [UNRELEASED]
+- Migrated from Electron to Tauri.
 
 ## v0.5.26 - 2022-03-31
 - Changed package dependencies to latest versions, especially electron to ^18.0.0 to get newer Chromium version with fix for CVE-2022-1096.

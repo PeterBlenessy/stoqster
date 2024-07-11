@@ -144,7 +144,7 @@ const fundHoldings = {
     }
 };
 
-module.exports = {
+export {
     fiFunds,
     fiDownload,
     funds,

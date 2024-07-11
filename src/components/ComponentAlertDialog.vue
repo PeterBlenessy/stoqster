@@ -96,7 +96,7 @@
                 <div>
                     <q-space />
                     <!-- Cancel alert -->
-                    <q-btn flat color="grey" icon="close" v-close-popup @click="onCancelClick">
+                    <q-btn flat color="grey" icon="mdi-close" v-close-popup @click="onCancelClick">
                         <q-tooltip transition-show="scale" transition-hide="scale">{{ "Cancel" }}</q-tooltip>
                     </q-btn>
                     <!-- Save alert -->
@@ -104,7 +104,7 @@
                         v-show="hasAlert"
                         flat
                         color="negative"
-                        icon="delete_outline"
+                        icon="mdi-delete-outline"
                         v-close-popup
                         @click="onDeleteAlert()"
                     >
@@ -114,7 +114,7 @@
                         >{{ "Delete alert" }}</q-tooltip>
                     </q-btn>
                     <!-- Save alert -->
-                    <q-btn flat color="primary" icon="save" v-close-popup @click="onSaveAlert()">
+                    <q-btn flat color="primary" icon="mdi-content-save" v-close-popup @click="onSaveAlert()">
                         <q-tooltip
                             transition-show="scale"
                             transition-hide="scale"
@@ -130,7 +130,8 @@
 
 import { ref, toRefs, onMounted } from 'vue';
 import { useDialogPluginComponent } from 'quasar'
-import { useStore } from 'vuex';
+import { storeToRefs } from 'pinia';
+import { useSettingsStore } from '../stores/settings-store.js';
 
 export default {
     name: 'ComponentAlertDialog',
@@ -150,7 +151,8 @@ export default {
     ],
 
     setup(props) {
-        const store = useStore();
+        const settingsStore = useSettingsStore();
+        const { alerts } = storeToRefs(settingsStore);
 
         // We can do this since all props are required
         const { companyCode, companyName, field, fieldLabel, fieldValue } = toRefs(props);
@@ -172,15 +174,9 @@ export default {
         const alertAction = ref(['in-app']);
         const expirationDate = ref(new Date().toJSON().slice(0, 10).replace(/-/g, '/'));
 
-        // Reads the alarms from Vuex store
-        function getAlerts() {
-            return store.state.alerts;
-        }
-
         // Checks if an alert has been registered for a company
         function checkAlert() {
-            let alerts = getAlerts();
-            hasAlert.value = JSON.stringify(alerts).includes(companyCode.value);
+            hasAlert.value = alerts.value.includes(companyCode.value);
         }
 
         // Adds / updates alert in Vuex store
@@ -201,21 +197,14 @@ export default {
                 }
             };
 
-            let alerts = getAlerts() || [];
-
             // Allow only one alarm configuration per company.
             // This filter return all other alerts, i.e., removes the alarm for company if it exists.
-            alerts = alerts.filter(item => item.companyCode !== newAlert.companyCode);
-            alerts.push(newAlert);
-            store.commit('setAlerts', alerts);
+            alerts.value = alerts.value.filter(item => item.companyCode !== newAlert.companyCode);
+            alerts.value.push(newAlert);
         }
 
         // Removes an alert if it exists
-        function onDeleteAlert() {
-            let alerts = getAlerts() || [];
-            alerts = alerts.filter(item => item.companyCode !== companyCode.value); // This removes any existing alert for the company
-            store.commit('setAlerts', alerts);
-        }
+        const onDeleteAlert = () => alerts.value = alerts.value.filter(item => item.companyCode !== companyCode.value);
 
         onMounted(checkAlert);
 
@@ -226,8 +215,10 @@ export default {
             timePeriod,
             alertAction,
             expirationDate,
+
             onDeleteAlert,
             onSaveAlert,
+
             hasAlert,
             checkAlert,
 

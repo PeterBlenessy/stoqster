@@ -6,7 +6,7 @@
 
 <script>
 
-import ComponentFunds from 'components/ComponentFunds.vue'
+import ComponentFunds from '../components/ComponentFunds.vue'
 
 export default {
     name: 'PageFunds',

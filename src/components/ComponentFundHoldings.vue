@@ -26,7 +26,7 @@
                 style="width: 500px"
             >
                 <template v-slot:append>
-                    <q-icon name="filter_list" />
+                    <q-icon name="mdi-filter-variant" />
                 </template>
             </q-input>
         </template>
@@ -38,7 +38,7 @@
 <script>
 import { ref, toRef, onMounted } from 'vue';
 import { fundHoldings } from '../api/fiAPI.js';
-import localforage from 'localforage'
+import localforage from 'localforage';
 
 export default {
     name: 'ComponentFundHoldings',

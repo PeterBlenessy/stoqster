@@ -1,39 +1,20 @@
 <template>
     <div class="q-pa-sm">
-        <q-table
-            dense
-            color="primary"
-            :title="title"
-            :rows="rows"
-            :columns="columns"
-            :visible-columns="visibleColumns"
-            :filter="filter"
-            :rows-per-page-options="[0]"
-            :binary-state-sort="true"
-            row-key="product"
-            :loading="loading"
-            selection="multiple"
-            v-model:selected="selectedRows"
-            @update:selected="onUpdateSelected"
-            class="my-sticky-header-table"
-        >
+        <q-table dense color="primary" :title="title" :rows="rows" :columns="columns" :visible-columns="visibleColumns"
+            :filter="filter" :rows-per-page-options="[0]" :binary-state-sort="true" row-key="product" :loading="loading"
+            selection="multiple" v-model:selected="selectedRows" @update:selected="onUpdateSelected"
+            class="my-sticky-header-table">
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
                 <!-- Filter input -->
-                <q-input
-                    dense
-                    debounce="300"
-                    v-model="filter"
-                    placeholder="Filter list"
-                    style="width: 500px"
-                >
+                <q-input dense debounce="300" v-model="filter" placeholder="Filter list" style="width: 500px">
                     <template v-slot:append>
-                        <q-icon name="filter_list" />
+                        <q-icon name="mdi-filter-variant" />
                     </template>
                 </q-input>
 
                 <!-- Refresh data -->
-                <q-btn dense flat round icon="refresh" :color="refreshColor" @click="refreshData()">
+                <q-btn dense flat round icon="mdi-refresh" :color="refreshColor" @click="refreshData()">
                     <q-tooltip transition-show="scale" transition-hide="scale">{{ "Refresh data" }}</q-tooltip>
                 </q-btn>
             </template>
@@ -47,20 +28,9 @@
 
                     <!-- Column selection  -->
                     <q-th auto-width>
-                        <q-select
-                            multiple
-                            dense
-                            options-dense
-                            borderless
-                            dropdown-icon="more_vert"
-                            style="size: 300px"
-                            v-model="visibleColumns"
-                            display-value
-                            emit-value
-                            map-options
-                            :options="columns"
-                            option-value="name"
-                        >
+                        <q-select multiple dense options-dense borderless dropdown-icon="mdi-dots-vertical"
+                            style="size: 300px" v-model="visibleColumns" display-value emit-value map-options
+                            :options="columns" option-value="name">
                             <template v-slot:option="{ itemProps, opt, selected, toggleOption }">
                                 <q-item v-bind="itemProps" dense>
                                     <q-item-section>
@@ -68,18 +38,13 @@
                                     </q-item-section>
 
                                     <q-item-section side>
-                                        <q-toggle
-                                            size="xs"
-                                            :model-value="selected"
-                                            @update:model-value="toggleOption(opt)"
-                                        />
+                                        <q-toggle size="xs" :model-value="selected"
+                                            @update:model-value="toggleOption(opt)" />
                                     </q-item-section>
                                 </q-item>
                             </template>
-                            <q-tooltip
-                                transition-show="scale"
-                                transition-hide="scale"
-                            >{{ "Show/hide columns" }}</q-tooltip>
+                            <q-tooltip transition-show="scale" transition-hide="scale">{{ "Show/hide columns"
+                                }}</q-tooltip>
                         </q-select>
                     </q-th>
                 </q-tr>
@@ -93,32 +58,19 @@
                     <!-- Action buttons -->
                     <q-td auto-width>
                         <!-- Add to watchlist / dashboard -->
-                        <q-toggle
-                            size="sm"
-                            dense
-                            v-model="props.selected"
-                            checked-icon="visibility"
-                            unchecked-icon="visibility_off"
-                        >
-                            <q-tooltip
-                                transition-show="scale"
-                                transition-hide="scale"
-                            >{{ props.selected ? "Remove from dashboard" : "Add to dashboard" }}</q-tooltip>
+                        <q-toggle size="sm" dense v-model="props.selected" checked-icon="mdi-eye"
+                            unchecked-icon="mdi-eye-off">
+                            <q-tooltip transition-show="scale" transition-hide="scale">
+                                {{ props.selected ? "Remove fromdashboard" : "Add to dashboard" }}
+                            </q-tooltip>
                         </q-toggle>
 
                         <!-- Expand more details -->
-                        <q-btn
-                            size="sm"
-                            color="primary"
-                            flat
-                            round
-                            dense
-                            :icon="props.expand ? 'expand_less' : 'expand_more'"
-                        >
-                            <q-tooltip
-                                transition-show="scale"
-                                transition-hide="scale"
-                            >{{ "Show more info sbout " + props.row.productName }}</q-tooltip>
+                        <q-btn size="sm" color="primary" flat round dense
+                            :icon="props.expand ? 'mdi-chevron-up' : 'mdi-chevron-down'">
+                            <q-tooltip transition-show="scale" transition-hide="scale">
+                                {{ "Show more info sbout " + props.row.productName }}
+                            </q-tooltip>
                         </q-btn>
                     </q-td>
                 </q-tr>
@@ -130,20 +82,16 @@
                             <div class="col-6">
                                 <q-card>
                                     <q-card-section>
-                                        <ComponentIbindexCompanyHoldings
-                                            :company="props.row.product"
-                                            :key="props.row.product"
-                                        />
+                                        <ComponentIbindexCompanyHoldings :company="props.row.product"
+                                            :key="props.row.product" />
                                     </q-card-section>
                                 </q-card>
                             </div>
                             <div class="col-3">
                                 <q-card>
                                     <q-card-section>
-                                        <ComponentIbindexCompanyEvents
-                                            :company="props.row.product"
-                                            :key="props.row.product"
-                                        />
+                                        <ComponentIbindexCompanyEvents :company="props.row.product"
+                                            :key="props.row.product" />
                                     </q-card-section>
                                 </q-card>
                             </div>
@@ -157,13 +105,15 @@
 
 <script>
 
-import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.js';
-import ComponentIbindexCompanyHoldings from 'src/components/ComponentIbindexCompanyHoldings.vue';
-import ComponentIbindexCompanyEvents from 'src/components/ComponentIbindexCompanyEvents.vue';
+import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.mjs';
+import ComponentIbindexCompanyHoldings from './ComponentIbindexCompanyHoldings.vue';
+import ComponentIbindexCompanyEvents from './ComponentIbindexCompanyEvents.vue';
 import { ref, toRef, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
-import { useStore } from 'vuex';
+import { storeToRefs } from 'pinia';
+import { useSettingsStore } from '../stores/settings-store.js';
 import localforage from 'localforage';
+import { fetch } from "@tauri-apps/api/http";
 
 export default {
     name: 'ComponentIbindex',
@@ -177,7 +127,8 @@ export default {
 
     setup(props) {
         const $q = useQuasar();
-        const store = useStore();
+        const settingsStore = useSettingsStore();
+        const { watchlist } = storeToRefs(settingsStore);
         const api = toRef(props, 'api');
         const title = ref(ibindex[api.value].title);
         const visibleColumns = ref(ibindex[api.value].visibleColumns);
@@ -193,15 +144,18 @@ export default {
         // Fetch data from ibindex using the provided api reference
         async function refreshData() {
             loading.value = true;
-            fetch(requestOptions.url, requestOptions.options).then(response => {
-                if (!response.ok) {
-                    return Promise.reject(`Error - fetch() status code: ${response.status}`);
-                }
-                return response.arrayBuffer();
-            })
-                .then(buffer => {
-                    let data = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
-                    rows.value = data;
+            fetch(requestOptions.url, requestOptions.options)
+                .then(response => {
+                    if (!response.ok) {
+                        return Promise.reject(`Error - fetch() status code: ${response.status}`);
+                    }
+
+                    return response.data;
+                })
+                .then(data => {
+                    console.log(data);
+                    rows.value = [...data];
+                    // Store new data
                     data.forEach(item => {
                         ibiStore.setItem(item.product, item);
                     });
@@ -221,12 +175,12 @@ export default {
 
         // Save the selected rows to Vuex state store. These rows represent the watchlist and will also be saved to the localStorage.
         function onUpdateSelected(newSelection) {
-            store.commit('setWatchlist', newSelection);
+            watchlist.value = newSelection;
         }
 
         // Restore selected rows from Vuex state store. These rows represent the watchlist.
         function restoreSelectedRows() {
-            selectedRows.value = store.state.watchlist;
+            selectedRows.value = watchlist.value;
         }
 
         // Load data. Try local storage first and online download if that fails.
@@ -276,10 +230,11 @@ export default {
 
 </script>
 
-<style >
+<style>
 .q-table tbody td:after {
     background: rgba(255, 255, 255, 0);
 }
+
 .q-table--dark tbody td:after {
     background: rgba(0, 0, 0, 0);
 }
@@ -287,6 +242,7 @@ export default {
 .q-table tbody td:before {
     background: rgba(0, 0, 0, 0.04);
 }
+
 .q-table--dark tbody td:before {
     background: rgba(255, 255, 255, 0.04);
 }
@@ -325,3 +281,4 @@ export default {
 
 </style>
 
+../api/ibindexAPI.jsm../api/ibindexAPI.mjs

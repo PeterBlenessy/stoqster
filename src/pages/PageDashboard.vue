@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import ComponentDashboard from 'src/components/ComponentDashboard.vue'
+import ComponentDashboard from '../components/ComponentDashboard.vue'
 
 import { defineComponent } from 'vue';
 

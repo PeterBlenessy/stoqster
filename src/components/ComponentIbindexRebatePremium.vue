@@ -21,11 +21,13 @@
 
 <script>
 
-import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.js';
+import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.mjs';
 import { ref, toRef, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
-import { useStore } from 'vuex';
+import { storeToRefs } from 'pinia';
+import { useSettingsStore } from '../stores/settings-store.js';
 import localforage from 'localforage';
+import { fetch } from "@tauri-apps/api/http";
 
 export default {
     name: 'ComponentIbindexRebatePremium',
@@ -37,7 +39,8 @@ export default {
 
     setup(props) {
         const $q = useQuasar();
-        const store = useStore();
+        const settingsStore = useSettingsStore();
+        const { alerts, refreshInterval } = storeToRefs(settingsStore);
 
         const api = toRef(props, 'api');
         const companyCode = toRef(props, 'company');
@@ -53,20 +56,22 @@ export default {
         // Fetch data from ibindex using the provided api reference
         async function refreshData() {
             loading.value = true;
-
-            fetch(requestOptions.url, requestOptions.options).then( response => {
+            fetch(requestOptions.url, requestOptions.options)
+            .then( response => {
                 if (!response.ok) {
                     return Promise.reject( `Error - fetch() status code: ${response.status}` );
                 }
-                return response.arrayBuffer();
+
+                return response.data;
             })
-            .then( buffer => {
-                let data = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
-                rows.value = data;
+            .then( data => {
+                console.log(data);
+                rows.value = [...data];
                 // Store new rebate/premium values
                 ibiRebatePremiumStore.setItem( companyCode.value, data );
             })
             .catch( error => {
+                console.log(error);
                 rows.value = ibiRebatePremiumStore.getItem(companyCode.value);
                 $q.notify({
                     type: 'negative',
@@ -78,10 +83,7 @@ export default {
         }
 
         // Checks if an alert has been registered for a company
-        function hasAlert(companyCode) {
-            let alerts = store.state.alerts;
-            return JSON.stringify(alerts).includes(companyCode);
-        }
+        const hasAlert = (companyCode) => alerts.value.includes(companyCode);
 
         function checkAlertTriggers(current) {
 
@@ -133,7 +135,7 @@ export default {
 
             setInterval( () => {
                 refreshData();
-            }, store.state.refreshInterval);
+            }, refreshInterval.value);
         });
 
         return {
@@ -155,4 +157,4 @@ export default {
 .table__top {
     justify-content: center;
 }
-</style>
+</style>../api/ibindexAPI.jsm

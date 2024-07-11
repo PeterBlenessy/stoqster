@@ -3,31 +3,20 @@
         <q-header elevated>
             <!--  Top toolbar -->
             <q-toolbar>
-                <q-btn flat dense round icon="menu" aria-label="Menu" @click="drawer = !drawer">
-                    <q-tooltip
-                        transition-show="scale"
-                        transition-hide="scale"
-                    >{{ "Show/hide drawer" }}</q-tooltip>
+                <q-btn flat dense round icon="mdi-menu" aria-label="Menu" @click="drawer = !drawer">
+                    <q-tooltip transition-show="scale" transition-hide="scale">{{ "Show/hide drawer" }}</q-tooltip>
                 </q-btn>
                 <q-toolbar-title>Stoqster</q-toolbar-title>
 
                 <!-- Toggle dark / light mode -->
-                <q-btn flat round icon="invert_colors" @click="toggleDarkMode">
-                    <q-tooltip
-                        transition-show="scale"
-                        transition-hide="scale"
-                    >{{ darkMode ? "Light mode" : "Dark mode" }}</q-tooltip>
+                <q-btn flat round icon="mdi-invert-colors" @click="toggleDarkMode">
+                    <q-tooltip transition-show="scale" transition-hide="scale">{{ darkMode ? "Light mode" : "Dark mode"
+                        }}</q-tooltip>
                 </q-btn>
 
                 <!-- Populate the toolbar with menu item icons an actions -->
-                <q-btn
-                    flat
-                    round
-                    v-for="item in menuItems"
-                    :key="item.title"
-                    :icon="item.icon"
-                    @click="setRouterPath({ path: item.path })"
-                >
+                <q-btn flat round v-for="item in menuItems" :key="item.title" :icon="item.icon"
+                    @click="setRouterPath({ path: item.path })">
                     <q-tooltip transition-show="scale" transition-hide="scale">{{ item.caption }}</q-tooltip>
                 </q-btn>
             </q-toolbar>
@@ -38,14 +27,8 @@
             <q-list>
                 <q-item-label header>Application Links</q-item-label>
 
-                <q-item
-                    clickable
-                    v-ripple
-                    v-for="item in menuItems"
-                    :key="item.title"
-                    :icon="item.icon"
-                    @click="setRouterPath({ path: item.path })"
-                >
+                <q-item clickable v-ripple v-for="item in menuItems" :key="item.title" :icon="item.icon"
+                    @click="setRouterPath({ path: item.path })">
                     <q-item-section avatar>
                         <q-icon :name="item.icon" />
                     </q-item-section>
@@ -70,39 +53,41 @@ const links = [
     {
         title: 'Dashboard ',
         caption: 'Dashboard',
-        icon: 'apps',
+        icon: 'mdi-apps',
         path: '/'
     },
     {
         title: 'Ibindex',
         caption: 'Ibindex companies',
         path: '/ibindex',
-        icon: 'list'
+        icon: 'mdi-format-list-bulleted'
     },
     {
         title: 'Ibindex - weights',
         caption: 'Market and index weights',
         path: '/ibindex-weights',
-        icon: 'pie_chart'
+        icon: 'mdi-chart-pie'
     },
     {
         title: 'Funds',
         caption: 'Funds',
         path: '/funds',
-        icon: 'business_center'
+        icon: 'mdi-briefcase-variant'
     },
     {
         title: 'Info',
         caption: 'Application information',
         path: '/info',
-        icon: 'info'
+        icon: 'mdi-information'
     }
 ]
 
-import { onMounted, computed, ref } from 'vue';
-import { useStore } from 'vuex';
+import { onMounted, watch, ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useSettingsStore } from '../stores/settings-store.js';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router'
+import { invoke } from '@tauri-apps/api';
 
 export default {
     name: 'MainLayout',
@@ -111,33 +96,25 @@ export default {
 
     setup() {
         const $q = useQuasar();
-        const store = useStore();
+        const settingsStore = useSettingsStore();
+        const { darkMode, routerPath } = storeToRefs(settingsStore);
         const router = useRouter();
-        const darkMode = computed(() => store.state.darkMode);
         const drawer = ref(false);
 
-        // Sets Quasar dark mode plugin value based on stored mode.
-        // Used at app start.
-        function setDarkMode() {
-            $q.dark.set(darkMode.value)
-        }
+        // Show the main window when all web content has loaded.
+        // This fixes the issue of flickering when the app starts and is in darkMode.
+        onMounted(() => invoke('show_main_window'));
 
-        // Make sure to set the store dark mode for app
-        onMounted(setDarkMode);
+        watch(darkMode, () => $q.dark.set(darkMode.value));
+        watch(routerPath, () => router.replace(routerPath.value));
 
         return {
             menuItems: links,
             darkMode,
             drawer,
 
-            toggleDarkMode: () => {
-                store.commit('toggleDarkMode');
-                $q.dark.toggle();
-            },
-            setRouterPath: (newPath) => {
-                store.commit('setRouterPath', newPath);
-                router.replace(newPath);
-            }
+            toggleDarkMode: () => darkMode.value = !darkMode.value,
+            setRouterPath: (newPath) => routerPath.value = newPath
         }
     }
 }
