@@ -153,7 +153,6 @@ export default {
                     return response.data;
                 })
                 .then(data => {
-                    console.log(data);
                     rows.value = [...data];
                     // Store new data
                     data.forEach(item => ibiStore.setItem(item.product, item));
@@ -186,19 +185,20 @@ export default {
             loading.value = true;
 
             let data = [];
-            ibiStore.iterate((value, key, iterationNumber) => data.push(value))
-                .then(() => {
-                    if (data.length === 0) {
-                        return refreshData();
-                    }
-                    rows.value = data;
-                    // Make sure we have a unique index for each row
-                    rows.value.forEach((row, index) => {
-                        rows.value.index = index;
-                    });
-                })
-                .catch(error => console.log(error))
-                .finally(() => loading.value = false);
+            ibiStore.iterate((value, key, iterationNumber) => {
+                data.push(value);
+            }).then(() => {
+                if (data.length === 0) {
+                    return refreshData();
+                }
+
+                rows.value = [...data];
+                // Make sure we have a unique index for each row
+                rows.value.forEach((row, index) => {
+                    rows.value.index = index;
+                });
+            }).catch(error => console.log(error))
+            .finally(() => loading.value = false);
         }
 
         onMounted(() => {

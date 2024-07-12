@@ -105,6 +105,13 @@ export default {
         // This fixes the issue of flickering when the app starts and is in darkMode.
         onMounted(() => invoke('show_main_window'));
 
+        // Restore application states from last session
+        onMounted(() => {
+            $q.dark.set(darkMode.value);
+            router.replace(routerPath.value);
+        });
+
+        // Watch for application state changes
         watch(darkMode, () => $q.dark.set(darkMode.value));
         watch(routerPath, () => router.replace(routerPath.value));
 

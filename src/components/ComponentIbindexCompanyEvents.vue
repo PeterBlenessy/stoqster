@@ -79,18 +79,18 @@ export default {
         async function loadData() {
             loading.value = true;
             ibiEventsStore.getItem(companyCode.value)
-                .then( data => {
-                    if (data === null) {
-                        return refreshData();
-                    }
-                    rows.value = data;
-                    // Make sure we have a unique index for each row
-                    rows.value.forEach((row, index) => {
-                        rows.value.index = index;
-                    });
-                })
-                .catch( error => console.log(error) )
-                .finally( () => loading.value = false );
+            .then( data => {
+                if (data === null) {
+                    return refreshData();
+                }
+                rows.value = data;
+                // Make sure we have a unique index for each row
+                rows.value.forEach((row, index) => {
+                    rows.value.index = index;
+                });
+            })
+            .catch( error => console.log(error) )
+            .finally(() => loading.value = false );
         }
 
         onMounted( () => loadData() );

@@ -177,7 +177,7 @@ const ibindex = {
         },
     },
 
-    // Holdings of an IB company
+    // IB company holdings
     getHoldings: {
         title: 'Company holdings',
         url: 'https://ibindex.se/ibi//company/getHoldings.req',
@@ -243,28 +243,10 @@ const ibindex = {
     // -----------------------------
     getSpecialURL: {
         getHoldings: {
-            'AJA B': 'https://ibindex.se/ibi//aja/getHoldings.req',
-            'FIRST B': 'https://ibindex.se/ibi//firstventure/getHoldings.req',
-            'FLAT B': 'https://ibindex.se/ibi//flatcapital/getHoldings.req',
-            'NAIG B': 'https://ibindex.se/ibi//nordicasia/getHoldings.req',
-            'SPILTAN': 'https://ibindex.se/ibi//spiltan/getHoldings.req',
-            'VEFL SDB': 'https://ibindex.se/ibi//vef/getHoldings.req'
         },
         getRebatePremiums: {
-            'AJA B': 'https://ibindex.se/ibi//aja/getRebatePremiums.req',
-            'FIRST B': 'https://ibindex.se/ibi//firstventure/getRebatePremiums.req',
-            'FLAT B': 'https://ibindex.se/ibi//flatcapital/getRebatePremiums.req',
-            'NAIG B': 'https://ibindex.se/ibi//nordicasia/getRebatePremiums.req',
-            'SPILTAN': 'https://ibindex.se/ibi//spiltan/getRebatePremiums.req',
-            'VEFL SDB': 'https://ibindex.se/ibi//vef/getRebatePremiums.req'
         },
         getEvents: {
-            'AJA B': null, //'https://ibindex.se/ibi//aja/getEvents.req',
-            'FIRST B': null, //'https://ibindex.se/ibi//firstventure/getEvents.req',
-            'FLAT B': null, //'https://ibindex.se/ibi//flatcapital/getEvents.req',
-            'NAIG B': null, //'https://ibindex.se/ibi//nordicasia/getEvents.req',
-            'SPILTAN': null, //'https://ibindex.se/ibi//spiltan/getEvents.req',
-            'VEFL SDB': null //'https://ibindex.se/ibi//vef/getEvents.req'
         }
     }
 }

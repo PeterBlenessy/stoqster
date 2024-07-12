@@ -65,8 +65,8 @@ export default {
                     rows.value.index = index;
                 });
             })
-                .catch(error => console.log(error))
-                .finally(() => loading.value = false);
+            .catch(error => console.log(error))
+            .finally(() => loading.value = false);
         }
 
         onMounted(loadData());

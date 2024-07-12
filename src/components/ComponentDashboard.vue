@@ -1,5 +1,5 @@
 <template>
-    <div class="q-pa-sm col-4">
+    <div class="q-pa-sm ">
         <q-table :title="title" dense :rows="rows" :columns="columns" row-key="product" :rows-per-page-options="[0]"
             :filter="filter" :loading="loading" grid color="primary" v-model:expanded="expandedCards">
             <template v-slot:top-right>
@@ -11,7 +11,7 @@
                 </q-input>
 
                 <!-- Refresh button -->
-                <q-btn flat round dense class="q-ml-md" icon="mdi-refresh" :color="refreshColor" @click="refreshData()">
+                <q-btn flat round dense icon="mdi-refresh" :color="refreshColor" @click="refreshData()">
                     <q-tooltip transition-show="scale" transition-hide="scale">{{ "Refresh data" }}</q-tooltip>
                 </q-btn>
             </template>
