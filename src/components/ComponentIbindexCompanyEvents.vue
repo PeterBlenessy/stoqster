@@ -51,45 +51,46 @@ export default {
             if (requestOptions.url === null) return;
 
             fetch(requestOptions.url, requestOptions.options)
-            .then( response => {
-                if (!response.ok || response.status === 500) {
-                    return Promise.reject( `Error - fetch() status code: ${response.status}` );
-                }
+                .then( response => {
+                    if (!response.ok || response.status === 500) {
+                        return Promise.reject( `Error - fetch() status code: ${response.status}` );
+                    }
 
-                return response.data;
-            })
-            .then( data => {
-                console.log(data);
-                rows.value = [...data];
-                // Store data in localforage
-                ibiEventsStore.setItem( companyCode.value, data );
-                //$q.notify({ type: 'positive', message: 'Successful refresh' });
-            })
-            .catch( error  => {
-                $q.notify({
-                    type: 'warning',
-                    message: 'Something went wrong during refresh',
-                    caption: title + " info not available for " + companyCode.value
-                });
-                console.log(error);
-            })
-            .finally( () => loading.value = false );
+                    return response.data;
+                })
+                .then( data => {
+                    console.log(data);
+                    rows.value = [...data];
+                    // Store data in localforage
+                    ibiEventsStore.setItem( companyCode.value, data );
+                    //$q.notify({ type: 'positive', message: 'Successful refresh' });
+                })
+                .catch( error  => {
+                    $q.notify({
+                        type: 'warning',
+                        message: 'Something went wrong during refresh',
+                        caption: title + " info not available for " + companyCode.value
+                    });
+                    console.log(error);
+                })
+                .finally( () => loading.value = false );
         }
 
         async function loadData() {
             loading.value = true;
-            ibiEventsStore.getItem(companyCode.value).then( data => {
-                if (data === null) {
-                    return refreshData();
-                }
-                rows.value = data;
-                // Make sure we have a unique index for each row
-                rows.value.forEach((row, index) => {
-                    rows.value.index = index;
-                });
-            })
-            .catch( error => console.log(error) )
-            .finally( () => loading.value = false );
+            ibiEventsStore.getItem(companyCode.value)
+                .then( data => {
+                    if (data === null) {
+                        return refreshData();
+                    }
+                    rows.value = data;
+                    // Make sure we have a unique index for each row
+                    rows.value.forEach((row, index) => {
+                        rows.value.index = index;
+                    });
+                })
+                .catch( error => console.log(error) )
+                .finally( () => loading.value = false );
         }
 
         onMounted( () => loadData() );

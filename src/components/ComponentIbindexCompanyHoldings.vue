@@ -56,37 +56,36 @@ export default {
                 return response.data;
             })
             .then( data => {
-                console.log(data);
                 rows.value = [...data];
                 ibiHoldingsStore.setItem( companyCode.value, data );
                 //$q.notify({ type: 'positive', message: 'Successful refresh' });
             })
             .catch( error => {
-                // TODO: rows.value = load data from dB
+                console.log(error);
                 $q.notify({
                     type: 'warning',
                     message: 'Something went wrong during refresh',
                     caption: title + ' loaded from local storage for ' + companyCode.value
                 });
-                console.log(error);
             })
             .finally( () => loading.value = false );
         }
 
         async function loadData() {
             loading.value = true;
-            ibiHoldingsStore.getItem(companyCode.value).then( data => {
-                if (data === null) {
-                    return refreshData();
-                }
-                rows.value = data;
-                // Make sure we have a unique index for each row
-                rows.value.forEach((row, index) => {
-                    rows.value.index = index;
-                });
-            })
-            .catch( error => console.log(error) )
-            .finally( () => loading.value = false );
+            ibiHoldingsStore.getItem(companyCode.value)
+                .then( data => {
+                    if (data === null) {
+                        return refreshData();
+                    }
+                    rows.value = data;
+                    // Make sure we have a unique index for each row
+                    rows.value.forEach((row, index) => {
+                        rows.value.index = index;
+                    });
+                })
+                .catch( error => console.log(error) )
+                .finally( () => loading.value = false );
         }
 
         onMounted( () => loadData() );

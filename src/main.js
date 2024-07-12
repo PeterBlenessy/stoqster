@@ -59,9 +59,7 @@ app.use(Quasar, {
     config: {
         dark: 'auto',
         notify: {},
-        brand: {
-            primary: '#ff6f00'
-        }
+        brand: {}
     },
     iconSet: quasarIconSet,
     extras: [

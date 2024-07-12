@@ -137,6 +137,7 @@ import { unzip } from 'unzipit'
 import X2JS from 'x2js'//'../libs/xml2json.js'
 import localforage from 'localforage'
 import ComponentFundHoldings from './ComponentFundHoldings.vue';
+import { fetch } from "@tauri-apps/api/http";
 
 export default {
     name: 'ComponentFunds',
@@ -217,7 +218,8 @@ export default {
                 if (!response.ok) {
                     return Promise.reject(`Error - fetch() status code: ${response.status}`);
                 }
-                let text = await response.text();
+                console.log(response);
+                let text = response.data;
                 let parser = new DOMParser();
                 let doc = parser.parseFromString(text, "text/html");
                 let table = doc.getElementsByTagName('table')[0];

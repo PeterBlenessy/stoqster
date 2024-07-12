@@ -1,3 +1,5 @@
+import {Body, ResponseType} from "@tauri-apps/api/http";
+
 // Get color based on value being negative or positive
 const setStyle = (number, ifNegative='red', ifPositive='green') => {
     if (number != 0) {
@@ -29,7 +31,8 @@ const fiFunds = {
     url: baseUrl + '/sv/vara-register/fondinnehav-per-kvartal/',
     options: {
         method: 'get',
-        mode: 'cors'
+        mode: 'cors',
+        responseType: ResponseType.Text
     }
 };
 
@@ -39,6 +42,7 @@ const fiDownload = {
     options: {
         method: 'get',
         mode: 'no-cors',
+        responseType: ResponseType.Binary,
         responseType: 'arraybuffer',
         headers: { 
             'Accept': 'application/zip', 

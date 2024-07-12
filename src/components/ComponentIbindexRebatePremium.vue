@@ -57,29 +57,39 @@ export default {
         async function refreshData() {
             loading.value = true;
             fetch(requestOptions.url, requestOptions.options)
-            .then( response => {
-                if (!response.ok) {
-                    return Promise.reject( `Error - fetch() status code: ${response.status}` );
-                }
+                .then( response => {
+                    if (!response.ok) {
+                        return Promise.reject( `Error - fetch() status code: ${response.status}` );
+                    }
 
-                return response.data;
-            })
-            .then( data => {
-                console.log(data);
-                rows.value = [...data];
-                // Store new rebate/premium values
-                ibiRebatePremiumStore.setItem( companyCode.value, data );
-            })
-            .catch( error => {
-                console.log(error);
-                rows.value = ibiRebatePremiumStore.getItem(companyCode.value);
-                $q.notify({
-                    type: 'negative',
-                    message: 'Something went wrong during refresh',
-                    caption: 'Showing data from last successful refresh of ' + title
-                });
-            })
-            .finally( () => loading.value = false );
+                    return response.data;
+                })
+                .then( data => {
+                    rows.value = [...data];
+                    // Store new rebate/premium values
+                    ibiRebatePremiumStore.setItem( companyCode.value, data );
+                })
+                .catch( error => {
+                    console.log(error);
+                    $q.notify({
+                        type: 'negative',
+                        message: 'Something went wrong during refresh',
+                        caption: 'Showing data from last successful refresh of ' + title
+                    });
+
+                    // Load data from local storage
+                    ibiRebatePremiumStore.getItem(companyCode.value)
+                        .then( data => rows.value = [...data])
+                        .catch( () => {
+                            console.log('Error - could not load data from local storage');
+                            $q.notify({
+                                type: 'negative',
+                                message: 'Something went wrong during refresh',
+                                caption: 'Could not load data from local storage ' + title
+                            });
+                        });
+                })
+                .finally( () => loading.value = false );
         }
 
         // Checks if an alert has been registered for a company

@@ -114,38 +114,36 @@ export default {
             let visibleRows = [];
 
             fetch(requestOptions.url, requestOptions.options)
-                .then(response => {
-                    if (!response.ok) {
-                        return Promise.reject(`Error - fetch() status code: ${response.status}`);
-                    }
+            .then(response => {
+                if (!response.ok) {
+                    return Promise.reject(`Error - fetch() status code: ${response.status}`);
+                }
 
-                    return response.data;
-                })
-                .then(data => {
-                    console.log(data);
-                    rows.value = [...data];
-
-                    //         rows.value = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
-                    if (watchlist.value !== null) {
-                        Object.entries(watchlist.value).forEach(([key, value]) => {
-                            visibleRows.push(value.product);
-                        });
-                        rows.value = rows.value.filter(item => visibleRows.includes(item.product));
-
-                        watchlist.value = rows.value; // Store current values in watchlist
-                        refreshColor.value = 'primary';
-                        $q.notify({ type: 'positive', message: 'Successful refresh' });
-                    }
-                }).catch(error => {
-                    console.log(error);
-                    rows.value = watchlist; // Show the latest values in case we have a network error 
-                    refreshColor.value = 'negative';
-                    $q.notify({
-                        type: 'negative',
-                        message: 'Something went wrong during refresh',
-                        caption: 'Showing data from last successful refresh of ' + title
+                return response.data;
+            })
+            .then(data => {
+                rows.value = [...data];
+                // Filter out rows that are not in the watchlist
+                if (watchlist.value !== null) {
+                    Object.entries(watchlist.value).forEach(([key, value]) => {
+                        visibleRows.push(value.product);
                     });
-                }).finally(() => loading.value = false);
+                    rows.value = rows.value.filter(item => visibleRows.includes(item.product));
+
+                    watchlist.value = rows.value; // Store current values in watchlist
+                    refreshColor.value = 'primary';
+                    $q.notify({ type: 'positive', message: 'Successful refresh' });
+                }
+            }).catch(error => {
+                console.log(error);
+                rows.value = watchlist.value; // Show the latest values in case we have a network error 
+                refreshColor.value = 'negative';
+                $q.notify({
+                    type: 'negative',
+                    message: 'Something went wrong during refresh',
+                    caption: 'Showing data from last successful refresh of ' + title
+                });
+            }).finally(() => loading.value = false);
         }
 
         // Updates the watchlist in Pinia state store. The state is also stored in localStorage.

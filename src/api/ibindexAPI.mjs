@@ -1,6 +1,5 @@
 import {Body, ResponseType} from "@tauri-apps/api/http";
 
-
 // Set color based on value being negative or positive
 const setStyle = (number, ifNegative = 'red', ifPositive = 'green') => {
     if (number != 0) {

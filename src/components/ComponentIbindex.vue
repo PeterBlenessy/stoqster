@@ -156,9 +156,7 @@ export default {
                     console.log(data);
                     rows.value = [...data];
                     // Store new data
-                    data.forEach(item => {
-                        ibiStore.setItem(item.product, item);
-                    });
+                    data.forEach(item => ibiStore.setItem(item.product, item));
 
                     refreshColor.value = 'primary';
                     $q.notify({ type: 'positive', message: 'Successful refresh' });
@@ -188,14 +186,12 @@ export default {
             loading.value = true;
 
             let data = [];
-            ibiStore.iterate((value, key, iterationNumber) => {
-                data.push(value);
-            })
+            ibiStore.iterate((value, key, iterationNumber) => data.push(value))
                 .then(() => {
                     if (data.length === 0) {
                         return refreshData();
                     }
-                    rows.value = data
+                    rows.value = data;
                     // Make sure we have a unique index for each row
                     rows.value.forEach((row, index) => {
                         rows.value.index = index;
