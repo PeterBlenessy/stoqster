@@ -59,17 +59,23 @@ export default {
         async function loadData() {
             loading.value = true;
             fundHoldingsStore.getItem(fundName.value).then(holdings => {
-                rows.value = holdings;
-                // Make sure we have a unique index for each row
-                rows.value.forEach((row, index) => {
-                    rows.value.index = index;
-                });
+                if (holdings === undefined || holdings === null || holdings === '') {
+                    console.warn("No holdings for: ", fundName.value);
+                } else {
+                    rows.value = holdings;
+                    // Make sure we have a unique index for each row
+                    rows.value.forEach((row, index) => {
+                        rows.value.index = index;
+                    });
+                }
             })
             .catch(error => console.log(error))
             .finally(() => loading.value = false);
         }
 
-        onMounted(loadData());
+        onMounted(() => {
+            loadData();
+        });
 
         return {
             title,
