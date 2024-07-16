@@ -57,20 +57,24 @@ export default {
         const fundHoldingsStore = localforage.createInstance({ name: 'stoqster', storeName: fundHoldings.localForageConfig.storeName });
 
         async function loadData() {
+            console.time(`loadHoldingsFromDB(): ${fundName.value}`);
             loading.value = true;
             fundHoldingsStore.getItem(fundName.value).then(holdings => {
                 if (holdings === undefined || holdings === null || holdings === '') {
-                    console.warn("No holdings for: ", fundName.value);
+                    console.error(`No holdings for: ${fundName.value}. Should have skipped import!`);
                 } else {
                     rows.value = holdings;
-                    // Make sure we have a unique index for each row
+                    // Make sure we have a unique index for each row in the table
                     rows.value.forEach((row, index) => {
                         rows.value.index = index;
                     });
                 }
             })
             .catch(error => console.log(error))
-            .finally(() => loading.value = false);
+            .finally(() => {
+                loading.value = false;
+                console.timeEnd(`loadHoldingsFromDB(): ${fundName.value}`);
+            });
         }
 
         onMounted(() => {

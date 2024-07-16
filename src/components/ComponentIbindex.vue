@@ -1,9 +1,10 @@
 <template>
     <div class="q-pa-sm">
-        <q-table dense color="primary" :title="title" :rows="rows" :columns="columns" :visible-columns="visibleColumns"
-            :filter="filter" :rows-per-page-options="[0]" :binary-state-sort="true" row-key="product" :loading="loading"
+        <q-table dense color="primary" class="my-sticky-header-table" row-key="product" :loading="loading"
+            :title="title" :rows="rows" :columns="columns" :visible-columns="visibleColumns"
+            :filter="filter" :rows-per-page-options="[0]" :binary-state-sort="true" 
             selection="multiple" v-model:selected="selectedRows" @update:selected="onUpdateSelected"
-            class="my-sticky-header-table">
+        >
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
                 <!-- Filter input -->
@@ -38,13 +39,13 @@
                                     </q-item-section>
 
                                     <q-item-section side>
-                                        <q-toggle size="xs" :model-value="selected"
-                                            @update:model-value="toggleOption(opt)" />
+                                        <q-toggle size="xs" :model-value="selected" @update:model-value="toggleOption(opt)" />
                                     </q-item-section>
                                 </q-item>
                             </template>
-                            <q-tooltip transition-show="scale" transition-hide="scale">{{ "Show/hide columns"
-                                }}</q-tooltip>
+                            <q-tooltip transition-show="scale" transition-hide="scale">
+                                {{ "Show/hide columns"}}
+                            </q-tooltip>
                         </q-select>
                     </q-th>
                 </q-tr>
@@ -69,7 +70,7 @@
                         <q-btn size="sm" color="primary" flat round dense
                             :icon="props.expand ? 'mdi-chevron-up' : 'mdi-chevron-down'">
                             <q-tooltip transition-show="scale" transition-hide="scale">
-                                {{ "Show more info sbout " + props.row.productName }}
+                                {{ "Show more info about " + props.row.productName }}
                             </q-tooltip>
                         </q-btn>
                     </q-td>

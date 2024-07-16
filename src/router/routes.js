@@ -7,7 +7,8 @@ const routes = [
       { path: '', component: () => import('../pages/PageDashboard.vue') },
       { path: 'ibindex', component: () => import('../pages/PageIbindex.vue') },
       { path: 'ibindex-weights', component: () => import('../pages/PageIbindexWeights.vue') },
-      { path: 'funds', component: () => import('../pages/PageFunds.vue') }
+      { path: 'funds', component: () => import('../pages/PageFunds.vue') },
+      { path: 'info', component: () => import('../pages/PageDashboard.vue') }
     ]
   },
 
@@ -15,7 +16,7 @@ const routes = [
   // but you can also remove it
   {
     path: '/:catchAll(.*)*',
-    component: () => import('../pages/Error404.vue')
+    component: () => import('../pages/PageDashboard.vue')
   }
 ]
 

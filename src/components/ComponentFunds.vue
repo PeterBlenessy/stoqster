@@ -1,43 +1,21 @@
 <template>
     <div class="q-pa-sm">
-        <q-table
-            dense
-            color="primary"
-            :title="title"
-            :rows="rows"
-            :columns="columns"
-            :visible-columns="visibleColumns"
-            :filter="filter"
-            :rows-per-page-options="[0]"
-            :binary-state-sort="true"
-            row-key="Fond_namn"
+        <q-table dense color="primary" class="my-sticky-header-table" row-key="Fond_namn"
+            :title="title" :rows="rows" :columns="columns" :visible-columns="visibleColumns" 
+            :filter="filter" :rows-per-page-options="[0]" :binary-state-sort="true"
             :loading="loading"
-            class="my-sticky-header-table"
         >
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
                 <!-- Search input -->
-                <q-input
-                    dense
-                    debounce="300"
-                    v-model="filter"
-                    placeholder="Filter list"
-                    style="width: 500px"
-                >
+                <q-input dense debounce="300" v-model="filter" placeholder="Filter list" style="width: 500px" >
                     <template v-slot:append>
                         <q-icon name="mdi-filter-variant" />
                     </template>
                 </q-input>
 
                 <!-- Refresh data -->
-                <q-btn
-                    dense
-                    flat
-                    round
-                    icon="mdi-refresh"
-                    :color="refreshColor"
-                    @click="loadDataFromWeb()"
-                >
+                <q-btn dense flat round icon="mdi-refresh" :color="refreshColor" @click="loadDataFromWeb()">
                     <q-tooltip transition-show="scale" transition-hide="scale">{{ "Refresh data" }}</q-tooltip>
                 </q-btn>
             </template>
@@ -51,20 +29,9 @@
 
                     <!-- Column selection  -->
                     <q-th auto-width>
-                        <q-select
-                            multiple
-                            dense
-                            options-dense
-                            borderless
-                            dropdown-icon="mdi-dots-vertical"
-                            style="size: 300px"
-                            v-model="visibleColumns"
-                            display-value
-                            emit-value
-                            map-options
-                            :options="columns"
-                            option-value="name"
-                        >
+                        <q-select multiple dense options-dense borderless dropdown-icon="mdi-dots-vertical"
+                            style="size: 300px" v-model="visibleColumns" display-value emit-value
+                            map-options :options="columns" option-value="name">
                             <template v-slot:option="{ itemProps, opt, selected, toggleOption }">
                                 <q-item v-bind="itemProps" dense>
                                     <q-item-section>
@@ -72,18 +39,13 @@
                                     </q-item-section>
 
                                     <q-item-section side>
-                                        <q-toggle
-                                            size="xs"
-                                            :model-value="selected"
-                                            @update:model-value="toggleOption(opt)"
-                                        />
+                                        <q-toggle size="xs" :model-value="selected" @update:model-value="toggleOption(opt)"/>
                                     </q-item-section>
                                 </q-item>
                             </template>
-                            <q-tooltip
-                                transition-show="scale"
-                                transition-hide="scale"
-                            >{{ "Show/hide columns" }}</q-tooltip>
+                            <q-tooltip transition-show="scale" transition-hide="scale">
+                                {{ "Show/hide columns" }}
+                            </q-tooltip>
                         </q-select>
                     </q-th>
                 </q-tr>
@@ -97,31 +59,18 @@
                     <!-- Action buttons -->
                     <q-td auto-width>
                         <!-- Expand more details -->
-                        <q-btn
-                            size="sm"
-                            color="primary"
-                            flat
-                            round
-                            dense
-                            :icon="props.expand ? 'mdi-chevron-up' : 'mdi-chevron-down'"
-                        >
-                            <q-tooltip
-                                transition-show="scale"
-                                transition-hide="scale"
-                            >{{ "Show holdings " }}</q-tooltip>
+                        <q-btn size="sm" color="primary" flat round dense :icon="props.expand ? 'mdi-chevron-up' : 'mdi-chevron-down'">
+                            <q-tooltip transition-show="scale" transition-hide="scale">
+                                {{ "Show holdings " }}
+                            </q-tooltip>
                         </q-btn>
                     </q-td>
                 </q-tr>
 
-                <!--  Expanded row. Displays additional insights about the company.  -->
-                <q-tr v-show="props.expand" :props="props" no-hover>
+                <!--  Expanded row. Displays information about the fund's holdings.  -->
+                <q-tr v-if="props.expand" :props="props" no-hover>
                     <q-td :colspan="props.cols.length + 1">
-                        <ComponentFundHoldings v-if="props.expand"
-                            :fund-name="props.row['Fond_namn']"
-                            :key="props.row['Fond_namn']"
-                        />
-
-                        <!--                    <pre>{{ JSON.stringify(props.row.FinansiellaInstrument.FinansielltInstrument[0], null, 4) }}</pre> -->
+                        <ComponentFundHoldings :fund-name="props.row['Fond_namn']" :key="props.row['Fond_namn']" />
                     </q-td>
                 </q-tr>
             </template>
@@ -187,7 +136,7 @@ export default {
                                 let fundHoldings = fundInformation.FinansiellaInstrument.FinansielltInstrument;
 
                                 if (fundHoldings == undefined || fundHoldings == null || fundHoldings == "") {
-                                    console.warn("No holdings for: " + fundName);
+                                    console.warn(`No holdings for: ${fundName}. Skipping import.`);
                                 } else  {
                                     data.push(fundInformation);
 
