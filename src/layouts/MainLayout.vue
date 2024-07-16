@@ -73,12 +73,6 @@ const links = [
         caption: 'Funds',
         path: '/funds',
         icon: 'mdi-briefcase-variant'
-    },
-    {
-        title: 'Info',
-        caption: 'Application information',
-        path: '/info',
-        icon: 'mdi-information'
     }
 ]
 

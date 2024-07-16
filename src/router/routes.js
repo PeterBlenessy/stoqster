@@ -8,7 +8,6 @@ const routes = [
       { path: 'ibindex', component: () => import('../pages/PageIbindex.vue') },
       { path: 'ibindex-weights', component: () => import('../pages/PageIbindexWeights.vue') },
       { path: 'funds', component: () => import('../pages/PageFunds.vue') },
-      { path: 'info', component: () => import('../pages/PageDashboard.vue') }
     ]
   },
 
