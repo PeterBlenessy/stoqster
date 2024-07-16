@@ -44,7 +44,7 @@ const ibindex = {
 
     // IB companies and their reported and calculated net asset values and price
     getCompanies: {
-        title: 'Ibindex: reported and calculated net asset values, rebate / premium, and price',
+        title: 'Ibindex: Rapporterade och beräknade värden',
         url: 'https://ibindex.se/ibi//index/getProducts.req',
         fields: ['productName', 'product', 'netAssetValue', 'netAssetValueCalculated', 'netAssetValueCalculatedRebatePremium', 'netAssetValueRebatePremium', 'netAssetValueChangeDate', 'price', 'previousPrice', 'priceChange'],
         columns: [
@@ -103,7 +103,7 @@ const ibindex = {
 
     // Index and market weights of IB companies
     getWeights: {
-        title: 'Ibindex: Index and market weights of ibindex companies',
+        title: 'Ibindex: Index- och marknadsvikt',
         url: 'https://ibindex.se/ibi//companies/getCompanies.req',
         fields: ['product', 'productName', 'indexWeight', 'marketWeight'],
         columns: [
@@ -126,7 +126,7 @@ const ibindex = {
 
     // Price and net asset value trends
     getTrends: {
-        title: 'Ibindex: Price and net asset value trends',
+        title: 'Ibindex: Trender - pris och substansvärde',
         url: 'https://ibindex.se/ibi//index/getTrends.req',
         fields: ["product", "productName", "price", "navCalculatedPerShare", "thirtyDaysPriceChange", "sixMonthPriceChange", "oneYearPriceChange", "threeYearPriceChange", "fiveYearPriceChange", "thirtyDaysNavChange", "sixMonthNavChange", "oneYearNavChange", "threeYearNavChange", "fiveYearNavChange"],
         header: ["Aktiekod", "Investmentbolag", "Pris", "Beräknat substansvärde", "30 dagar", "6 månader", "1 år", "3 år", "5 år", "30 dagar", "6 månader", "1 år", "3 år", "5 år"],
@@ -154,7 +154,7 @@ const ibindex = {
 
     // Net asset value rebate / premium over time
     getRebatePremiums: {
-        title: 'Ibindex: Rebate / Premium over time',
+        title: 'Rabatt & Premium över tid',
         url: 'https://ibindex.se/ibi//company/getRebatePremiums.req',
         fields: ['rebatePremium', 'calculatedRebatePremium', 'rebatePremiumMax', 'rebatePremiumMin', 'rebatePremiumAverage', 'calculatedRebatePremiumMax', 'calculatedRebatePremiumMin', 'calculatedRebatePremiumAverage', 'label'],
         header: ['Rabatt/Premium', 'Beräknad Rabatt/Premium', 'Max', 'Min', 'Medel', 'Max', 'Min', 'Medel', 'Tidsperiod'],
@@ -179,7 +179,7 @@ const ibindex = {
 
     // IB company holdings
     getHoldings: {
-        title: 'Company holdings',
+        title: 'Bolagets innehav',
         url: 'https://ibindex.se/ibi//company/getHoldings.req',
         fields: ['holdingName', 'holdingProduct', 'holdingValue', 'holdingValuePrevious', 'listed'],
         header: ['Bolag', 'Aktie', 'Värde', 'Tidigare värde', 'Noterad'],
@@ -205,7 +205,7 @@ const ibindex = {
 
     // Company events
     getEvents: {
-        title: 'Calendar  ',
+        title: 'Kalender',
         url: 'https://ibindex.se/ibi//company/getEvents.req',
         fields: ['product', 'productName', 'eventDate', 'eventType', 'eventName', 'eventDetails'],
         header: ['Bolag', 'Aktie', 'Datum', 'Händelse', 'Beskrivning'],

@@ -8,7 +8,7 @@
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
                 <!-- Search input -->
-                <q-input dense debounce="300" v-model="filter" placeholder="Filter list" style="width: 500px" >
+                <q-input dense debounce="300" v-model="filter" placeholder="Sök i listan" style="width: 500px" >
                     <template v-slot:append>
                         <q-icon name="mdi-filter-variant" />
                     </template>
@@ -227,11 +227,11 @@ export default {
                 loadDataFromWeb()
                 .then(() => {
                     console.log('Data loaded from web');
-                    $q.notify({ type: 'positive', message: 'Successful refresh' });
+                    $q.notify({ type: 'positive', message: 'Uppdateringen gick bra' });
                 })
                 .catch(error => {
                     console.log(error);
-                    $q.notify({ type: 'error', message: 'Something went wrong during refresh' });
+                    $q.notify({ type: 'error', message: 'Något gick fel under uppdateringen' });
                 })
                 .finally(() => loading.value = false);
             } else {

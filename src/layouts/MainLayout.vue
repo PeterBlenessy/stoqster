@@ -3,14 +3,14 @@
         <q-header elevated>
             <!--  Top toolbar -->
             <q-toolbar>
-                <q-btn flat dense round icon="mdi-menu" aria-label="Menu" @click="drawer = !drawer">
-                    <q-tooltip transition-show="scale" transition-hide="scale">{{ "Show/hide drawer" }}</q-tooltip>
+                <q-btn flat dense round icon="mdi-menu" aria-label="Meny" @click="drawer = !drawer">
+                    <q-tooltip transition-show="scale" transition-hide="scale">{{ "Visa/dölj meny" }}</q-tooltip>
                 </q-btn>
                 <q-toolbar-title>Stoqster</q-toolbar-title>
 
                 <!-- Toggle dark / light mode -->
                 <q-btn flat round icon="mdi-invert-colors" @click="toggleDarkMode">
-                    <q-tooltip transition-show="scale" transition-hide="scale">{{ darkMode ? "Light mode" : "Dark mode"
+                    <q-tooltip transition-show="scale" transition-hide="scale">{{ darkMode ? "Ljust läge" : "Mörkt läge"
                         }}</q-tooltip>
                 </q-btn>
 
@@ -51,26 +51,26 @@
 
 const links = [
     {
-        title: 'Dashboard ',
-        caption: 'Dashboard',
+        title: 'Ibindex',
+        caption: 'Bevakningar',
         icon: 'mdi-apps',
         path: '/'
     },
     {
         title: 'Ibindex',
-        caption: 'Ibindex companies',
+        caption: 'Investmentbolag',
         path: '/ibindex',
         icon: 'mdi-format-list-bulleted'
     },
     {
-        title: 'Ibindex - weights',
-        caption: 'Market and index weights',
+        title: 'Ibindex vikter',
+        caption: 'Index- och marknadsviker',
         path: '/ibindex-weights',
         icon: 'mdi-chart-pie'
     },
     {
-        title: 'Funds',
-        caption: 'Funds',
+        title: 'Fonder - FinansInspektionen',
+        caption: 'Fonder',
         path: '/funds',
         icon: 'mdi-briefcase-variant'
     }

@@ -9,7 +9,7 @@
 
                 <!-- Trigger options -->
                 <q-select
-                    label="Alert trigger"
+                    label="Larmet triggas av"
                     dense
                     options-dense
                     stack-label
@@ -23,7 +23,7 @@
 
                 <!-- Time period -->
                 <q-select
-                    label="Time period"
+                    label="Tidsperiod"
                     dense
                     options-dense
                     stack-label
@@ -37,7 +37,7 @@
 
                 <!-- Expiration date -->
                 <q-input
-                    label="Expiration date"
+                    label="Giltighetstid"
                     dense
                     stack-label
                     outlined
@@ -46,7 +46,7 @@
                     :rules="['date']"
                 >
                     <template v-slot:append>
-                        <q-icon name="event" class="cursor-pointer">
+                        <q-icon name="mdi-calendar" class="cursor-pointer">
                             <q-popup-proxy
                                 ref="qDateProxy"
                                 cover
@@ -55,7 +55,7 @@
                             >
                                 <q-date v-model="expirationDate">
                                     <div class="row items-center justify-end">
-                                        <q-btn v-close-popup label="Close" color="primary" flat />
+                                        <q-btn v-close-popup label="Stäng" color="primary" flat />
                                     </div>
                                 </q-date>
                             </q-popup-proxy>
@@ -75,7 +75,7 @@
 
                 <!-- Alert name -->
                 <q-input
-                    label="Alert name"
+                    label="Larmets namn"
                     type="text"
                     dense
                     stack-label
@@ -85,7 +85,7 @@
 
                 <!-- Alert description -->
                 <q-input
-                    label="Alert message"
+                    label="Meddelande när larmet triggas"
                     type="textarea"
                     dense
                     stack-label
@@ -97,7 +97,7 @@
                     <q-space />
                     <!-- Cancel alert -->
                     <q-btn flat color="grey" icon="mdi-close" v-close-popup @click="onCancelClick">
-                        <q-tooltip transition-show="scale" transition-hide="scale">{{ "Cancel" }}</q-tooltip>
+                        <q-tooltip transition-show="scale" transition-hide="scale">{{ "Avbryt" }}</q-tooltip>
                     </q-btn>
                     <!-- Save alert -->
                     <q-btn
@@ -118,7 +118,7 @@
                         <q-tooltip
                             transition-show="scale"
                             transition-hide="scale"
-                        >{{ "Save alert" }}</q-tooltip>
+                        >{{ "Spara larm" }}</q-tooltip>
                     </q-btn>
                 </div>
             </div>
@@ -223,9 +223,9 @@ export default {
             checkAlert,
 
             triggerOptions: [
-                { label: 'Crossing', value: 'crossing', active: true },
-                { label: 'Crossing down', value: 'crossing-down', disable: true },
-                { label: 'Crossing up', value: 'crossing-up', disable: true }
+                { label: 'Korsar', value: 'crossing', active: true },
+                { label: 'Korsar ner', value: 'crossing-down', disable: true },
+                { label: 'Korsar upp', value: 'crossing-up', disable: true }
             ],
 
             timePeriodOptions: [
@@ -238,8 +238,8 @@ export default {
             ],
 
             actionOptions: [
-                { label: 'In-app notification', value: 'in-app' },
-                { label: 'System notification', value: 'system', disable: true },
+                { label: 'App-meddelande', value: 'in-app' },
+                { label: 'System-meddelande', value: 'system', disable: true },
                 { label: 'E-mail', value: 'email', disable: true }
             ],
 

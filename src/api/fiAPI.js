@@ -1,4 +1,4 @@
-import {Body, ResponseType} from "@tauri-apps/api/http";
+import { ResponseType } from "@tauri-apps/api/http";
 
 // Get color based on value being negative or positive
 const setStyle = (number, ifNegative='red', ifPositive='green') => {
@@ -31,7 +31,6 @@ const fiFunds = {
     url: baseUrl + '/sv/vara-register/fondinnehav-per-kvartal/',
     options: {
         method: 'get',
-        mode: 'cors',
         responseType: ResponseType.Text
     }
 };
@@ -41,7 +40,6 @@ const fiDownload = {
     url: baseUrl,
     options: {
         method: 'get',
-        mode: 'no-cors',
         responseType: ResponseType.Binary,
         responseType: 'arraybuffer',
         headers: { 
@@ -60,7 +58,7 @@ const fiDownload = {
  *                  - 'Förvaltningsavgift': [{'Andelsklass_namn': String, 'Förvaltningsavgift_typ':{'Förvaltningsavgift_fast': Number}}, ...]
  */
 const funds = {
-    title: 'Quarterly reported funds and their holdings',
+    title: 'FI: Information om fonder och innehav',
     url: '',
     localForageConfig: {
         storeName: 'fi-funds',
@@ -116,7 +114,7 @@ const funds = {
  *      - Alt-2: Missing if 'Tillgångsslag_enligt_LVF_5_kap' = 'DerivatinstrumentSamtTeknikerOchInstrument'
  */
 const fundHoldings = {
-    title: 'Fund holdings',
+    title: 'Fondens innehav',
     url: '',
     localForageConfig: {
         storeName: 'fi-funds-holdings',

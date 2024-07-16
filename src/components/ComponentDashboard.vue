@@ -132,7 +132,7 @@ export default {
 
                     watchlist.value = rows.value; // Store current values in watchlist
                     refreshColor.value = 'primary';
-                    $q.notify({ type: 'positive', message: 'Successful refresh' });
+                    $q.notify({ type: 'positive', message: 'Uppdateringen gick bra' });
                 }
             }).catch(error => {
                 console.log(error);
@@ -140,8 +140,8 @@ export default {
                 refreshColor.value = 'negative';
                 $q.notify({
                     type: 'negative',
-                    message: 'Something went wrong during refresh',
-                    caption: 'Showing data from last successful refresh of ' + title
+                    message: 'Något gick fel under uppdatering',
+                    caption: 'Visar data från senaste uppdateringen av ' + title
                 });
             }).finally(() => loading.value = false);
         }
