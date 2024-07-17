@@ -2,12 +2,12 @@
 const routes = [
   {
     path: '/',
-    component: () => import('layouts/MainLayout.vue'),
+    component: () => import('../layouts/MainLayout.vue'),
     children: [
-      { path: '', component: () => import('src/pages/PageDashboard.vue') },
-      { path: 'ibindex', component: () => import('src/pages/PageIbindex.vue') },
-      { path: 'ibindex-weights', component: () => import('src/pages/PageIbindexWeights.vue') },
-      { path: 'funds', component: () => import('src/pages/PageFunds.vue') }
+      { path: '', component: () => import('../pages/PageDashboard.vue') },
+      { path: 'ibindex', component: () => import('../pages/PageIbindex.vue') },
+      { path: 'ibindex-weights', component: () => import('../pages/PageIbindexWeights.vue') },
+      { path: 'funds', component: () => import('../pages/PageFunds.vue') },
     ]
   },
 
@@ -15,7 +15,7 @@ const routes = [
   // but you can also remove it
   {
     path: '/:catchAll(.*)*',
-    component: () => import('pages/Error404.vue')
+    component: () => import('../pages/PageDashboard.vue')
   }
 ]
 

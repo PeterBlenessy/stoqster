@@ -26,7 +26,7 @@
                 style="width: 500px"
             >
                 <template v-slot:append>
-                    <q-icon name="filter_list" />
+                    <q-icon name="mdi-filter-variant" />
                 </template>
             </q-input>
         </template>
@@ -38,7 +38,7 @@
 <script>
 import { ref, toRef, onMounted } from 'vue';
 import { fundHoldings } from '../api/fiAPI.js';
-import localforage from 'localforage'
+import localforage from 'localforage';
 
 export default {
     name: 'ComponentFundHoldings',
@@ -57,19 +57,29 @@ export default {
         const fundHoldingsStore = localforage.createInstance({ name: 'stoqster', storeName: fundHoldings.localForageConfig.storeName });
 
         async function loadData() {
+            console.time(`loadHoldingsFromDB(): ${fundName.value}`);
             loading.value = true;
             fundHoldingsStore.getItem(fundName.value).then(holdings => {
-                rows.value = holdings;
-                // Make sure we have a unique index for each row
-                rows.value.forEach((row, index) => {
-                    rows.value.index = index;
-                });
+                if (holdings === undefined || holdings === null || holdings === '') {
+                    console.error(`No holdings for: ${fundName.value}. Should have skipped import!`);
+                } else {
+                    rows.value = holdings;
+                    // Make sure we have a unique index for each row in the table
+                    rows.value.forEach((row, index) => {
+                        rows.value.index = index;
+                    });
+                }
             })
-                .catch(error => console.log(error))
-                .finally(() => loading.value = false);
+            .catch(error => console.log(error))
+            .finally(() => {
+                loading.value = false;
+                console.timeEnd(`loadHoldingsFromDB(): ${fundName.value}`);
+            });
         }
 
-        onMounted(loadData());
+        onMounted(() => {
+            loadData();
+        });
 
         return {
             title,

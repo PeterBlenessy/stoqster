@@ -1,43 +1,21 @@
 <template>
     <div class="q-pa-sm">
-        <q-table
-            dense
-            color="primary"
-            :title="title"
-            :rows="rows"
-            :columns="columns"
-            :visible-columns="visibleColumns"
-            :filter="filter"
-            :rows-per-page-options="[0]"
-            :binary-state-sort="true"
-            row-key="Fond_namn"
+        <q-table dense color="primary" class="my-sticky-header-table" row-key="Fond_namn"
+            :title="title" :rows="rows" :columns="columns" :visible-columns="visibleColumns" 
+            :filter="filter" :rows-per-page-options="[0]" :binary-state-sort="true"
             :loading="loading"
-            class="my-sticky-header-table"
         >
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
                 <!-- Search input -->
-                <q-input
-                    dense
-                    debounce="300"
-                    v-model="filter"
-                    placeholder="Filter list"
-                    style="width: 500px"
-                >
+                <q-input dense debounce="300" v-model="filter" placeholder="Sök i listan" style="width: 500px" >
                     <template v-slot:append>
-                        <q-icon name="filter_list" />
+                        <q-icon name="mdi-filter-variant" />
                     </template>
                 </q-input>
 
                 <!-- Refresh data -->
-                <q-btn
-                    dense
-                    flat
-                    round
-                    icon="refresh"
-                    :color="refreshColor"
-                    @click="loadDataFromWeb()"
-                >
+                <q-btn dense flat round icon="mdi-refresh" :color="refreshColor" @click="loadDataFromWeb()">
                     <q-tooltip transition-show="scale" transition-hide="scale">{{ "Refresh data" }}</q-tooltip>
                 </q-btn>
             </template>
@@ -51,20 +29,9 @@
 
                     <!-- Column selection  -->
                     <q-th auto-width>
-                        <q-select
-                            multiple
-                            dense
-                            options-dense
-                            borderless
-                            dropdown-icon="more_vert"
-                            style="size: 300px"
-                            v-model="visibleColumns"
-                            display-value
-                            emit-value
-                            map-options
-                            :options="columns"
-                            option-value="name"
-                        >
+                        <q-select multiple dense options-dense borderless dropdown-icon="mdi-dots-vertical"
+                            style="size: 300px" v-model="visibleColumns" display-value emit-value
+                            map-options :options="columns" option-value="name">
                             <template v-slot:option="{ itemProps, opt, selected, toggleOption }">
                                 <q-item v-bind="itemProps" dense>
                                     <q-item-section>
@@ -72,18 +39,13 @@
                                     </q-item-section>
 
                                     <q-item-section side>
-                                        <q-toggle
-                                            size="xs"
-                                            :model-value="selected"
-                                            @update:model-value="toggleOption(opt)"
-                                        />
+                                        <q-toggle size="xs" :model-value="selected" @update:model-value="toggleOption(opt)"/>
                                     </q-item-section>
                                 </q-item>
                             </template>
-                            <q-tooltip
-                                transition-show="scale"
-                                transition-hide="scale"
-                            >{{ "Show/hide columns" }}</q-tooltip>
+                            <q-tooltip transition-show="scale" transition-hide="scale">
+                                {{ "Show/hide columns" }}
+                            </q-tooltip>
                         </q-select>
                     </q-th>
                 </q-tr>
@@ -97,31 +59,18 @@
                     <!-- Action buttons -->
                     <q-td auto-width>
                         <!-- Expand more details -->
-                        <q-btn
-                            size="sm"
-                            color="primary"
-                            flat
-                            round
-                            dense
-                            :icon="props.expand ? 'expand_less' : 'expand_more'"
-                        >
-                            <q-tooltip
-                                transition-show="scale"
-                                transition-hide="scale"
-                            >{{ "Show holdings " }}</q-tooltip>
+                        <q-btn size="sm" color="primary" flat round dense :icon="props.expand ? 'mdi-chevron-up' : 'mdi-chevron-down'">
+                            <q-tooltip transition-show="scale" transition-hide="scale">
+                                {{ "Show holdings " }}
+                            </q-tooltip>
                         </q-btn>
                     </q-td>
                 </q-tr>
 
-                <!--  Expanded row. Displays additional insights about the company.  -->
-                <q-tr v-show="props.expand" :props="props" no-hover>
+                <!--  Expanded row. Displays information about the fund's holdings.  -->
+                <q-tr v-if="props.expand" :props="props" no-hover>
                     <q-td :colspan="props.cols.length + 1">
-                        <ComponentFundHoldings
-                            :fund-name="props.row['Fond_namn']"
-                            :key="props.row['Fond_namn']"
-                        />
-
-                        <!--                    <pre>{{ JSON.stringify(props.row.FinansiellaInstrument.FinansielltInstrument[0], null, 4) }}</pre> -->
+                        <ComponentFundHoldings :fund-name="props.row['Fond_namn']" :key="props.row['Fond_namn']" />
                     </q-td>
                 </q-tr>
             </template>
@@ -133,10 +82,11 @@
 import { fiFunds, fiDownload, funds, fundHoldings } from '../api/fiAPI.js';
 import { ref, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
-import { unzip } from 'unzipit'
+import JSZip from 'jszip';
 import X2JS from 'x2js'//'../libs/xml2json.js'
 import localforage from 'localforage'
-import ComponentFundHoldings from 'components/ComponentFundHoldings.vue';
+import ComponentFundHoldings from './ComponentFundHoldings.vue';
+import { ResponseType, fetch } from "@tauri-apps/api/http";
 
 export default {
     name: 'ComponentFunds',
@@ -160,93 +110,113 @@ export default {
         const loading = ref(false);
         const refreshColor = ref('primary');
 
-        async function fetchZipAndImportToDB(url) {
-            console.time("fetchZipAndImportToDB()");
-            const { entries } = await unzip(url);
+        async function unzipAndImportToDB(zipFile) {
+            console.time("unzipAndImportToDB()");
+
             let data = [];
 
-            // Running asyncronously gives a better user experience. Loading a usable first page takes ~2.5s. Syncronously is > 10s.
-            await Promise.all(Object.values(entries).map(async (entry) => {
-                if (entry != '' && !entry.isDirectory) {
+            JSZip.loadAsync(zipFile).then(function (zip) {
+                zip.forEach(function (relativePath, zipEntry) {
+                    if (zipEntry.dir === false) {
+                        zipEntry.async("string").then(function (xml) {
+                            let x2js = new X2JS();
+                            let json = x2js.xml2js(xml);
 
-                    let xml = await entry.text();
-                    let x2js = new X2JS();
-                    let json = x2js.xml2js(xml);
+                            // let fundManagerInformation = json['VärdepappersfondInnehav'].Bolagsinformation;
+                            // {Fondbolag_namn: "FCG Fonder AB", Fondbolag_institutnummer: "59005", Fondbolag_LEI-kod: "254900CCW358UPZNRP67"}
+                            // let fundManagerName = fundManagerInformation.Fondbolag_namn;
 
-                    // let fundManagerInformation = json['VärdepappersfondInnehav'].Bolagsinformation;
-                    // let fundManagerName = fundManagerInformation.Fondbolag_namn;
+                            // Handle to the fund's top level information
+                            let fundInformation = json['VärdepappersfondInnehav'].Fondinformation[0];
+                            let fundName = fundInformation.Fond_namn;
 
-                    // Handle to the fund's top level information
-                    let fundInformation = json['VärdepappersfondInnehav'].Fondinformation[0];
-                    let fundName = fundInformation.Fond_namn;
+                            if (fundInformation.Fond_status != "Ej aktiv fond") {
 
-                    if (fundInformation.Fond_status != "Ej aktiv fond") {
-                        data.push(fundInformation);
+                                // Handle to the fund's holdings information
+                                let fundHoldings = fundInformation.FinansiellaInstrument.FinansielltInstrument;
 
-                        // Handle to the fund's holdings information
-                        let fundHoldings = fundInformation.FinansiellaInstrument.FinansielltInstrument;
+                                if (fundHoldings == undefined || fundHoldings == null || fundHoldings == "") {
+                                    console.warn(`No holdings for: ${fundName}. Skipping import.`);
+                                } else  {
+                                    data.push(fundInformation);
 
-                        // Removing array/object of holdings from fund object avoids storing funds holdings twice.
-                        // Reduces storage need in dB from ~70 -> 38 MB.
-                        delete fundInformation.FinansiellaInstrument;
+                                    // Removing array/object of holdings from fund object avoids storing funds holdings twice.
+                                    // Reduces storage need in dB from ~70 -> 38 MB.
+                                    delete fundInformation.FinansiellaInstrument;
 
-                        // Store top level fund information in dB
-                        fundsStore.setItem(fundName, fundInformation);
+                                    // Store top level fund information in dB
+                                    fundsStore.setItem(fundName, fundInformation);
 
-                        // Store fund holdings details in dB
-                        if (Array.isArray(fundHoldings)) {
-                            fundHoldingsStore.setItem(fundName, fundHoldings);
-                        } else {
-                            fundHoldingsStore.setItem(fundName, [fundHoldings]);
-                        }
+                                    // Store fund holdings details in dB
+                                    if (Array.isArray(fundHoldings)) {
+                                        fundHoldingsStore.setItem(fundName, fundHoldings);
+                                    } else {
+                                        fundHoldingsStore.setItem(fundName, [fundHoldings]);
+                                    }
+                                }
+                            }
+                        });
                     }
-                }
-            }));
-            fiCommonStore.setItem(fiQuarterlyHoldingsUrl, url);
-            console.timeEnd("fetchZipAndImportToDB()");
+                });
+            });
+
+            console.timeEnd("unzipAndImportToDB()");
             return data;
+        }
+
+        async function fiScrapeZipUrl() {
+            console.time("fiScrapeZipUrl()");
+            let response = await fetch(fiFunds.url, fiFunds.options);
+            if (!response.ok) {
+                return Promise.reject(`Error - fetch() status code: ${response.status}`);
+            }
+
+            let text = response.data;
+            let parser = new DOMParser();
+            let doc = parser.parseFromString(text, "text/html");
+            let table = doc.getElementsByTagName('table')[0];
+            let aList = table.querySelectorAll(('tr td:first-child a'));
+
+            // The first item in the list of links is the latest.
+            // This could be easily confirmed by checking the 2nd and 3rd columns, year and quarter respectively, 
+            //      or by spliting the filename with ' ' and comparing the dates in the 3rd position in the arrays, [2].
+            let a = aList[0];
+            let url = fiDownload.url + a.pathname + a.search;
+            console.timeEnd("fiScrapeZipUrl()");
+            return url;
+        }
+    
+        async function fiFetchZipFile(url) {
+            console.time("fiFetchZipFile()");
+            let response = await fetch(url, {responseType: ResponseType.Binary});
+            if (!response.ok) {
+                return Promise.reject(`Error - fetch() status code: ${response.status}`);
+            }
+            console.timeEnd("fiFetchZipFile()");
+            return response.data;
         }
 
         async function loadDataFromWeb() {
             console.time("loadDataFromWeb()");
-            loading.value = true;
             let url = await fundsStore.getItem(fiQuarterlyHoldingsUrl);
             if (url === null) {
-                // Scrape FI web page to get url to the zip file
-                let response = await fetch(fiFunds.url, fiFunds.options);
-                if (!response.ok) {
-                    return Promise.reject(`Error - fetch() status code: ${response.status}`);
-                }
-                let text = await response.text();
-                let parser = new DOMParser();
-                let doc = parser.parseFromString(text, "text/html");
-                let table = doc.getElementsByTagName('table')[0];
-                let aList = table.querySelectorAll(('tr td:first-child a'));
 
-                // The first item in the list of links is the latest.
-                // This could be easily confirmed by checking the 2nd and 3rd columns, year and quarter respectively, 
-                //      or by spliting the filename with ' ' and comparing the dates in the 3rd position in the arrays, [2].
-                let a = aList[0];
-                url = fiDownload.url + a.pathname + a.search;
-
-                // Now fetch, unpack and import the zip file
-                rows.value = await fetchZipAndImportToDB(url);
-                loading.value = false
-                $q.notify({ type: 'positive', message: 'Successful refresh' });
-                console.timeEnd("loadDataFromWeb()");
+                fiScrapeZipUrl()
+                .then(zipUrl => fiFetchZipFile(zipUrl))
+                .then(zipFile => unzipAndImportToDB(zipFile))
+                .then(() => { fiCommonStore.setItem(fiQuarterlyHoldingsUrl, url); })
+                .catch(error => { throw new Error(error); })
+                .finally(() => console.timeEnd("loadDataFromWeb()"));
             }
         }
 
         async function loadDataFromDB() {
             console.time("loadDataFromDB()");
-            loading.value = true;
             let data = [];
-            fundsStore.iterate((value, key, iterationNumber) => {
-                data.push(value);
-            })
-                .then(() => rows.value = data)
-                .catch(error => console.log(error))
-                .finally(console.timeEnd("loadDataFromDB()"));
+            fundsStore.iterate((value, key, iterationNumber) => { data.push(value); })
+            .then(() => { rows.value = data; })
+            .catch(error => { throw new Error(error); })
+            .finally(() => console.timeEnd("loadDataFromDB()"));
         }
 
         // Load funds holdings
@@ -255,10 +225,20 @@ export default {
             let numberOfFunds = await fundsStore.length();
             if (numberOfFunds === 0) {
                 loadDataFromWeb()
-                    .then(() => loading.value = false)
-                    .catch(error => console.log(error))
+                .then(() => {
+                    console.log('Data loaded from web');
+                    $q.notify({ type: 'positive', message: 'Uppdateringen gick bra' });
+                })
+                .catch(error => {
+                    console.log(error);
+                    $q.notify({ type: 'error', message: 'Något gick fel under uppdateringen' });
+                })
+                .finally(() => loading.value = false);
             } else {
-                loadDataFromDB().then(() => loading.value = false);
+                loadDataFromDB()
+                .then(() => console.log('Data loaded from DB'))
+                .catch(error => console.log(error))
+                .finally(() => loading.value = false);
             }
         }
 

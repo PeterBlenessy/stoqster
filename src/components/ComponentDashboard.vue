@@ -1,42 +1,17 @@
 <template>
-    <div class="q-pa-sm col-4">
-        <q-table
-            :title="title"
-            dense
-            :rows="rows"
-            :columns="columns"
-            row-key="product"
-            :rows-per-page-options="[0]"
-            :filter="filter"
-            :loading="loading"
-            grid
-            color="primary"
-            v-model:expanded="expandedCards"
-        >
+    <div class="q-pa-sm ">
+        <q-table :title="title" dense :rows="rows" :columns="columns" row-key="product" :rows-per-page-options="[0]"
+            :filter="filter" :loading="loading" grid color="primary" v-model:expanded="expandedCards">
             <template v-slot:top-right>
                 <!-- Filter input -->
-                <q-input
-                    dense
-                    debounce="300"
-                    v-model="filter"
-                    placeholder="Filter"
-                    style="width: 500px"
-                >
+                <q-input dense debounce="300" v-model="filter" placeholder="Filter" style="width: 500px">
                     <template v-slot:append>
-                        <q-icon name="filter_list" />
+                        <q-icon name="mdi-filter-variant" />
                     </template>
                 </q-input>
 
                 <!-- Refresh button -->
-                <q-btn
-                    flat
-                    round
-                    dense
-                    class="q-ml-md"
-                    icon="refresh"
-                    :color="refreshColor"
-                    @click="refreshData()"
-                >
+                <q-btn flat round dense icon="mdi-refresh" :color="refreshColor" @click="refreshData()">
                     <q-tooltip transition-show="scale" transition-hide="scale">{{ "Refresh data" }}</q-tooltip>
                 </q-btn>
             </template>
@@ -45,92 +20,54 @@
             <template v-slot:item="props">
                 <div class="q-pa-xs col-4">
                     <q-card>
-                        <q-card-section
-                            class="text-center text-subtitle2"
-                        >{{ props.row.productName }}</q-card-section>
+                        <q-card-section class="text-center text-subtitle2">{{ props.row.productName }}</q-card-section>
                         <q-separator inset />
                         <q-card-section>
-                            <div
-                                class="text-center text-overline"
-                            >{{ props.colsMap.netAssetValueCalculatedRebatePremium.label }}</div>
-                            <div
-                                class="flex flex-center text-h6"
-                                :style="{
-                                    color: props.row.netAssetValueCalculatedRebatePremium < 0 ? 'red' : 'green'
-                                }"
-                            >
+                            <div class="text-center text-overline">{{props.colsMap.netAssetValueCalculatedRebatePremium.label }}</div>
+                            <div class="flex flex-center text-h6" :style="{color: props.row.netAssetValueCalculatedRebatePremium < 0 ? 'red' : 'green'}">
                                 {{ props.row.netAssetValueCalculatedRebatePremium.toFixed(2) }}%
-                                <q-icon
-                                    :name="props.row.priceChange < 0 ? 'trending_down' : 'trending_up'"
-                                />
+                                <q-icon :name="props.row.priceChange < 0 ? 'mdi-trending-down' : 'mdi-trending-up'" />
                             </div>
                         </q-card-section>
                         <q-separator inset />
 
                         <q-card-actions>
                             <!-- Delete item button -->
-                            <q-btn
-                                color="grey"
-                                round
-                                flat
-                                dense
-                                size="sm"
-                                icon="delete_outline"
-                                @click="removeWatchlistItem(props.row.product)"
-                            >
-                                <q-tooltip
-                                    transition-show="scale"
-                                    transition-hide="scale"
-                                >{{ "Remove from dashboard" }}</q-tooltip>
+                            <q-btn color="grey" round flat dense size="sm" icon="mdi-delete-outline"
+                                @click="removeWatchlistItem(props.row.product)">
+                                <q-tooltip transition-show="scale" transition-hide="scale">
+                                    {{ "Remove from dashboard"}}
+                                </q-tooltip>
                             </q-btn>
 
                             <!-- Add alarm to item button -->
                             <!-- icon="edit_notifications" -->
-                            <q-btn
-                                :color="hasAlert(props.row.product) ? 'primary' : 'grey'"
-                                round
-                                flat
-                                dense
-                                size="sm"
-                                :icon="hasAlert(props.row.product) ? 'edit_notifications' : 'notification_add'"
+                            <q-btn :color="hasAlert(props.row.product) ? 'primary' : 'grey'" round flat dense size="sm"
+                                :icon="hasAlert(props.row.product) ? 'mdi-bell-cog' : 'mdi-bell-plus'" 
                                 @click="onAddAlert(
                                     props.row.product,
                                     props.row.productName,
                                     props.colsMap.netAssetValueCalculatedRebatePremium.field,
                                     props.colsMap.netAssetValueCalculatedRebatePremium.label,
                                     props.row.netAssetValueCalculatedRebatePremium
-                                )"
-                            >
-                                <q-tooltip
-                                    transition-show="scale"
-                                    transition-hide="scale"
-                                >{{ "Add an alert" }}</q-tooltip>
+                                )">
+                                <q-tooltip transition-show="scale" transition-hide="scale">
+                                    {{hasAlert(props.row.product) ? "Edit the alert" : "Add an alert" }}
+                                </q-tooltip>
                             </q-btn>
                             <q-space />
 
                             <!-- Expand more info button -->
-                            <q-btn
-                                size="sm"
-                                color="primary"
-                                flat
-                                round
-                                dense
-                                @click="props.expand = !props.expand"
-                                :icon="props.expand ? 'expand_less' : 'expand_more'"
-                            >
-                                <q-tooltip
-                                    transition-show="scale"
-                                    transition-hide="scale"
-                                >{{ props.expand ? "Hide" : "Show more time periods" }}</q-tooltip>
+                            <q-btn size="sm" color="primary" flat round dense @click="props.expand = !props.expand"
+                                :icon="props.expand ? 'mdi-chevron-up' : 'mdi-chevron-down'">
+                                <q-tooltip transition-show="scale" transition-hide="scale">{{ props.expand ? "Hide" :
+                                    "Show more time periods" }}</q-tooltip>
                             </q-btn>
                         </q-card-actions>
 
                         <!-- Expandable historical info about Rebate/Premiums -->
                         <div class="q-pa-md" v-show="props.expand">
-                            <ComponentIbindexRebatePremium
-                                api="getRebatePremiums"
-                                :company="props.row.product"
-                            />
+                            <ComponentIbindexRebatePremium api="getRebatePremiums" :company="props.row.product" />
                         </div>
                     </q-card>
                 </div>
@@ -141,12 +78,14 @@
 
 <script>
 
-import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.js';
-import ComponentIbindexRebatePremium from 'src/components/ComponentIbindexRebatePremium.vue';
-import AlertDialog from 'src/components/ComponentAlertDialog.vue';
+import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.mjs';
+import ComponentIbindexRebatePremium from './ComponentIbindexRebatePremium.vue';
+import AlertDialog from './ComponentAlertDialog.vue';
 import { ref, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
-import { useStore } from 'vuex';
+import { storeToRefs } from 'pinia';
+import { useSettingsStore } from '../stores/settings-store.js';
+import { fetch } from "@tauri-apps/api/http";
 
 export default {
     name: 'ComponentDashboard',
@@ -157,7 +96,9 @@ export default {
 
     setup() {
         const $q = useQuasar();
-        const store = useStore();
+        const settingsStore = useSettingsStore();
+        const { alerts, watchlist, refreshInterval } = storeToRefs(settingsStore);
+
         const api = ref('getCompanies');
         const title = "Bevakningar: beräknad rabatt/premie"; //ibindex[ibiAPI].title;
         const visibleColumns = ibindex[api.value].visibleColumns;
@@ -170,59 +111,50 @@ export default {
 
         // Refresh data
         async function refreshData() {
-            let watchlist = getWatchlist();
             let visibleRows = [];
 
-            fetch(requestOptions.url, requestOptions.options).then(response => {
+            fetch(requestOptions.url, requestOptions.options)
+            .then(response => {
                 if (!response.ok) {
                     return Promise.reject(`Error - fetch() status code: ${response.status}`);
                 }
-                return response.arrayBuffer();
+
+                return response.data;
             })
-                .then(buffer => {
-                    rows.value = JSON.parse(new TextDecoder('latin1').decode(buffer)) || [];
-                    if (watchlist !== null) {
-                        Object.entries(watchlist).forEach(([key, value]) => {
-                            visibleRows.push(value.product);
-                        });
-                        rows.value = rows.value.filter(item => visibleRows.includes(item.product));
-
-                        setWatchlist(rows.value); // Store current values in watchlist
-                        refreshColor.value = 'primary';
-                        $q.notify({ type: 'positive', message: 'Successful refresh' });
-                    }
-                }).catch(error => {
-                    console.log(error);
-                    rows.value = watchlist; // Show the latest values in case we have a network error 
-                    refreshColor.value = 'negative';
-                    $q.notify({
-                        type: 'negative',
-                        message: 'Something went wrong during refresh',
-                        caption: 'Showing data from last successful refresh of ' + title
+            .then(data => {
+                rows.value = [...data];
+                // Filter out rows that are not in the watchlist
+                if (watchlist.value !== null) {
+                    Object.entries(watchlist.value).forEach(([key, value]) => {
+                        visibleRows.push(value.product);
                     });
-                }).finally(() => loading.value = false);
+                    rows.value = rows.value.filter(item => visibleRows.includes(item.product));
+
+                    watchlist.value = rows.value; // Store current values in watchlist
+                    refreshColor.value = 'primary';
+                    $q.notify({ type: 'positive', message: 'Uppdateringen gick bra' });
+                }
+            }).catch(error => {
+                console.log(error);
+                rows.value = watchlist.value; // Show the latest values in case we have a network error 
+                refreshColor.value = 'negative';
+                $q.notify({
+                    type: 'negative',
+                    message: 'Något gick fel under uppdatering',
+                    caption: 'Visar data från senaste uppdateringen av ' + title
+                });
+            }).finally(() => loading.value = false);
         }
 
-        // Reads the watchlist from Vuex state store.
-        function getWatchlist() {
-            return store.state.watchlist;
-        }
-
-        // Updates the watchlist in Vuex state store. The state is also stored in localStorage.
+        // Updates the watchlist in Pinia state store. The state is also stored in localStorage.
         function removeWatchlistItem(removedItem) {
             rows.value = rows.value.filter(item => item.product !== removedItem);
-            store.commit('setWatchlist', rows.value);
-        }
-
-        // Store watchlist in Vuex store.
-        function setWatchlist(watchlist) {
-            store.commit('setWatchlist', watchlist);
+            watchlist.value = rows.value;
         }
 
         // Checks if an alert has been registered for a company
         function hasAlert(companyCode) {
-            let alerts = store.state.alerts;
-            return JSON.stringify(alerts).includes(companyCode);
+            return alerts.value.includes(companyCode);
         }
 
         function onAddAlert(product, productName, field, fieldLabel, fieldValue) {
@@ -258,7 +190,7 @@ export default {
 
             setInterval(() => {
                 refreshData();
-            }, store.state.refreshInterval);
+            }, refreshInterval.value);
         });
 
         return {
@@ -281,3 +213,4 @@ export default {
 
 }
 </script>
+../api/ibindexAPI.jsm

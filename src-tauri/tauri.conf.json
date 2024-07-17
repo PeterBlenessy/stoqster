@@ -1,0 +1,85 @@
+{
+    "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+    "build": {
+        "beforeBuildCommand": "yarn build",
+        "beforeDevCommand": "yarn dev",
+        "devPath": "http://localhost:1420",
+        "distDir": "../dist",
+        "withGlobalTauri": false
+    },
+    "package": {
+        "productName": "stoqster",
+        "version": "../package.json"
+    },
+    "tauri": {
+        "allowlist": {
+            "all": false,
+            "http": {
+                "all": false,
+                "request": true,
+                "scope": [
+                    "https://*"
+                ]
+            }
+        },
+        "bundle": {
+            "active": true,
+            "category": "Productivity",
+            "copyright": "Copyright © 2021 Péter Blénessy",
+            "deb": {
+                "depends": []
+            },
+            "externalBin": [],
+            "icon": [
+                "icons/32x32.png",
+                "icons/128x128.png",
+                "icons/128x128@2x.png",
+                "icons/icon.icns",
+                "icons/icon.ico"
+            ],
+            "identifier": "com.addable.stoqster",
+            "longDescription": "",
+            "macOS": {
+                "entitlements": "./entitlements.plist",
+                "exceptionDomain": "",
+                "frameworks": [],
+                "providerShortName": null,
+                "signingIdentity": null
+            },
+            "resources": [],
+            "shortDescription": "Follow your favourite stocks and fonds, and your portfolio's performance",
+            "targets": "all",
+            "windows": {
+                "certificateThumbprint": null,
+                "digestAlgorithm": "sha256",
+                "timestampUrl": ""
+            }
+        },
+        "security": {
+            "csp": null
+        },
+        "updater": {
+            "active": true,
+            "dialog": true,
+            "endpoints": [
+                "https://github.com/PeterBlenessy/stoqster/releases/latest/download/latest.json"
+            ],
+            "pubkey":"dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVGMkIxRjY0MzI2RjJGQ0QKUldUTkwyOHlaQjhyWDdxMTYvYlh5TnV2L3ZvMEdpSGpLTVUxYTRwKzBic3IvQ1o3MzZOMkZiUCsK",
+            "windows": {
+                "installMode": "passive"
+            }
+        },
+        "windows": [
+            {
+                "fullscreen": false,
+                "resizable": true,
+                "hiddenTitle": true,
+                "title": "Stoqster",
+                "width": 1280,
+                "height": 720,
+                "visible": true,
+                "label": "main"
+            }
+        ]
+    }
+}

@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import ComponentIbindex from 'src/components/ComponentIbindex.vue'
+import ComponentIbindex from '../components/ComponentIbindex.vue'
 
 import { defineComponent } from 'vue';
 
