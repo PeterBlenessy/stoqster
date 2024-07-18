@@ -43,10 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change: change from localforage -> Dexie
 
 ## [IN-PROGRESS]
-- Changed storage backend in vuex from localStorage -> localForage
-- Changed state Vuex -> Pine
 
 ## [UNRELEASED]
+
+## v1.0.0 - 2024-07-19
 - Migrated from Electron to Tauri.
 
 ## v0.5.26 - 2022-03-31
