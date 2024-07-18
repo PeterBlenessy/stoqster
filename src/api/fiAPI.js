@@ -83,7 +83,7 @@ const funds = {
             { 
                 name: 'Jämförelseindex', label: 'Jämförelseindex', 
                 field: (val) => val['Jämförelseindex']['Jämförelseindex'],
-                align: 'left', required: false, sortable: true 
+                align: 'left', required: false, sortable: true
             },
             { 
                 name: 'Likvida_medel', label: 'Likvida medel', field: 'Likvida_medel', align: 'right', required: false, sortable: true,
@@ -100,10 +100,10 @@ const funds = {
                 name: 'Övriga_tillgångar_och_skulder', label: 'Övriga tillgångar och skulder', field: 'Övriga_tillgångar_och_skulder', align: 'right', required: false, sortable: true,
                 sort: (a, b) => parseFloat(a) - parseFloat(b),
                 format: val => isValidNumber(val) ? formatter.format(val) : '',
-                style: val => setStyle(val['Övriga_tillgångar_och_skulder'], 'red', 'primary')
+                style: val => setStyle(val['Övriga_tillgångar_och_skulder'], 'red', 'primary'),
             },
         ],
-        visibleColumns: ['Fond_namn', 'Fond_ISIN-kod', 'Fondförmögenhet', 'Likvida_medel', 'Standardavvikelse_24_månader', 'Övriga_tillgångar_och_skulder']
+        visibleColumns: ['Fond_namn', 'Fondförmögenhet', 'Likvida_medel', 'Standardavvikelse_24_månader', 'Övriga_tillgångar_och_skulder']
     }
 };
 

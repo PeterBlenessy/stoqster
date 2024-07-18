@@ -13,6 +13,7 @@
         :binary-state-sort="true"
         :loading="loading"
         class="my-sticky-header-table-expanded"
+        wrap-cells
     >
     
         <!-- Configure top-right part of the data table component -->

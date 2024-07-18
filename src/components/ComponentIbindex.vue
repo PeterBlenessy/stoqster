@@ -2,7 +2,7 @@
     <div class="q-pa-sm">
         <q-table dense color="primary" class="my-sticky-header-table" row-key="product" :loading="loading"
             :title="title" :rows="rows" :columns="columns" :visible-columns="visibleColumns"
-            :filter="filter" :rows-per-page-options="[0]" :binary-state-sort="true" 
+            :filter="filter" :rows-per-page-options="[0]" :binary-state-sort="true" wrap-cells
             selection="multiple" v-model:selected="selectedRows" @update:selected="onUpdateSelected"
         >
             <!-- Configure top-right part of the data table component -->

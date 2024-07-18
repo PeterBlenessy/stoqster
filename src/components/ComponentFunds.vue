@@ -3,7 +3,7 @@
         <q-table dense color="primary" class="my-sticky-header-table" row-key="Fond_namn"
             :title="title" :rows="rows" :columns="columns" :visible-columns="visibleColumns" 
             :filter="filter" :rows-per-page-options="[0]" :binary-state-sort="true"
-            :loading="loading"
+            :loading="loading" wrap-cells
         >
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
@@ -25,6 +25,9 @@
                 <q-tr :props="props">
                     <q-th v-for="col in props.cols" :key="col.name" :props="props">
                         {{ col.label }}
+                        <q-tooltip transition-show="scale" transition-hide="scale">
+                            {{ col.label }}
+                        </q-tooltip>
                     </q-th>
 
                     <!-- Column selection  -->
@@ -54,7 +57,12 @@
             <template v-slot:body="props">
                 <q-tr :props="props" @click="props.expand = !props.expand">
                     <!-- Column values -->
-                    <q-td v-for="col in props.cols" :key="col.name" :props="props">{{ col.value }}</q-td>
+                    <q-td v-for="col in props.cols" :key="col.name" :props="props">
+                        {{ col.value }}
+                        <q-tooltip transition-show="scale" transition-hide="scale">
+                            {{ col.label }}
+                        </q-tooltip>
+                    </q-td>
 
                     <!-- Action buttons -->
                     <q-td auto-width>
@@ -105,7 +113,7 @@ export default {
         const title = ref(funds.title);
         const columns = ref(funds.qTableConfig.columns);
         const visibleColumns = ref(funds.qTableConfig.visibleColumns);
-        const rows = ref([]);
+        const rows= ref([]);
 
         const loading = ref(false);
         const refreshColor = ref('primary');
@@ -214,7 +222,11 @@ export default {
             console.time("loadDataFromDB()");
             let data = [];
             fundsStore.iterate((value, key, iterationNumber) => { data.push(value); })
-            .then(() => { rows.value = data; })
+            .then(() => { 
+                console.time("rows");
+                rows.value = data; 
+                console.timeEnd("rows");
+            })
             .catch(error => { throw new Error(error); })
             .finally(() => console.timeEnd("loadDataFromDB()"));
         }
@@ -280,7 +292,7 @@ export default {
 
 .my-sticky-header-table
     /* height or max-height is important */
-    height: calc(100vh - 115px)
+    height: calc(100vh - 100px)
 
     .q-table__top,
     .q-table__bottom,
