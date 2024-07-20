@@ -73,7 +73,7 @@ const funds = {
     ],
     qTableConfig: {
         columns: [
-            { name: 'Fond_namn', label: 'Fondnamn', field: 'Fond_namn', align: 'left', required: true, sortable: true },
+            { name: 'Fond_namn', label: 'Fondnamn', field: 'Fond_namn', align: 'left', required: true, sortable: true, style:'white-space: nowrap' },
             { name: 'Fond_ISIN-kod', label: 'ISIN-kod', field: 'Fond_ISIN-kod', align: 'left', required: false },
             { 
                 name: 'Fondförmögenhet', label: 'Fondförmögenhet', field: 'Fondförmögenhet', align: 'right', required: false, sortable: true,
@@ -137,7 +137,7 @@ const fundHoldings = {
              },
             { name: 'Valuta', label: 'Valuta', field: 'Valuta', align: 'right', required: false, sortable: true },
             { 
-                name: 'Andel_av_fondförmögenhet_instrument', label: 'Andel av fondförmögenhet', field: 'Andel_av_fondförmögenhet_instrument', align: 'right', required: true, sortable: true,
+                name: 'Andel_av_fondförmögenhet_instrument', label: 'Andel', field: 'Andel_av_fondförmögenhet_instrument', align: 'right', required: true, sortable: true,
                 sort: (a, b) => parseFloat(a) - parseFloat(b),
                 format: val => isValidNumber(val) ? Number.parseFloat(val) : ''
             }

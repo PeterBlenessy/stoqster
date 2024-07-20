@@ -11,7 +11,6 @@
         row-key="index"
         :rows-per-page-options="[0]"
         :binary-state-sort="true"
-        :loading="loading"
         class="my-sticky-header-table-expanded"
         wrap-cells
     >
@@ -102,21 +101,13 @@ export default {
 
     .q-table__top,
     .q-table__bottom,
-    thead tr:first-child th
-        /* bg color is important for th; just specify one */
-        background-color: #ffffff
 
     thead tr th
         position: sticky
+        top: 0
         z-index: 1
         text-transform: uppercase
-    thead tr:first-child th
-        top: 0
-
-    /* this is when the loading indicator appears */
-    &.q-table--loading thead tr:last-child th
-        /* height of all previous header rows */
-        top: 48px
+        background-color: #ffffff
 
 .q-table--dark 
     .q-table__top,
@@ -124,6 +115,5 @@ export default {
     thead tr:first-child th
         /* bg color is important for th; just specify one */
         background-color: #1d1d1d
-
 
 </style>

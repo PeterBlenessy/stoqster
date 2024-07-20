@@ -1,7 +1,7 @@
 <template>
     <div class="q-pa-sm ">
         <q-table :title="title" dense :rows="rows" :columns="columns" row-key="product" :rows-per-page-options="[0]"
-            :filter="filter" :loading="loading" grid color="primary" v-model:expanded="expandedCards">
+            :filter="filter" grid color="primary" v-model:expanded="expandedCards">
             <template v-slot:top-right>
                 <!-- Filter input -->
                 <q-input dense debounce="300" v-model="filter" placeholder="Filter" style="width: 500px">
@@ -11,8 +11,8 @@
                 </q-input>
 
                 <!-- Refresh button -->
-                <q-btn flat round dense icon="mdi-refresh" :color="refreshColor" @click="refreshData()">
-                    <q-tooltip transition-show="scale" transition-hide="scale">{{ "Refresh data" }}</q-tooltip>
+                <q-btn flat round dense icon="mdi-refresh" :color="refreshColor" :loading="loading" @click="refreshData()">
+                    <q-tooltip transition-show="scale" transition-hide="scale">{{ "Uppdatera" }}</q-tooltip>
                 </q-btn>
             </template>
 
@@ -36,7 +36,7 @@
                             <q-btn color="grey" round flat dense size="sm" icon="mdi-delete-outline"
                                 @click="removeWatchlistItem(props.row.product)">
                                 <q-tooltip transition-show="scale" transition-hide="scale">
-                                    {{ "Remove from dashboard"}}
+                                    {{ "Ta bort"}}
                                 </q-tooltip>
                             </q-btn>
 
@@ -52,7 +52,7 @@
                                     props.row.netAssetValueCalculatedRebatePremium
                                 )">
                                 <q-tooltip transition-show="scale" transition-hide="scale">
-                                    {{hasAlert(props.row.product) ? "Edit the alert" : "Add an alert" }}
+                                    {{hasAlert(props.row.product) ? "Editera larm" : "Lägg till larm" }}
                                 </q-tooltip>
                             </q-btn>
                             <q-space />
@@ -138,11 +138,7 @@ export default {
                 console.log(error);
                 rows.value = watchlist.value; // Show the latest values in case we have a network error 
                 refreshColor.value = 'negative';
-                $q.notify({
-                    type: 'negative',
-                    message: 'Något gick fel under uppdatering',
-                    caption: 'Visar data från senaste uppdateringen av ' + title
-                });
+                $q.notify({type: 'negative', message: 'Något gick fel under uppdatering'});
             }).finally(() => loading.value = false);
         }
 
@@ -154,7 +150,7 @@ export default {
 
         // Checks if an alert has been registered for a company
         function hasAlert(companyCode) {
-            return alerts.value.includes(companyCode);
+            return alerts.value.some(item => item.companyCode === companyCode);
         }
 
         function onAddAlert(product, productName, field, fieldLabel, fieldValue) {
@@ -174,7 +170,7 @@ export default {
                     persistent: true
                 }
             }).onOk(data => {
-                //console.log('>>>> OK, received', data)
+                // console.log('>>>> OK, received', data)
 
             }).onCancel(() => {
                 // console.log('>>>> Cancel')

@@ -46,6 +46,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.0.1 - 2024-07-20
+- Fixed some table styling inconsistencies in the app.
+- Translated some missed texts to Swedish.
+- Added performance logs to IBIndex components.
+- Fixed issue where determining if IB company alert is registered did not work.
+
 ## v1.0.0 - 2024-07-19
 - Migrated from Electron to Tauri.
 

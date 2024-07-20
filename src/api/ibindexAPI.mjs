@@ -48,7 +48,7 @@ const ibindex = {
         url: 'https://ibindex.se/ibi//index/getProducts.req',
         fields: ['productName', 'product', 'netAssetValue', 'netAssetValueCalculated', 'netAssetValueCalculatedRebatePremium', 'netAssetValueRebatePremium', 'netAssetValueChangeDate', 'price', 'previousPrice', 'priceChange'],
         columns: [
-            { name: 'productName', label: 'Investmentbolag', field: 'productName', align: 'left', required: true, sortable: true },
+            { name: 'productName', label: 'Investmentbolag', field: 'productName', align: 'left', required: true, sortable: true, style:'white-space: nowrap' },
             { name: 'product', label: 'Aktiekod', field: 'product', sortable: true },
             {
                 name: 'netAssetValue', label: 'Substansvärde', field: 'netAssetValue', sortable: true,
@@ -73,7 +73,8 @@ const ibindex = {
             },
             {
                 name: 'netAssetValueChangeDate', label: 'Ändrat', field: 'netAssetValueChangeDate', sortable: true,
-                format: val => `${new Date(val).toISOString().slice(0, 10)}`
+                format: val => `${new Date(val).toISOString().slice(0, 10)}`,
+                style: 'word-break: keep-all;'
             },
             {
                 name: 'price', label: 'Pris', field: 'price', sortable: true,

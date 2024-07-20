@@ -9,7 +9,6 @@
             :visible-columns="visibleColumns"
             row-key="label"
             :rows-per-page-options="[0]"
-            :loading="loading"
             hide-bottom
         >
             <template v-slot:top>
@@ -55,6 +54,7 @@ export default {
 
         // Fetch data from ibindex using the provided api reference
         async function refreshData() {
+            console.time(`ibiLoadDataFromWeb() \t ${api.value} \t ${companyCode.value}`);
             loading.value = true;
             fetch(requestOptions.url, requestOptions.options)
                 .then( response => {
@@ -71,11 +71,7 @@ export default {
                 })
                 .catch( error => {
                     console.log(error);
-                    $q.notify({
-                        type: 'negative',
-                        message: 'Something went wrong during refresh',
-                        caption: 'Showing data from last successful refresh of ' + title
-                    });
+                    $q.notify({type: 'negative', message: 'Något gick fel under uppdateringen'});
 
                     // Load data from local storage
                     ibiRebatePremiumStore.getItem(companyCode.value)
@@ -84,12 +80,14 @@ export default {
                             console.log('Error - could not load data from local storage');
                             $q.notify({
                                 type: 'negative',
-                                message: 'Something went wrong during refresh',
-                                caption: 'Could not load data from local storage ' + title
+                                caption: 'Kunde inte läsa data från databasen:' + title
                             });
                         });
                 })
-                .finally( () => loading.value = false );
+                .finally(() => {
+                    loading.value = false;
+                    console.timeEnd(`ibiLoadDataFromWeb() \t ${api.value} \t ${companyCode.value}`);
+                });
         }
 
         // Checks if an alert has been registered for a company
@@ -109,12 +107,10 @@ export default {
                 $q.notify({
                     type: 'warning',
                     group: false,
-                    message: 'Alert triggered for ' + companyCode.value + '!',
-                    caption: 'Calculated rebate/premium crosses down 30 days average',
+                    message: 'Alarm triggades för ' + companyCode.value + '!',
+                    caption: 'Beräknad rabatt/premium korsar ner det löpande medelvärdet',
                     timeout: 0,
-                    actions: [
-                        { label: 'Dismiss', color: 'white', handler: () => { /* ... */ } }
-                    ]
+                    actions: [{ label: 'Avvisa', color: 'white', handler: () => { /* ... */ } }]
                 });
                 return '----- cross down -----';
             }
@@ -125,11 +121,9 @@ export default {
                     type: 'warning',
                     group: false,
                     message: 'Alert triggered!',
-                    caption: 'Calculated rebate/premium crosses up 30 days average',
+                    caption: 'Beräknad rabatt/premium korsar upp det löpande medelvärdet',
                     timeout: 0,
-                    actions: [
-                        { label: 'Dismiss', color: 'white', handler: () => { /* ... */ } }
-                    ]
+                    actions: [{ label: 'Avvisa', color: 'white', handler: () => { /* ... */ } }]
                 });
                 return '----- cross up -----';
             }
@@ -150,13 +144,9 @@ export default {
 
         return {
             title,
-
-            refreshData,
             columns,
             visibleColumns,
-            rows,
-
-            loading
+            rows
         }
     }
 }
@@ -167,4 +157,4 @@ export default {
 .table__top {
     justify-content: center;
 }
-</style>../api/ibindexAPI.jsm
+</style>

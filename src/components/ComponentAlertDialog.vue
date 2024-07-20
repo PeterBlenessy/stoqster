@@ -8,43 +8,17 @@
                 <q-separator />
 
                 <!-- Trigger options -->
-                <q-select
-                    label="Larmet triggas av"
-                    dense
-                    options-dense
-                    stack-label
-                    outlined
-                    v-model="trigger"
-                    :options="triggerOptions"
-                    map-options
-                    readonly
-                    hide-dropdown-icon
-                />
+                <q-select label="Larmet triggas av" dense options-dense stack-label outlined
+                    v-model="trigger" :options="triggerOptions" map-options readonly hide-dropdown-icon/>
 
                 <!-- Time period -->
-                <q-select
-                    label="Tidsperiod"
-                    dense
-                    options-dense
-                    stack-label
-                    outlined
-                    v-model="timePeriod"
-                    :options="timePeriodOptions"
-                    map-options
-                    readonly
-                    hide-dropdown-icon
-                />
+                <q-select label="Tidsperiod" dense options-dense stack-label outlined v-model="timePeriod"
+                    :options="timePeriodOptions" map-options readonly hide-dropdown-icon />
 
                 <!-- Expiration date -->
-                <q-input
-                    label="Giltighetstid"
-                    dense
-                    stack-label
-                    outlined
-                    v-model="expirationDate"
-                    mask="date"
-                    :rules="['date']"
-                >
+                <q-input label="Giltighetstid" dense stack-label outlined
+                    v-model="expirationDate" mask="date" :rules="['date']">
+
                     <template v-slot:append>
                         <q-icon name="mdi-calendar" class="cursor-pointer">
                             <q-popup-proxy
@@ -64,34 +38,13 @@
                 </q-input>
 
                 <!-- Alert actions -->
-                <q-option-group
-                    type="checkbox"
-                    dense
-                    color="primary"
-                    inline
-                    v-model="alertAction"
-                    :options="actionOptions"
-                />
+                <q-option-group type="checkbox" dense color="primary" inline v-model="alertAction" :options="actionOptions"/>
 
                 <!-- Alert name -->
-                <q-input
-                    label="Larmets namn"
-                    type="text"
-                    dense
-                    stack-label
-                    outlined
-                    v-model="alertName"
-                />
+                <q-input label="Larmets namn" type="text" dense stack-label outlined v-model="alertName"/>
 
                 <!-- Alert description -->
-                <q-input
-                    label="Meddelande när larmet triggas"
-                    type="textarea"
-                    dense
-                    stack-label
-                    outlined
-                    v-model="alertMessage"
-                />
+                <q-input label="Meddelande när larmet triggas" type="textarea" dense stack-label outlined v-model="alertMessage"/>
 
                 <div>
                     <q-space />
@@ -100,25 +53,12 @@
                         <q-tooltip transition-show="scale" transition-hide="scale">{{ "Avbryt" }}</q-tooltip>
                     </q-btn>
                     <!-- Save alert -->
-                    <q-btn
-                        v-show="hasAlert"
-                        flat
-                        color="negative"
-                        icon="mdi-delete-outline"
-                        v-close-popup
-                        @click="onDeleteAlert()"
-                    >
-                        <q-tooltip
-                            transition-show="scale"
-                            transition-hide="scale"
-                        >{{ "Delete alert" }}</q-tooltip>
+                    <q-btn v-show="hasAlert" flat color="negative" icon="mdi-delete" v-close-popup @click="onDeleteAlert()">
+                        <q-tooltip transition-show="scale" transition-hide="scale">{{ "Ta bort" }}</q-tooltip>
                     </q-btn>
                     <!-- Save alert -->
                     <q-btn flat color="primary" icon="mdi-content-save" v-close-popup @click="onSaveAlert()">
-                        <q-tooltip
-                            transition-show="scale"
-                            transition-hide="scale"
-                        >{{ "Spara larm" }}</q-tooltip>
+                        <q-tooltip transition-show="scale" transition-hide="scale">{{ "Spara larm" }}</q-tooltip>
                     </q-btn>
                 </div>
             </div>
@@ -167,16 +107,38 @@ export default {
         //                    example: onDialogOK({ /*.../* }) - with payload
         // onDialogCancel - Function to call to settle dialog with "cancel" outcome
 
-        const trigger = ref('crossing');
+        const triggerOptions = [
+                { label: 'korsar', value: 'crossing', active: true },
+                { label: 'korsar ner', value: 'crossing-down', disable: true },
+                { label: 'korsar upp', value: 'crossing-up', disable: true }
+        ];
+
+        const timePeriodOptions = [
+                { label: '30-dagars medelvärde', value: '30-days-average' },
+                { label: '3-månaders medelvärde', value: '3-months-average', disable: true },
+                { label: '6-månaders medelvärde', value: '6-months-average', disable: true },
+                { label: '1-års medelvärde', value: '1-years-average', disable: true },
+                { label: '3-års medelvärde', value: '3-years-average', disable: true },
+                { label: '5-års medelvärde', value: '5-years-average', disable: true }
+        ];
+
+        const actionOptions = [
+                { label: 'App-meddelande', value: 'in-app' },
+                { label: 'System-meddelande', value: 'system', disable: true },
+                { label: 'E-mail', value: 'email', disable: true }
+        ];
+
+
+        const trigger = ref('korsar');
         const timePeriod = ref('30-days-average');
         const alertName = ref(companyName.value + ' : ' + fieldLabel.value + ' : ' + trigger.value);
-        const alertMessage = ref('Alert triggered for ' + companyName.value + ' : ' + fieldLabel.value + '!');
+        const alertMessage = ref('Alarm triggades för ' + companyName.value + ' : ' + fieldLabel.value + '!');
         const alertAction = ref(['in-app']);
         const expirationDate = ref(new Date().toJSON().slice(0, 10).replace(/-/g, '/'));
 
         // Checks if an alert has been registered for a company
         function checkAlert() {
-            hasAlert.value = alerts.value.includes(companyCode.value);
+            hasAlert.value = alerts.value.some(item => item.companyCode === companyCode.value);
         }
 
         // Adds / updates alert in Vuex store
@@ -201,6 +163,7 @@ export default {
             // This filter return all other alerts, i.e., removes the alarm for company if it exists.
             alerts.value = alerts.value.filter(item => item.companyCode !== newAlert.companyCode);
             alerts.value.push(newAlert);
+            console.log("Added new alert: ", newAlert);
         }
 
         // Removes an alert if it exists
@@ -222,26 +185,9 @@ export default {
             hasAlert,
             checkAlert,
 
-            triggerOptions: [
-                { label: 'Korsar', value: 'crossing', active: true },
-                { label: 'Korsar ner', value: 'crossing-down', disable: true },
-                { label: 'Korsar upp', value: 'crossing-up', disable: true }
-            ],
-
-            timePeriodOptions: [
-                { label: '30-days-average', value: '30-days-average' },
-                { label: '3-months-average', value: '3-months-average', disable: true },
-                { label: '6-months-average', value: '6-months-average', disable: true },
-                { label: '1-years-average', value: '1-years-average', disable: true },
-                { label: '3-years-average', value: '3-years-average', disable: true },
-                { label: '5-years-average', value: '5-years-average', disable: true }
-            ],
-
-            actionOptions: [
-                { label: 'App-meddelande', value: 'in-app' },
-                { label: 'System-meddelande', value: 'system', disable: true },
-                { label: 'E-mail', value: 'email', disable: true }
-            ],
+            triggerOptions,
+            timePeriodOptions,
+            actionOptions,
 
             // This is REQUIRED;
             // Need to inject these (from useDialogPluginComponent() call)

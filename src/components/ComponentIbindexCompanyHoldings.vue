@@ -1,18 +1,6 @@
 <template>
-    <q-table
-        dense
-        flat
-        color="primary"
-        :title="title"
-        :rows="rows"
-        :columns="columns"
-        :visible-columns="visibleColumns"
-        row-key="product"
-        :rows-per-page-options="[0]"
-        :loading="loading"
-        hide-bottom
-        :binary-state-sort="true"
-    ></q-table>
+    <q-table dense flat color="primary" :title="title" :rows="rows" :columns="columns" :visible-columns="visibleColumns"
+        row-key="product" :rows-per-page-options="[0]" hide-bottom :binary-state-sort="true"></q-table>
 </template>
 
 <script>
@@ -46,58 +34,64 @@ export default {
 
         // Fetch data from ibindex using the provided api reference
         async function refreshData() {
+            console.time(`ibiLoadDataFromWeb() \t ${api.value} \t ${companyCode.value}`);
             loading.value = true;
             fetch(requestOptions.url, requestOptions.options)
-            .then( response => {
-                if (!response.ok) {
-                    return Promise.reject( `Error - fetch() status code: ${response.status}` );
-                }
+                .then(response => {
+                    if (!response.ok) {
+                        return Promise.reject(`Error - fetch() status code: ${response.status}`);
+                    }
 
-                return response.data;
-            })
-            .then( data => {
-                rows.value = [...data];
-                ibiHoldingsStore.setItem( companyCode.value, data );
-                //$q.notify({ type: 'positive', message: 'Successful refresh' });
-            })
-            .catch( error => {
-                console.log(error);
-                $q.notify({
-                    type: 'warning',
-                    message: 'Something went wrong during refresh',
-                    caption: title + ' loaded from local storage for ' + companyCode.value
+                    return response.data;
+                })
+                .then(data => {
+                    rows.value = [...data];
+                    ibiHoldingsStore.setItem(companyCode.value, data);
+                    //$q.notify({ type: 'positive', message: 'Successful refresh' });
+                })
+                .catch(error => {
+                    console.log(error);
+                    $q.notify({
+                        type: 'warning',
+                        message: 'Något gick fel under uppdateringen',
+                        caption: title + ' info saknas för ' + companyCode.value
+                    });
+                })
+                .finally(() => {
+                    loading.value = false;
+                    console.timeEnd(`ibiLoadDataFromWeb() \t ${api.value} \t ${companyCode.value}`);
                 });
-            })
-            .finally( () => loading.value = false );
         }
 
         async function loadData() {
+            console.time(`ibiLoadData() \t ${api.value} \t ${companyCode.value}`);
             loading.value = true;
             ibiHoldingsStore.getItem(companyCode.value)
-            .then( data => {
-                if (data === null) {
-                    return refreshData();
-                }
-                rows.value = data;
-                // Make sure we have a unique index for each row
-                rows.value.forEach((row, index) => {
-                    rows.value.index = index;
+                .then(data => {
+                    if (data === null) {
+                        return refreshData();
+                    }
+                    rows.value = data;
+                    // Make sure we have a unique index for each row
+                    rows.value.forEach((row, index) => {
+                        rows.value.index = index;
+                    });
+                })
+                .catch(error => console.log(error))
+                .finally(() => {
+                    loading.value = false;
+                    console.timeEnd(`ibiLoadData() \t ${api.value} \t ${companyCode.value}`);
                 });
-            })
-            .catch( error => console.log(error) )
-            .finally( () => loading.value = false );
         }
 
-        onMounted( () => loadData() );
+        onMounted(() => loadData());
 
         return {
             title,
             columns,
             visibleColumns,
-            rows,
-            loading
+            rows
         }
     }
 }
 </script>
-../api/ibindexAPI.jsm../api/ibindexAPI.mjs

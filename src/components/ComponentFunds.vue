@@ -1,29 +1,29 @@
 <template>
     <div class="q-pa-sm">
-        <q-table dense color="primary" class="my-sticky-header-table" row-key="Fond_namn"
-            :title="title" :rows="rows" :columns="columns" :visible-columns="visibleColumns" 
-            :filter="filter" :rows-per-page-options="[0]" :binary-state-sort="true"
-            :loading="loading" wrap-cells
-        >
+        <q-table dense wrap-cells color="primary" class="my-sticky-header-table" row-key="Fond_namn" :title="title"
+            :rows="rows" :columns="columns" :visible-columns="visibleColumns" :filter="filter"
+            :rows-per-page-options="[0]" :binary-state-sort="true">
+
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
                 <!-- Search input -->
-                <q-input dense debounce="300" v-model="filter" placeholder="Sök i listan" style="width: 500px" >
+                <q-input dense debounce="300" v-model="filter" placeholder="Sök i listan" style="width: 500px">
                     <template v-slot:append>
                         <q-icon name="mdi-filter-variant" />
                     </template>
                 </q-input>
 
                 <!-- Refresh data -->
-                <q-btn dense flat round icon="mdi-refresh" :color="refreshColor" @click="loadDataFromWeb()">
-                    <q-tooltip transition-show="scale" transition-hide="scale">{{ "Refresh data" }}</q-tooltip>
+                <q-btn dense flat round icon="mdi-refresh" :color="refreshColor" :loading="loading"
+                    @click="loadDataFromWeb()">
+                    <q-tooltip transition-show="scale" transition-hide="scale">{{ "Uppdatera" }}</q-tooltip>
                 </q-btn>
             </template>
 
             <!-- Table header row -->
             <template v-slot:header="props">
                 <q-tr :props="props">
-                    <q-th v-for="col in props.cols" :key="col.name" :props="props">
+                    <q-th v-for="col in props.cols" :key="col.name" :props="props" style="vertical-align: bottom">
                         {{ col.label }}
                         <q-tooltip transition-show="scale" transition-hide="scale">
                             {{ col.label }}
@@ -33,8 +33,8 @@
                     <!-- Column selection  -->
                     <q-th auto-width>
                         <q-select multiple dense options-dense borderless dropdown-icon="mdi-dots-vertical"
-                            style="size: 300px" v-model="visibleColumns" display-value emit-value
-                            map-options :options="columns" option-value="name">
+                            style="size: 300px" v-model="visibleColumns" display-value emit-value map-options
+                            :options="columns" option-value="name">
                             <template v-slot:option="{ itemProps, opt, selected, toggleOption }">
                                 <q-item v-bind="itemProps" dense>
                                     <q-item-section>
@@ -42,12 +42,13 @@
                                     </q-item-section>
 
                                     <q-item-section side>
-                                        <q-toggle size="xs" :model-value="selected" @update:model-value="toggleOption(opt)"/>
+                                        <q-toggle size="xs" :model-value="selected"
+                                            @update:model-value="toggleOption(opt)" />
                                     </q-item-section>
                                 </q-item>
                             </template>
                             <q-tooltip transition-show="scale" transition-hide="scale">
-                                {{ "Show/hide columns" }}
+                                {{ "Välj kolumner" }}
                             </q-tooltip>
                         </q-select>
                     </q-th>
@@ -67,7 +68,8 @@
                     <!-- Action buttons -->
                     <q-td auto-width>
                         <!-- Expand more details -->
-                        <q-btn size="sm" color="primary" flat round dense :icon="props.expand ? 'mdi-chevron-up' : 'mdi-chevron-down'">
+                        <q-btn size="sm" color="primary" flat round dense
+                            :icon="props.expand ? 'mdi-chevron-up' : 'mdi-chevron-down'">
                             <q-tooltip transition-show="scale" transition-hide="scale">
                                 {{ "Show holdings " }}
                             </q-tooltip>
@@ -113,13 +115,13 @@ export default {
         const title = ref(funds.title);
         const columns = ref(funds.qTableConfig.columns);
         const visibleColumns = ref(funds.qTableConfig.visibleColumns);
-        const rows= ref([]);
+        const rows = ref([]);
 
         const loading = ref(false);
         const refreshColor = ref('primary');
 
         async function unzipAndImportToDB(zipFile) {
-            console.time("unzipAndImportToDB()");
+            console.time("fiUnzipAndImportToDB()");
 
             let data = [];
 
@@ -145,7 +147,7 @@ export default {
 
                                 if (fundHoldings == undefined || fundHoldings == null || fundHoldings == "") {
                                     console.warn(`No holdings for: ${fundName}. Skipping import.`);
-                                } else  {
+                                } else {
                                     data.push(fundInformation);
 
                                     // Removing array/object of holdings from fund object avoids storing funds holdings twice.
@@ -168,10 +170,11 @@ export default {
                 });
             });
 
-            console.timeEnd("unzipAndImportToDB()");
+            console.timeEnd("fiUnzipAndImportToDB()");
             return data;
         }
 
+        // Scrape fund web page at FinansInspektionen and get latest zip file url
         async function fiScrapeZipUrl() {
             console.time("fiScrapeZipUrl()");
             let response = await fetch(fiFunds.url, fiFunds.options);
@@ -193,10 +196,11 @@ export default {
             console.timeEnd("fiScrapeZipUrl()");
             return url;
         }
-    
+
+        // Download zipped fund reports from FinansInspektionen
         async function fiFetchZipFile(url) {
             console.time("fiFetchZipFile()");
-            let response = await fetch(url, {responseType: ResponseType.Binary});
+            let response = await fetch(url, { responseType: ResponseType.Binary });
             if (!response.ok) {
                 return Promise.reject(`Error - fetch() status code: ${response.status}`);
             }
@@ -204,53 +208,63 @@ export default {
             return response.data;
         }
 
+        // Download data from FinansInspektionen and store it in IndexedDB
         async function loadDataFromWeb() {
-            console.time("loadDataFromWeb()");
+            console.time("fiLoadDataFromWeb()");
+            loading.value = true;
             let url = await fundsStore.getItem(fiQuarterlyHoldingsUrl);
             if (url === null) {
 
                 fiScrapeZipUrl()
-                .then(zipUrl => fiFetchZipFile(zipUrl))
-                .then(zipFile => unzipAndImportToDB(zipFile))
-                .then(() => { fiCommonStore.setItem(fiQuarterlyHoldingsUrl, url); })
-                .catch(error => { throw new Error(error); })
-                .finally(() => console.timeEnd("loadDataFromWeb()"));
+                    .then(zipUrl => fiFetchZipFile(zipUrl))
+                    .then(zipFile => unzipAndImportToDB(zipFile))
+                    .then(() => { fiCommonStore.setItem(fiQuarterlyHoldingsUrl, url); })
+                    .catch(error => { throw new Error(error); })
+                    .finally(() => {
+                        loading.value = false;
+                        console.timeEnd("fiLoadDataFromWeb()");
+                    });
             }
         }
 
+        // Load funds from IndexedDB
         async function loadDataFromDB() {
-            console.time("loadDataFromDB()");
+            console.time("fiLoadDataFromDB()");
+            loading.value = true;
             let data = [];
             fundsStore.iterate((value, key, iterationNumber) => { data.push(value); })
-            .then(() => { 
-                console.time("rows");
-                rows.value = data; 
-                console.timeEnd("rows");
-            })
-            .catch(error => { throw new Error(error); })
-            .finally(() => console.timeEnd("loadDataFromDB()"));
+                .then(() => {
+                    console.time("rows");
+                    rows.value = data;
+                    console.timeEnd("rows");
+                })
+                .catch(error => { throw new Error(error); })
+                .finally(() => {
+                    loading.value = false;
+                    console.timeEnd("fiLoadDataFromDB()")
+                });
         }
 
-        // Load funds holdings
+        // Load funds, either from web or from IndexedDB
         async function loadData() {
             loading.value = true;
             let numberOfFunds = await fundsStore.length();
             if (numberOfFunds === 0) {
                 loadDataFromWeb()
-                .then(() => {
-                    console.log('Data loaded from web');
-                    $q.notify({ type: 'positive', message: 'Uppdateringen gick bra' });
-                })
-                .catch(error => {
-                    console.log(error);
-                    $q.notify({ type: 'error', message: 'Något gick fel under uppdateringen' });
-                })
-                .finally(() => loading.value = false);
+                    .then(() => {
+                        console.log('Data loaded from web');
+                        $q.notify({ type: 'positive', message: 'Uppdateringen gick bra' });
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        $q.notify({ type: 'negative', message: 'Något gick fel under uppdateringen' });
+                    })
+                    .finally(() => loading.value = false);
             } else {
                 loadDataFromDB()
-                .then(() => console.log('Data loaded from DB'))
-                .catch(error => console.log(error))
-                .finally(() => loading.value = false);
+                    .then(() => console.log('Data loaded from DB'))
+                    .catch(error => console.log(error))
+                    .finally(() => loading.value = false);
             }
         }
 
@@ -276,6 +290,7 @@ export default {
 .q-table tbody td:after {
     background: rgba(255, 255, 255, 0);
 }
+
 .q-table--dark tbody td:after {
     background: rgba(0, 0, 0, 0);
 }
@@ -283,6 +298,7 @@ export default {
 .q-table tbody td:before {
     background: rgba(0, 0, 0, 0.04);
 }
+
 .q-table--dark tbody td:before {
     background: rgba(255, 255, 255, 0.04);
 }
@@ -296,22 +312,13 @@ export default {
 
     .q-table__top,
     .q-table__bottom,
-    thead tr:first-child th
-        /* bg color is important for th; just specify one */
-        background-color: #ffffff
 
     thead tr th
+        top: 0
         position: sticky
         z-index: 2
+        background-color: #ffffff
         text-transform: uppercase
-    thead tr:first-child th
-        top: 0
-
-    /* this is when the loading indicator appears */
-    &.q-table--loading thead tr:last-child th
-        /* height of all previous header rows */
-        top: 48px
-
 
 .q-table--dark 
     .q-table__top,

@@ -1,6 +1,6 @@
 <template>
     <div class="q-pa-sm">
-        <q-table dense color="primary" class="my-sticky-header-table" row-key="product" :loading="loading"
+        <q-table dense color="primary" class="my-sticky-header-table" row-key="product" 
             :title="title" :rows="rows" :columns="columns" :visible-columns="visibleColumns"
             :filter="filter" :rows-per-page-options="[0]" :binary-state-sort="true" wrap-cells
             selection="multiple" v-model:selected="selectedRows" @update:selected="onUpdateSelected"
@@ -15,15 +15,15 @@
                 </q-input>
 
                 <!-- Refresh data -->
-                <q-btn dense flat round icon="mdi-refresh" :color="refreshColor" @click="refreshData()">
-                    <q-tooltip transition-show="scale" transition-hide="scale">{{ "Refresh data" }}</q-tooltip>
+                <q-btn dense flat round icon="mdi-refresh" :color="refreshColor" :loading="loading" @click="refreshData()">
+                    <q-tooltip transition-show="scale" transition-hide="scale">{{ "Uppdatera" }}</q-tooltip>
                 </q-btn>
             </template>
 
             <!-- Table header row -->
             <template v-slot:header="props">
                 <q-tr :props="props">
-                    <q-th v-for="col in props.cols" :key="col.name" :props="props">
+                    <q-th v-for="col in props.cols" :key="col.name" :props="props" style="vertical-align: bottom">
                         {{ col.label }}
                     </q-th>
 
@@ -44,7 +44,7 @@
                                 </q-item>
                             </template>
                             <q-tooltip transition-show="scale" transition-hide="scale">
-                                {{ "Show/hide columns"}}
+                                {{ "Välj kolumner"}}
                             </q-tooltip>
                         </q-select>
                     </q-th>
@@ -57,7 +57,7 @@
                     <q-td v-for="col in props.cols" :key="col.name" :props="props">{{ col.value }}</q-td>
 
                     <!-- Action buttons -->
-                    <q-td auto-width>
+                    <q-td auto-width style="white-space: nowrap">
                         <!-- Add to watchlist / dashboard -->
                         <q-toggle size="sm" dense v-model="props.selected" checked-icon="mdi-eye"
                             unchecked-icon="mdi-eye-off">
@@ -144,6 +144,7 @@ export default {
 
         // Fetch data from ibindex using the provided api reference
         async function refreshData() {
+            console.time(`ibiLoadDataFromWeb() \t ${api.value}`);
             loading.value = true;
             fetch(requestOptions.url, requestOptions.options)
                 .then(response => {
@@ -159,16 +160,15 @@ export default {
                     data.forEach(item => ibiStore.setItem(item.product, item));
 
                     refreshColor.value = 'primary';
-                    $q.notify({ type: 'positive', message: 'Successful refresh' });
+                    $q.notify({ type: 'positive', message: 'Uppdateringen gick bra' });
                 }).catch(error => {
                     console.log(error);
                     refreshColor.value = 'negative';
-                    $q.notify({
-                        type: 'warning',
-                        message: 'Something went wrong during refresh',
-                        caption: 'Showing data from local storage'
-                    });
-                }).finally(() => loading.value = false);
+                    $q.notify({ type: 'negative', message: 'Något gick fel under uppdateringen' });
+                }).finally(() => {
+                    loading.value = false;
+                    console.timeEnd(`ibiLoadDataFromWeb() \t ${api.value}`);
+                });
         }
 
         // Save the selected rows to Vuex state store. These rows represent the watchlist and will also be saved to the localStorage.
@@ -183,6 +183,7 @@ export default {
 
         // Load data. Try local storage first and online download if that fails.
         async function loadData() {
+            console.time(`ibiLoadData() \t ${api.value}`);
             loading.value = true;
 
             let data = [];
@@ -199,7 +200,10 @@ export default {
                     rows.value.index = index;
                 });
             }).catch(error => console.log(error))
-            .finally(() => loading.value = false);
+            .finally(() => {
+                loading.value = false;
+                console.timeEnd(`ibiLoadData() \t ${api.value}`);
+            });
         }
 
         onMounted(() => {
@@ -249,25 +253,17 @@ export default {
 
 .my-sticky-header-table
     /* height or max-height is important */
-    height: calc(100vh - 115px)
+    height: calc(100vh - 100px)
 
     .q-table__top,
     .q-table__bottom,
-    thead tr:first-child th
-        /* bg color is important for th; just specify one */
-        background-color: #ffffff
 
     thead tr th
+        top: 0
         position: sticky
         z-index: 2
+        background-color: #ffffff
         text-transform: uppercase
-    thead tr:first-child th
-        top: 0
-
-    /* this is when the loading indicator appears */
-    &.q-table--loading thead tr:last-child th
-        /* height of all previous header rows */
-        top: 48px
 
 .q-table--dark 
     .q-table__top,
@@ -277,5 +273,3 @@ export default {
         background-color: #1d1d1d
 
 </style>
-
-../api/ibindexAPI.jsm../api/ibindexAPI.mjs
