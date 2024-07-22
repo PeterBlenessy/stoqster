@@ -100,20 +100,24 @@ export default {
     height: calc(50vh)
 
     .q-table__top,
+    .q-table__middle,
     .q-table__bottom,
+    thead tr:first-child th
+        /* bg color is important for th; just specify one */
+        background-color: #f8f8f8
 
     thead tr th
         position: sticky
         top: 0
         z-index: 1
         text-transform: uppercase
-        background-color: #ffffff
 
-.q-table--dark 
-    .q-table__top,
-    .q-table__bottom,
-    thead tr:first-child th
-        /* bg color is important for th; just specify one */
-        background-color: #1d1d1d
+    &.q-table--dark 
+        .q-table__top,
+        .q-table__middle,
+        .q-table__bottom,
+        thead tr:first-child th
+            /* bg color is important for th; just specify one */
+            background-color: #2e2e2e
 
 </style>

@@ -25,8 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### [MINOR]
 - Change: Refactor components. (1). Create composables, abstracting getting data from dB. (2). Move fetch() operations to pine store layer.
-- Change: Downloading FI data takes too long time, and immediately loading data from dB after refresh hangs, it seems that dB is not ready.
-- Fix: there are dupplicates in the data from FI and we get 605 items when refreshing, vs 600 when loading from dB. Refactor download-import flow?
 - Add: selectable rows in funds holdings tables.
 - Add support for user settings and app configuration.
 - Add historical rebate/premioum to expanded row in ibindex component.
@@ -35,7 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change yarn from v1 -> v2 (https://yarnpkg.com/getting-started/migration)
 
 ### [PATCH]
-- Fix: catch and handle fetch() POST errors, e.g., Failed to load resource: the server responded with a status of 500.
 - Fix: refresh does not seem to propagate to child components on ibindex pages
 - Fix: dashboard refreshed when alarm trigger is saved and refresh success notification is shown
 
@@ -45,6 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [IN-PROGRESS]
 
 ## [UNRELEASED]
+
+## v1.0.2 - 2024-07-21
+- Changed background color for expanded rows for better contrast compared to the rest of the table.
+- Fixed scroll performance degradation due to sticky headers in tables.
+- Upgraded openssl version to 0.10.66 (CWE-476)
 
 ## v1.0.1 - 2024-07-20
 - Fixed some table styling inconsistencies in the app.

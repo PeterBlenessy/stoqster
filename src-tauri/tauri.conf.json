@@ -62,7 +62,8 @@
             "active": true,
             "dialog": true,
             "endpoints": [
-                "https://github.com/PeterBlenessy/stoqster/releases/latest/download/latest.json"
+                "https://github.com/PeterBlenessy/stoqster/releases/latest/download/latest.json",
+                "https://github.com/PeterBlenessy/stoqster-releases/releases/latest/download/latest.json"
             ],
             "pubkey":"dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVGMkIxRjY0MzI2RjJGQ0QKUldUTkwyOHlaQjhyWDdxMTYvYlh5TnV2L3ZvMEdpSGpLTVUxYTRwKzBic3IvQ1o3MzZOMkZiUCsK",
             "windows": {
