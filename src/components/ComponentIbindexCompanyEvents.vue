@@ -49,7 +49,6 @@ export default {
                     return response.data;
                 })
                 .then(data => {
-                    console.log(data);
                     rows.value = [...data];
                     // Store data in localforage
                     ibiEventsStore.setItem(companyCode.value, data);

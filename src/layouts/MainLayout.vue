@@ -63,12 +63,6 @@ const links = [
         icon: 'mdi-format-list-bulleted'
     },
     {
-        title: 'Ibindex vikter',
-        caption: 'Index- och marknadsviker',
-        path: '/ibindex-weights',
-        icon: 'mdi-chart-pie'
-    },
-    {
         title: 'Fonder - FinansInspektionen',
         caption: 'Fonder',
         path: '/funds',

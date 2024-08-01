@@ -19,7 +19,8 @@ export const useSettingsStore = defineStore('settings', () => {
     const watchlist = ref(loadState('watchlist') || []);
     const alerts = ref(loadState('alerts') || []);
     const refreshInterval = ref(loadState('refreshInterval') || 60 * 60 * 1000);
-
+    const ibiVisibleColumns = ref(loadState('ibiVisibleColumns') || []);
+    const fiVisibleColumns = ref(loadState('fiVisibleColumns') || []);
 
     // Watch and save changes to local storage
     watch(darkMode, (newValue) => saveState('darkMode', newValue), { deep: true });
@@ -27,12 +28,16 @@ export const useSettingsStore = defineStore('settings', () => {
     watch(watchlist, (newValue) => saveState('watchlist', newValue), { deep: true });
     watch(alerts, (newValue) => saveState('alerts', newValue), { deep: true });
     watch(refreshInterval, (newValue) => saveState('refreshInterval', newValue), { deep: true });
+    watch(ibiVisibleColumns, (newValue) => saveState('ibiVisibleColumns', newValue), { deep: true });
+    watch(fiVisibleColumns, (newValue) => saveState('fiVisibleColumns', newValue), { deep: true });
 
     return {
         darkMode,
         routerPath,
         watchlist,
         alerts,
-        refreshInterval
+        refreshInterval,
+        ibiVisibleColumns,
+        fiVisibleColumns
     }
 });

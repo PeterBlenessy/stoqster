@@ -1,8 +1,10 @@
 <template>
     <div class="q-pa-sm">
         <q-table dense wrap-cells color="primary" class="my-sticky-header-table" row-key="Fond_namn" :title="title"
-            :rows="rows" :columns="columns" :visible-columns="visibleColumns" :filter="filter"
-            :rows-per-page-options="[0]" :binary-state-sort="true">
+            :rows="rows" :columns="columns" :visible-columns="visibleColumns" :filter="filter" binary-state-sort
+            virtual-scroll virtual-scroll-slice-size="100" virtual-scroll-slice-ratio-before="2"
+            virtual-scroll-slice-ratio-after="2" virtual-scroll-sticky-size-start="28" virtual-scroll-item-size="28"
+            virtual-scroll-sticky-size-end="33" v-model:pagination="pagination" :rows-per-page-options="[0]">
 
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
@@ -61,7 +63,7 @@
                     <q-td v-for="col in props.cols" :key="col.name" :props="props">
                         {{ col.value }}
                         <q-tooltip transition-show="scale" transition-hide="scale">
-                            {{ col.label }}
+                            {{ col.label + ': ' + col.value }}
                         </q-tooltip>
                     </q-td>
 
@@ -71,7 +73,7 @@
                         <q-btn size="sm" color="primary" flat round dense
                             :icon="props.expand ? 'mdi-chevron-up' : 'mdi-chevron-down'">
                             <q-tooltip transition-show="scale" transition-hide="scale">
-                                {{ "Show holdings " }}
+                                {{ "Visa innehav" }}
                             </q-tooltip>
                         </q-btn>
                     </q-td>
@@ -90,11 +92,13 @@
 
 <script>
 import { fiFunds, fiDownload, funds, fundHoldings } from '../api/fiAPI.js';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import JSZip from 'jszip';
-import X2JS from 'x2js'//'../libs/xml2json.js'
-import localforage from 'localforage'
+import X2JS from 'x2js';//'../libs/xml2json.js'
+import localforage from 'localforage';
+import { storeToRefs } from 'pinia';
+import { useSettingsStore } from '../stores/settings-store.js';
 import ComponentFundHoldings from './ComponentFundHoldings.vue';
 import { ResponseType, fetch } from "@tauri-apps/api/http";
 
@@ -109,6 +113,8 @@ export default {
         const fundsStore = localforage.createInstance({ name: 'stoqster', storeName: funds.localForageConfig.storeName });
         const fundHoldingsStore = localforage.createInstance({ name: 'stoqster', storeName: fundHoldings.localForageConfig.storeName });
         const fiQuarterlyHoldingsUrl = 'fi-quarterly-holdings-url';
+        const settingsStore = useSettingsStore();
+        const { fiVisibleColumns } = storeToRefs(settingsStore);
 
         const $q = useQuasar();
 
@@ -268,9 +274,19 @@ export default {
             }
         }
 
+        // Restore visible columns from Pinia store.
+        const restoreVisibleColumns = () => {
+            if (fiVisibleColumns.value.length != 0) {
+                visibleColumns.value = fiVisibleColumns.value;
+            }
+        }
+
         onMounted(() => {
             loadData();
+            restoreVisibleColumns();
         });
+
+        watch(visibleColumns, (newVal) => fiVisibleColumns.value = [...newVal]);
 
         return {
             loadDataFromWeb,
@@ -280,7 +296,10 @@ export default {
             title,
             columns,
             visibleColumns,
-            rows
+            rows,
+            pagination: ref({
+                rowsPerPage: 0
+            })
         }
     }
 }
@@ -317,7 +336,7 @@ export default {
         /* bg color is important for th; just specify one */
         background-color: #ffffff
 
-    thead tr th
+    thead tr
         top: 0
         position: sticky
         z-index: 2

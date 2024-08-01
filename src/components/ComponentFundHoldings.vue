@@ -1,37 +1,20 @@
 <template>
-    <q-table
-        dense
-        flat
-        color="primary"
-        :title="title"
-        :columns="columns"
-        :rows="rows"
-        :visible-columns="visibleColumns"
-        :filter="filter"
-        row-key="index"
-        :rows-per-page-options="[0]"
-        :binary-state-sort="true"
-        class="my-sticky-header-table-expanded"
-        wrap-cells
-    >
-    
+    <q-table dense flat color="primary" :title="title" :columns="columns" :rows="rows" :visible-columns="visibleColumns"
+        :filter="filter" row-key="index" binary-state-sort class="my-sticky-header-table-expanded" wrap-cells
+        virtual-scroll virtual-scroll-slice-size="100" virtual-scroll-slice-ratio-before="2"
+        virtual-scroll-slice-ratio-after="2" virtual-scroll-sticky-size-start="49" virtual-scroll-item-size="33"
+        virtual-scroll-sticky-size-end="33" v-model:pagination="pagination" :rows-per-page-options="[0]">
+
         <!-- Configure top-right part of the data table component -->
         <template v-slot:top-right>
             <!-- Search input -->
-            <q-input
-                dense
-                debounce="300"
-                v-model="filter"
-                placeholder="Filter list"
-                style="width: 500px"
-            >
+            <q-input dense debounce="300" v-model="filter" placeholder="Sök i listan" style="width: 500px">
                 <template v-slot:append>
                     <q-icon name="mdi-filter-variant" />
                 </template>
             </q-input>
         </template>
 
-    
     </q-table>
 </template>
 
@@ -70,11 +53,11 @@ export default {
                     });
                 }
             })
-            .catch(error => console.log(error))
-            .finally(() => {
-                loading.value = false;
-                console.timeEnd(`loadHoldingsFromDB(): ${fundName.value}`);
-            });
+                .catch(error => console.log(error))
+                .finally(() => {
+                    loading.value = false;
+                    console.timeEnd(`loadHoldingsFromDB(): ${fundName.value}`);
+                });
         }
 
         onMounted(() => {

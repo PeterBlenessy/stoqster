@@ -73,7 +73,9 @@ const funds = {
     ],
     qTableConfig: {
         columns: [
-            { name: 'Fond_namn', label: 'Fondnamn', field: 'Fond_namn', align: 'left', required: true, sortable: true, style:'white-space: nowrap' },
+            { name: 'Fond_namn', label: 'Fondnamn', field: 'Fond_namn', align: 'left', required: true, sortable: true, 
+                style:'white-space: nowrap; max-width: 250px; overflow: hidden; text-overflow: ellipsis;' 
+            },
             { name: 'Fond_ISIN-kod', label: 'ISIN-kod', field: 'Fond_ISIN-kod', align: 'left', required: false },
             { 
                 name: 'Fondförmögenhet', label: 'Fondförmögenhet', field: 'Fondförmögenhet', align: 'right', required: false, sortable: true,
@@ -83,7 +85,8 @@ const funds = {
             { 
                 name: 'Jämförelseindex', label: 'Jämförelseindex', 
                 field: (val) => val['Jämförelseindex']['Jämförelseindex'],
-                align: 'left', required: false, sortable: true
+                align: 'left', required: false, sortable: true,
+                style:'white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis;' 
             },
             { 
                 name: 'Likvida_medel', label: 'Likvida medel', field: 'Likvida_medel', align: 'right', required: false, sortable: true,
@@ -103,7 +106,7 @@ const funds = {
                 style: val => setStyle(val['Övriga_tillgångar_och_skulder'], 'red', 'primary'),
             },
         ],
-        visibleColumns: ['Fond_namn', 'Fondförmögenhet', 'Likvida_medel', 'Standardavvikelse_24_månader', 'Övriga_tillgångar_och_skulder']
+        visibleColumns: ['Fond_namn', 'Jämförelseindex', 'Fondförmögenhet', 'Likvida_medel', 'Standardavvikelse_24_månader', 'Övriga_tillgångar_och_skulder']
     }
 };
 
@@ -123,7 +126,9 @@ const fundHoldings = {
         'Landkod_Emittent', 'Marknadsvärde_instrument', 'Nominellt_belopp', 'Tillgångsslag_enligt_LVF_5_kap', 'Valuta', 'Valutakurs_instrument' ],
     qTableConfig: {
         columns: [
-            { name: 'Instrumentnamn', label: 'Instrumentnamn', field: 'Instrumentnamn', align: 'left', required: true, sortable: true },
+            { name: 'Instrumentnamn', label: 'Instrumentnamn', field: 'Instrumentnamn', align: 'left', required: true, sortable: true,
+                style:'white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis;' 
+            },
             { name: 'ISIN-kod_instrument', label: 'ISIN-kod', field: 'ISIN-kod_instrument', align: 'right', required: true, sortable: true },
             { 
                 name: 'Marknadsvärde_instrument', label: 'Marknadsvärde', field: 'Marknadsvärde_instrument', align: 'right', required: false, sortable: true, 

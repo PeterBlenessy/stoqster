@@ -1,10 +1,9 @@
 <template>
     <div class="q-pa-sm">
-        <q-table dense color="primary" class="my-sticky-header-table" row-key="product" 
-            :title="title" :rows="rows" :columns="columns" :visible-columns="visibleColumns"
-            :filter="filter" :rows-per-page-options="[0]" :binary-state-sort="true" wrap-cells
-            selection="multiple" v-model:selected="selectedRows" @update:selected="onUpdateSelected"
-        >
+        <q-table dense color="primary" class="my-sticky-header-table" row-key="product" :title="title" :rows="rows"
+            :columns="columns" :visible-columns="visibleColumns" :filter="filter" :rows-per-page-options="[0]"
+            :binary-state-sort="true" wrap-cells selection="multiple" v-model:selected="selectedRows"
+            @update:selected="onUpdateSelected">
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
                 <!-- Filter input -->
@@ -15,7 +14,8 @@
                 </q-input>
 
                 <!-- Refresh data -->
-                <q-btn dense flat round icon="mdi-refresh" :color="refreshColor" :loading="loading" @click="refreshData()">
+                <q-btn dense flat round icon="mdi-refresh" :color="refreshColor" :loading="loading"
+                    @click="refreshData()">
                     <q-tooltip transition-show="scale" transition-hide="scale">{{ "Uppdatera" }}</q-tooltip>
                 </q-btn>
             </template>
@@ -39,12 +39,13 @@
                                     </q-item-section>
 
                                     <q-item-section side>
-                                        <q-toggle size="xs" :model-value="selected" @update:model-value="toggleOption(opt)" />
+                                        <q-toggle size="xs" :model-value="selected"
+                                            @update:model-value="toggleOption(opt)" />
                                     </q-item-section>
                                 </q-item>
                             </template>
                             <q-tooltip transition-show="scale" transition-hide="scale">
-                                {{ "Välj kolumner"}}
+                                {{ "Välj kolumner" }}
                             </q-tooltip>
                         </q-select>
                     </q-th>
@@ -77,7 +78,7 @@
                 </q-tr>
 
                 <!--  Expanded row. Displays additional insights about the company.  -->
-                <q-tr v-show="props.expand" :props="props" no-hover>
+                <q-tr v-if="props.expand" :props="props" no-hover>
                     <q-td :colspan="props.cols.length + 1">
                         <div class="row items-start q-gutter-md">
                             <div class="col-6">
@@ -109,7 +110,7 @@
 import { ibindex, ibiRequestOptions } from '../api/ibindexAPI.mjs';
 import ComponentIbindexCompanyHoldings from './ComponentIbindexCompanyHoldings.vue';
 import ComponentIbindexCompanyEvents from './ComponentIbindexCompanyEvents.vue';
-import { ref, toRef, onMounted } from 'vue';
+import { ref, toRef, onMounted, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { storeToRefs } from 'pinia';
 import { useSettingsStore } from '../stores/settings-store.js';
@@ -129,7 +130,7 @@ export default {
     setup(props) {
         const $q = useQuasar();
         const settingsStore = useSettingsStore();
-        const { watchlist } = storeToRefs(settingsStore);
+        const { watchlist, ibiVisibleColumns } = storeToRefs(settingsStore);
         const api = toRef(props, 'api');
         const title = ref(ibindex[api.value].title);
         const visibleColumns = ref(ibindex[api.value].visibleColumns);
@@ -171,16 +172,6 @@ export default {
                 });
         }
 
-        // Save the selected rows to Vuex state store. These rows represent the watchlist and will also be saved to the localStorage.
-        function onUpdateSelected(newSelection) {
-            watchlist.value = newSelection;
-        }
-
-        // Restore selected rows from Vuex state store. These rows represent the watchlist.
-        function restoreSelectedRows() {
-            selectedRows.value = watchlist.value;
-        }
-
         // Load data. Try local storage first and online download if that fails.
         async function loadData() {
             console.time(`ibiLoadData() \t ${api.value}`);
@@ -200,16 +191,35 @@ export default {
                     rows.value.index = index;
                 });
             }).catch(error => console.log(error))
-            .finally(() => {
-                loading.value = false;
-                console.timeEnd(`ibiLoadData() \t ${api.value}`);
-            });
+                .finally(() => {
+                    loading.value = false;
+                    console.timeEnd(`ibiLoadData() \t ${api.value}`);
+                });
+        }
+
+        // Save the selected rows to Pinia store. These rows represent the watchlist and will also be saved to the localStorage.
+        function onUpdateSelected(newSelection) {
+            watchlist.value = newSelection;
+        }
+
+        // Restore selected rows from Pinia store. These rows represent the watchlist.
+        function restoreSelectedRows() {
+            selectedRows.value = watchlist.value;
+        }
+        // Restore visible columns from Pinia store.
+        const restoreVisibleColumns = () => {
+            if (ibiVisibleColumns.value.length != 0) {
+                visibleColumns.value = ibiVisibleColumns.value;
+            }
         }
 
         onMounted(() => {
             loadData();
             restoreSelectedRows();
+            restoreVisibleColumns();
         });
+
+        watch(visibleColumns, (newVal) => ibiVisibleColumns.value = [...newVal]);
 
         return {
             title,

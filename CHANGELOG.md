@@ -43,6 +43,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.0.3 - 2024-08-01
+- Added persistence of visible columns in local storage.
+- Removed IB index and market weights page.
+- Removed console.log of company events data loaded from the web.
+
 ## v1.0.2 - 2024-07-21
 - Changed background color for expanded rows for better contrast compared to the rest of the table.
 - Fixed scroll performance degradation due to sticky headers in tables.
