@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [IN-PROGRESS]
 
 ## [UNRELEASED]
+- Removed references to Quasar CLI from README.md and package.json.
+- Added more info about the project in README.md.
 
 ## v1.0.3 - 2024-08-01
 - Added persistence of visible columns in local storage.

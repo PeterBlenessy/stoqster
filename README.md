@@ -1,8 +1,31 @@
-# Stoqster (stoqster)
+# Stoqster
 
-Follow your favourite stocks and fonds, and your portfolio's performance
+Stoqster provides information about Swedish investment companies and funds, in particular information about the holdings.
 
-## Install the dependencies
+## Features
+
+- [x] List investment companies and their holdings
+- [x] List funds and their holdings
+- [x] Add/remove investment company to watch list
+- [x] Display company performance in watch list
+- [x] Set simple alarm in watchlist
+- [ ] List real estate companies and their holdings
+- [ ] List publicly listed companies
+- [ ] List indexes and their holdings
+
+More details are available in the [use cases](USECASES.md).
+
+## Data origin
+Stoqster uses information freely available on the web, specifically from [Investmentbolags Index](https://ibindex.se) and [Finansinspektionen](https://www.fi.se/sv/vara-register/fondinnehav-per-kvartal/).
+
+[![Investmentbolags Index](https://ibindex.se/ibi/assets/images/logo.png)](https://ibindex.se)
+[![Finansinspektionen](https://www.fi.se/static/gfx/images/fi-logotyp.svg)](https://www.fi.se/sv/vara-register/fondinnehav-per-kvartal/)
+
+## License
+
+## Contributors
+
+### Install the dependencies
 ```bash
 yarn
 ```
@@ -19,11 +42,8 @@ yarn run lint
 
 ### Build the app for production
 ```bash
-quasar build
+yarn build
 ```
-
-### Customize the configuration
-See [Configuring quasar.conf.js](https://quasar.dev/quasar-cli/quasar-conf-js).
 
 ### Publishing to GitHub
 To be able to publish to github a `GH_TOKEN` needs to be generated and exported as an environment variable.
@@ -39,4 +59,3 @@ export GH_TOKEN=<YOUR-GH-TOKEN>
 yarn outdated
 yarn upgrade
 ```
-

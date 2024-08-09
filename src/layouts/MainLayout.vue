@@ -53,20 +53,23 @@ const links = [
     {
         title: 'Ibindex',
         caption: 'Bevakningar',
-        icon: 'mdi-apps',
+        icon: 'mdi-monitor-eye',
+        iconUrl: '',
         path: '/'
     },
     {
         title: 'Ibindex',
         caption: 'Investmentbolag',
-        path: '/ibindex',
-        icon: 'mdi-format-list-bulleted'
+        icon: 'mdi-format-list-bulleted',
+        iconUrl: 'https://ibindex.se/ibi/assets/images/logo.png',
+        path: '/ibindex'
     },
     {
-        title: 'Fonder - FinansInspektionen',
+        title: 'Fonder - Finansinspektionen',
         caption: 'Fonder',
-        path: '/funds',
-        icon: 'mdi-briefcase-variant'
+        icon: 'mdi-briefcase-variant',
+        iconUrl: 'https://www.fi.se/static/gfx/images/fi-logotyp.svg',
+        path: '/funds'
     }
 ]
 

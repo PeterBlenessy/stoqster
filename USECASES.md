@@ -29,8 +29,8 @@ Fund managers report their holdings to Finansinspektionen, Sweden's financial su
 - [x] Display fund information in a table. Searchable.
 - [x] Selectable visible columns.
 - [x] Display fund holdings.
-- [] Display all instruments in one big list
-- [] Make fund holdings table filterable
+- [ ] Display all instruments in one big list
+- [x] Make fund holdings table filterable.
 
 #### Flowchart
 
@@ -101,6 +101,3 @@ refresh     --> fetchZip
 
 
 ```
-
-
-## Display information fetched from Placera news feed
