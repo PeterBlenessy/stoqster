@@ -1,4 +1,3 @@
-
 const routes = [
   {
     path: '/',
@@ -7,6 +6,7 @@ const routes = [
       { path: '', component: () => import('../pages/PageDashboard.vue') },
       { path: 'ibindex', component: () => import('../pages/PageIbindex.vue') },
       { path: 'funds', component: () => import('../pages/PageFunds.vue') },
+      { path: 'stocks', component: () => import('../pages/PageStocks.vue') },
     ]
   },
 
