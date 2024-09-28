@@ -12,14 +12,16 @@ Stoqster provides information about Swedish investment companies and funds, in p
 - [ ] List real estate companies and their holdings
 - [ ] List publicly listed companies
 - [ ] List indexes and their holdings
+- [x] List company information from fbindex.se
 
 More details are available in the [use cases](USECASES.md).
 
 ## Data origin
-Stoqster uses information freely available on the web, specifically from [Investmentbolags Index](https://ibindex.se) and [Finansinspektionen](https://www.fi.se/sv/vara-register/fondinnehav-per-kvartal/).
+Stoqster uses information freely available on the web, specifically from [Investmentbolags Index](https://ibindex.se), [Finansinspektionen](https://www.fi.se/sv/vara-register/fondinnehav-per-kvartal/), and [Fbindex](https://www.fbindex.se).
 
 [![Investmentbolags Index](https://ibindex.se/ibi/assets/images/logo.png)](https://ibindex.se)
 [![Finansinspektionen](https://www.fi.se/static/gfx/images/fi-logotyp.svg)](https://www.fi.se/sv/vara-register/fondinnehav-per-kvartal/)
+[![Fbindex](https://www.fbindex.se/assets/images/logo.png)](https://www.fbindex.se)
 
 ## License
 
