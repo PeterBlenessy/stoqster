@@ -20,8 +20,8 @@ More details are available in the [use cases](USECASES.md).
 Stoqster uses information freely available on the web, specifically from [Investmentbolags Index](https://ibindex.se), [Finansinspektionen](https://www.fi.se/sv/vara-register/fondinnehav-per-kvartal/), and [Fbindex](https://www.fbindex.se).
 
 [![Investmentbolags Index](https://ibindex.se/ibi/assets/images/logo.png)](https://ibindex.se)
+[![Fbindex](https://www.fbindex.se/fbi/assets/images/logo.png)](https://www.fbindex.se)
 [![Finansinspektionen](https://www.fi.se/static/gfx/images/fi-logotyp.svg)](https://www.fi.se/sv/vara-register/fondinnehav-per-kvartal/)
-[![Fbindex](https://www.fbindex.se/assets/images/logo.png)](https://www.fbindex.se)
 
 ## License
 
