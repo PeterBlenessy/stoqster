@@ -70,6 +70,13 @@ const links = [
         icon: 'mdi-briefcase-variant',
         iconUrl: 'https://www.fi.se/static/gfx/images/fi-logotyp.svg',
         path: '/funds'
+    },
+    {
+        title: 'Stocks',
+        caption: 'Stocks',
+        icon: 'mdi-chart-line',
+        iconUrl: '',
+        path: '/stocks'
     }
 ]
 
