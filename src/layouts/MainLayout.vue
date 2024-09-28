@@ -65,6 +65,13 @@ const links = [
         path: '/ibindex'
     },
     {
+        title: 'Fbindex',
+        caption: 'Company Information',
+        icon: 'mdi-domain',
+        iconUrl: 'https://www.fbindex.se/assets/images/logo.png',
+        path: '/fbindex'
+    },
+    {
         title: 'Fonder - Finansinspektionen',
         caption: 'Fonder',
         icon: 'mdi-briefcase-variant',
