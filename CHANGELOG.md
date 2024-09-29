@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v1.1.2 - 2024-09-29
 - Fixed Linux build issues: must use webkitgtk 4.1 for Tauri v2
+- Fixed Linux build issues: must use ubuntu-22.04 for Tauri v2
 
 ## v1.1.1 - 2024-09-29
 - Fixed GitHub Actions secrets.
