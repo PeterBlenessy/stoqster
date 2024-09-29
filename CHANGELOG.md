@@ -38,12 +38,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### [FUTURE]
 - Change: change from localforage -> Dexie
+- Refactor watchlist solution to include watched items from Ibindex, Fbindex, and FI
 
 ## [IN-PROGRESS]
 
 ## [UNRELEASED]
 - Removed references to Quasar CLI from README.md and package.json.
 - Added more info about the project in README.md.
+- Migrated to Tauri v2-rc
+- Added support for displaying data from fbindex.se (Fastighetsbolagsindex)
+- Added new component CompanyDetails, which replaces ComponentIbindexCompanyEvents, ComponentIbindexCompanyHoldings and ComponentIbindexRebatePremium.
+- Added support for displaying company holding being public or not.
 
 ## v1.0.3 - 2024-08-01
 - Added persistence of visible columns in local storage.
@@ -105,7 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed (back) mac build target to default (= dmg + zip) from only dmg to fix auto-updater issue caused by zip target being required but excluded in config
 - Changed all app and dev dependencies to latest
 - Removed store names from localForage boot file.
- 
+
 ## v0.5.16 - 2022-02-13
 - Added import of environment variables from .env file
 
@@ -223,7 +228,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adopted Composition API for components.
 
 ## v0.2.0 - 2021-11-16
-- Added CAlertDialog.vue to handle adding/deleting/updating alerts for companies with default settings. 
+- Added CAlertDialog.vue to handle adding/deleting/updating alerts for companies with default settings.
 - Aligned components more with Composition API.
 - Added support on dashbard to check if alert exists to change icon.
 
@@ -255,11 +260,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added first iteration of dashboard.
 
 ## v0.0.2 - 2021-11-01
-- Removed: Vetur related VSCode extension related configs. 
+- Removed: Vetur related VSCode extension related configs.
 - Added lint rules: vue3-strongly-recommended.
 - Changed icon files.
 - Added new build targets: linux (deb and tar.gz) and windows (portable).
 
 ## v0.0.1 - 2021-10-31
 - First commit to github of Stoqster
-

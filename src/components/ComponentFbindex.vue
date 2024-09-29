@@ -1,50 +1,111 @@
 <template>
     <div class="q-pa-sm">
-        <q-table dense color="primary" class="my-sticky-header-table" row-key="companyName" :title="title" :rows="rows"
-            :columns="columns" :visible-columns="visibleColumns" :filter="filter" :rows-per-page-options="[0]"
-            :binary-state-sort="true" wrap-cells selection="multiple" v-model:selected="selectedRows"
-            @update:selected="onUpdateSelected">
+        <q-table
+            dense
+            color="primary"
+            class="my-sticky-header-table"
+            row-key="product"
+            :title="title"
+            :rows="rows"
+            :columns="columns"
+            :visible-columns="visibleColumns"
+            :filter="filter"
+            :rows-per-page-options="[0]"
+            :binary-state-sort="true"
+            wrap-cells
+            selection="multiple"
+            v-model:selected="selectedRows"
+            @update:selected="onUpdateSelected"
+        >
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
                 <!-- Filter input -->
-                <q-input dense debounce="300" v-model="filter" placeholder="Sök i listan" style="width: 500px">
+                <q-input
+                    dense
+                    debounce="300"
+                    v-model="filter"
+                    placeholder="Sök i listan"
+                    style="width: 500px"
+                >
                     <template v-slot:append>
                         <q-icon name="mdi-filter-variant" />
                     </template>
                 </q-input>
 
                 <!-- Refresh data -->
-                <q-btn dense flat round icon="mdi-refresh" :color="refreshColor" :loading="loading"
-                    @click="refreshData()">
-                    <q-tooltip transition-show="scale" transition-hide="scale">{{ "Uppdatera" }}</q-tooltip>
+                <q-btn
+                    dense
+                    flat
+                    round
+                    icon="mdi-refresh"
+                    :color="refreshColor"
+                    :loading="loading"
+                    @click="refreshData()"
+                >
+                    <q-tooltip
+                        transition-show="scale"
+                        transition-hide="scale"
+                        >{{ "Uppdatera" }}</q-tooltip
+                    >
                 </q-btn>
             </template>
 
             <!-- Table header row -->
             <template v-slot:header="props">
                 <q-tr :props="props">
-                    <q-th v-for="col in props.cols" :key="col.name" :props="props" style="vertical-align: bottom">
+                    <q-th
+                        v-for="col in props.cols"
+                        :key="col.name"
+                        :props="props"
+                        style="vertical-align: bottom"
+                    >
                         {{ col.label }}
                     </q-th>
 
                     <!-- Column selection  -->
                     <q-th auto-width>
-                        <q-select multiple dense options-dense borderless dropdown-icon="mdi-dots-vertical"
-                            style="size: 300px" v-model="visibleColumns" display-value emit-value map-options
-                            :options="columns" option-value="name">
-                            <template v-slot:option="{ itemProps, opt, selected, toggleOption }">
+                        <q-select
+                            multiple
+                            dense
+                            options-dense
+                            borderless
+                            dropdown-icon="mdi-dots-vertical"
+                            style="size: 300px"
+                            v-model="visibleColumns"
+                            display-value
+                            emit-value
+                            map-options
+                            :options="columns"
+                            option-value="name"
+                        >
+                            <template
+                                v-slot:option="{
+                                    itemProps,
+                                    opt,
+                                    selected,
+                                    toggleOption,
+                                }"
+                            >
                                 <q-item v-bind="itemProps" dense>
                                     <q-item-section>
                                         <q-item-label v-html="opt.label" />
                                     </q-item-section>
 
                                     <q-item-section side>
-                                        <q-toggle size="xs" :model-value="selected"
-                                            @update:model-value="toggleOption(opt)" />
+                                        <q-toggle
+                                            size="xs"
+                                            :model-value="selected"
+                                            @update:model-value="
+                                                toggleOption(opt)
+                                            "
+                                        />
                                     </q-item-section>
                                 </q-item>
                             </template>
-                            <q-tooltip transition-show="scale" transition-hide="scale">
+                            <q-tooltip
+                                transition-show="scale"
+                                transition-hide="scale"
+                            >
                                 {{ "Välj kolumner" }}
                             </q-tooltip>
                         </q-select>
@@ -55,23 +116,55 @@
             <template v-slot:body="props">
                 <q-tr :props="props" @click="props.expand = !props.expand">
                     <!-- Column values -->
-                    <q-td v-for="col in props.cols" :key="col.name" :props="props">{{ col.value }}</q-td>
+                    <q-td
+                        v-for="col in props.cols"
+                        :key="col.name"
+                        :props="props"
+                        >{{ col.value }}</q-td
+                    >
 
                     <!-- Action buttons -->
                     <q-td auto-width style="white-space: nowrap">
                         <!-- Add to watchlist / dashboard -->
-                        <q-toggle size="sm" dense v-model="props.selected" checked-icon="mdi-eye"
-                            unchecked-icon="mdi-eye-off">
-                            <q-tooltip transition-show="scale" transition-hide="scale">
-                                {{ props.selected ? "Remove from dashboard" : "Add to dashboard" }}
+                        <q-toggle
+                            size="sm"
+                            dense
+                            v-model="props.selected"
+                            checked-icon="mdi-eye"
+                            unchecked-icon="mdi-eye-off"
+                        >
+                            <q-tooltip
+                                transition-show="scale"
+                                transition-hide="scale"
+                            >
+                                {{
+                                    props.selected
+                                        ? "Remove from dashboard"
+                                        : "Add to dashboard"
+                                }}
                             </q-tooltip>
                         </q-toggle>
 
                         <!-- Expand more details -->
-                        <q-btn size="sm" color="primary" flat round dense
-                            :icon="props.expand ? 'mdi-chevron-up' : 'mdi-chevron-down'">
-                            <q-tooltip transition-show="scale" transition-hide="scale">
-                                {{ "Show more info about " + props.row.companyName }}
+                        <q-btn
+                            size="sm"
+                            color="primary"
+                            flat
+                            round
+                            dense
+                            :icon="
+                                props.expand
+                                    ? 'mdi-chevron-up'
+                                    : 'mdi-chevron-down'
+                            "
+                        >
+                            <q-tooltip
+                                transition-show="scale"
+                                transition-hide="scale"
+                            >
+                                {{
+                                    "Show more info about " + props.row.product
+                                }}
                             </q-tooltip>
                         </q-btn>
                     </q-td>
@@ -84,16 +177,24 @@
                             <div class="col-6">
                                 <q-card>
                                     <q-card-section>
-                                        <ComponentFbindexCompanyHoldings :company="props.row.companyName"
-                                            :key="props.row.companyName" />
+                                        <CompanyDetails
+                                            :api="fbindex.getRebatePremiums"
+                                            request="getRebatePremiums"
+                                            :company="props.row.product"
+                                            :key="props.row.product"
+                                        />
                                     </q-card-section>
                                 </q-card>
                             </div>
-                            <div class="col-3">
+                            <div class="col-5">
                                 <q-card>
                                     <q-card-section>
-                                        <ComponentFbindexCompanyEvents :company="props.row.companyName"
-                                            :key="props.row.companyName" />
+                                        <CompanyDetails
+                                            :api="fbindex.getEvents"
+                                            request="getEvents"
+                                            :company="props.row.product"
+                                            :key="props.row.product"
+                                        />
                                     </q-card-section>
                                 </q-card>
                             </div>
@@ -106,112 +207,129 @@
 </template>
 
 <script>
-
-import { fbindex, fbindexRequestOptions } from '../api/fbindexAPI.js';
-import ComponentFbindexCompanyHoldings from './ComponentFbindexCompanyHoldings.vue';
-import ComponentFbindexCompanyEvents from './ComponentFbindexCompanyEvents.vue';
-import { ref, toRef, onMounted, watch } from 'vue';
-import { useQuasar } from 'quasar';
-import { storeToRefs } from 'pinia';
-import { useSettingsStore } from '../stores/settings-store.js';
-import localforage from 'localforage';
-import { fetch } from "@tauri-apps/api/http";
+import { fbindex, fbindexRequestOptions } from "../api/fbindexAPI.js";
+import CompanyDetails from "./CompanyDetails.vue";
+import { ref, toRef, onMounted, watch } from "vue";
+import { useQuasar } from "quasar";
+import { storeToRefs } from "pinia";
+import { useSettingsStore } from "../stores/settings-store.js";
+import localforage from "localforage";
+import { fetch } from "@tauri-apps/plugin-http";
 
 export default {
-    name: 'ComponentFbindex',
+    name: "ComponentFbindex",
     components: {
-        ComponentFbindexCompanyHoldings,
-        ComponentFbindexCompanyEvents
+        CompanyDetails,
     },
     props: {
-        api: { type: String, required: true }
+        api: { type: String, required: true },
     },
 
     setup(props) {
         const $q = useQuasar();
         const settingsStore = useSettingsStore();
-        const { watchlist, fbVisibleColumns } = storeToRefs(settingsStore);
-        const api = toRef(props, 'api');
+        const { fbiWatchlist, fbiVisibleColumns } = storeToRefs(settingsStore);
+        const api = toRef(props, "api");
         const title = ref(fbindex[api.value].title);
         const visibleColumns = ref(fbindex[api.value].visibleColumns);
         const columns = fbindex[api.value].columns;
         const rows = ref([]);
         const selectedRows = ref([]);
         const loading = ref(false);
-        const refreshColor = ref('primary');
+        const refreshColor = ref("primary");
 
         const requestOptions = fbindexRequestOptions(api.value);
-        const fbStore = localforage.createInstance({ name: 'stoqster', storeName: fbindex[api.value].localForageConfig.storeName });
+        const fbiStore = localforage.createInstance({
+            name: "stoqster",
+            storeName: fbindex[api.value].localForageConfig.storeName,
+        });
 
         // Fetch data from fbindex using the provided api reference
         async function refreshData() {
-            console.time(`fbLoadDataFromWeb() \t ${api.value}`);
+            console.time(`fbiLoadDataFromWeb() \t ${api.value}`);
             loading.value = true;
             fetch(requestOptions.url, requestOptions.options)
-                .then(response => {
+                .then((response) => {
                     if (!response.ok) {
-                        return Promise.reject(`Error - fetch() status code: ${response.status}`);
+                        return Promise.reject(
+                            `Error - fetch() status code: ${response.status}`,
+                        );
                     }
+                    let data = response.json();
+                    console.log(data);
 
-                    return response.data;
+                    return data;
                 })
-                .then(data => {
+                .then((data) => {
                     rows.value = [...data];
                     // Store new data
-                    data.forEach(item => fbStore.setItem(item.companyName, item));
+                    data.forEach((item) =>
+                        fbiStore.setItem(item.product, item),
+                    );
 
-                    refreshColor.value = 'primary';
-                    $q.notify({ type: 'positive', message: 'Uppdateringen gick bra' });
-                }).catch(error => {
+                    refreshColor.value = "primary";
+                    $q.notify({
+                        type: "positive",
+                        message: "Uppdateringen gick bra",
+                    });
+                })
+                .catch((error) => {
                     console.log(error);
-                    refreshColor.value = 'negative';
-                    $q.notify({ type: 'negative', message: 'Något gick fel under uppdateringen' });
-                }).finally(() => {
+                    refreshColor.value = "negative";
+                    $q.notify({
+                        type: "negative",
+                        message: "Något gick fel under uppdateringen",
+                    });
+                })
+                .finally(() => {
                     loading.value = false;
-                    console.timeEnd(`fbLoadDataFromWeb() \t ${api.value}`);
+                    console.timeEnd(`fbiLoadDataFromWeb() \t ${api.value}`);
                 });
         }
 
         // Load data. Try local storage first and online download if that fails.
         async function loadData() {
-            console.time(`fbLoadData() \t ${api.value}`);
+            console.time(`fbiLoadData() \t ${api.value}`);
             loading.value = true;
 
             let data = [];
-            fbStore.iterate((value, key, iterationNumber) => {
-                data.push(value);
-            }).then(() => {
-                if (data.length === 0) {
-                    return refreshData();
-                }
+            fbiStore
+                .iterate((value, key, iterationNumber) => {
+                    data.push(value);
+                })
+                .then(() => {
+                    if (data.length === 0) {
+                        return refreshData();
+                    }
 
-                rows.value = [...data];
-                // Make sure we have a unique index for each row
-                rows.value.forEach((row, index) => {
-                    rows.value.index = index;
-                });
-            }).catch(error => console.log(error))
+                    rows.value = [...data];
+                    // Make sure we have a unique index for each row
+                    rows.value.forEach((row, index) => {
+                        rows.value.index = index;
+                    });
+                })
+                .catch((error) => console.log(error))
                 .finally(() => {
                     loading.value = false;
-                    console.timeEnd(`fbLoadData() \t ${api.value}`);
+                    console.timeEnd(`fbiLoadData() \t ${api.value}`);
                 });
         }
 
         // Save the selected rows to Pinia store. These rows represent the watchlist and will also be saved to the localStorage.
         function onUpdateSelected(newSelection) {
-            watchlist.value = newSelection;
+            fbiWatchlist.value = newSelection;
         }
 
         // Restore selected rows from Pinia store. These rows represent the watchlist.
         function restoreSelectedRows() {
-            selectedRows.value = watchlist.value;
+            selectedRows.value = fbiWatchlist.value;
         }
         // Restore visible columns from Pinia store.
         const restoreVisibleColumns = () => {
-            if (fbVisibleColumns.value.length != 0) {
-                visibleColumns.value = fbVisibleColumns.value;
+            if (fbiVisibleColumns.value.length != 0) {
+                visibleColumns.value = fbiVisibleColumns.value;
             }
-        }
+        };
 
         onMounted(() => {
             loadData();
@@ -219,26 +337,28 @@ export default {
             restoreVisibleColumns();
         });
 
-        watch(visibleColumns, (newVal) => fbVisibleColumns.value = [...newVal]);
+        watch(
+            visibleColumns,
+            (newVal) => (fbiVisibleColumns.value = [...newVal]),
+        );
 
         return {
+            fbindex,
             title,
             columns,
             visibleColumns,
             rows,
             selectedRows,
-            filter: ref(''),
+            filter: ref(""),
 
             loading,
             refreshColor,
             refreshData,
             restoreSelectedRows,
-            onUpdateSelected
-        }
-    }
-
-}
-
+            onUpdateSelected,
+        };
+    },
+};
 </script>
 
 <style>
@@ -277,11 +397,10 @@ export default {
         z-index: 2
         text-transform: uppercase
 
-    &.q-table--dark 
+    &.q-table--dark
         .q-table__top,
         .q-table__bottom,
         thead tr:first-child th
             /* bg color is important for th; just specify one */
             background-color: #1d1d1d
-
 </style>
