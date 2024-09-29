@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.1.1 - 2024-09-29
+- Fixed GitHub Actions secrets.
+
 ## v1.1.0 - 2024-09-29
 - Removed references to Quasar CLI from README.md and package.json.
 - Added more info about the project in README.md.
