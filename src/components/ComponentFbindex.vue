@@ -255,10 +255,7 @@ export default {
                             `Error - fetch() status code: ${response.status}`,
                         );
                     }
-                    let data = response.json();
-                    console.log(data);
-
-                    return data;
+                    return response.json();
                 })
                 .then((data) => {
                     rows.value = [...data];

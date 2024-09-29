@@ -225,6 +225,8 @@ export default {
         const loading = ref(false);
         const refreshColor = ref("primary");
 
+        const loadedFromWeb = ref(false);
+
         async function unzipAndImportToDB(zipFile) {
             console.time("fiUnzipAndImportToDB()");
 
@@ -308,10 +310,10 @@ export default {
                 );
             }
 
-            let text = response.data;
+            let text = await response.text();
             let parser = new DOMParser();
             let doc = parser.parseFromString(text, "text/html");
-            let table = doc.getElementsByTagName("table")[0];
+            let table = doc.getElementsByTagName("tbody")[0];
             let aList = table.querySelectorAll("tr td:first-child a");
 
             // The first item in the list of links is the latest.
@@ -320,20 +322,21 @@ export default {
             let a = aList[0];
             let url = fiDownload.url + a.pathname + a.search;
             console.timeEnd("fiScrapeZipUrl()");
+            console.log("fiScrapeZipUrl() - url: ", url);
             return url;
         }
 
         // Download zipped fund reports from FinansInspektionen
         async function fiFetchZipFile(url) {
             console.time("fiFetchZipFile()");
-            let response = await fetch(url, { responseType: "blob" });
+            let response = await fetch(url, { responseType: "arrayBuffer" });
             if (!response.ok) {
                 return Promise.reject(
                     `Error - fetch() status code: ${response.status}`,
                 );
             }
             console.timeEnd("fiFetchZipFile()");
-            return response.data;
+            return Promise.resolve(response.blob());
         }
 
         // Download data from FinansInspektionen and store it in IndexedDB
@@ -343,10 +346,15 @@ export default {
             let url = await fundsStore.getItem(fiQuarterlyHoldingsUrl);
             if (url === null) {
                 fiScrapeZipUrl()
-                    .then((zipUrl) => fiFetchZipFile(zipUrl))
+                    .then((zipUrl) => {
+                        fiCommonStore.setItem(fiQuarterlyHoldingsUrl, zipUrl);
+                        return fiFetchZipFile(zipUrl);
+                    })
                     .then((zipFile) => unzipAndImportToDB(zipFile))
-                    .then(() => {
-                        fiCommonStore.setItem(fiQuarterlyHoldingsUrl, url);
+                    .then((data) => {
+                        rows.value = data;
+                        loadedFromWeb.value = true;
+                        console.log("loadedFromWeb.value = true");
                     })
                     .catch((error) => {
                         throw new Error(error);
@@ -389,6 +397,7 @@ export default {
                 loadDataFromWeb()
                     .then(() => {
                         console.log("Data loaded from web");
+                        loadedFromWeb.value = true;
                         $q.notify({
                             type: "positive",
                             message: "Uppdateringen gick bra",
@@ -427,7 +436,14 @@ export default {
             (newVal) => (fiVisibleColumns.value = [...newVal]),
         );
 
+        watch(loadedFromWeb, (newVal) => {
+            if (newVal) {
+                loadDataFromDB().then(() => console.log("Data loaded from DB"));
+            }
+        });
+
         return {
+            loadData,
             loadDataFromWeb,
             loading,
             refreshColor,

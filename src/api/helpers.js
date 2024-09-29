@@ -16,4 +16,14 @@ const formatter = new Intl.NumberFormat("sv-SE", {
     maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
 });
 
-export { setStyle, formatter };
+const isValidNumber = (val) => {
+    return (
+        val != 0 &&
+        val != "" &&
+        val != " " &&
+        typeof Number.parseFloat(val) === "number" &&
+        isFinite(val)
+    );
+};
+
+export { setStyle, formatter, isValidNumber };

@@ -35,20 +35,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### [PATCH]
 - Fix: refresh does not seem to propagate to child components on ibindex pages
 - Fix: dashboard refreshed when alarm trigger is saved and refresh success notification is shown
+- Fix: toggle dark/light mode takes 2 clicks the first time
+- Refactor watchlist solution to include watched items from Ibindex, Fbindex, and FI
+- Update dependencies: @intlify/unplugin-vue-i18n 4.0.0 -> 5.2.0 - major update
 
 ### [FUTURE]
 - Change: change from localforage -> Dexie
-- Refactor watchlist solution to include watched items from Ibindex, Fbindex, and FI
 
 ## [IN-PROGRESS]
 
 ## [UNRELEASED]
+
+## v1.1.0 - 2024-09-29
 - Removed references to Quasar CLI from README.md and package.json.
 - Added more info about the project in README.md.
 - Migrated to Tauri v2-rc
 - Added support for displaying data from fbindex.se (Fastighetsbolagsindex)
 - Added new component CompanyDetails, which replaces ComponentIbindexCompanyEvents, ComponentIbindexCompanyHoldings and ComponentIbindexRebatePremium.
 - Added support for displaying company holding being public or not.
+- Fixed Tauri fetch() related issues in FI component.
+- Updated Cargo dependencies
 
 ## v1.0.3 - 2024-08-01
 - Added persistence of visible columns in local storage.
