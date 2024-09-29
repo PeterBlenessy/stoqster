@@ -1,0 +1,23 @@
+{
+    "$schema": "../gen/schemas/desktop-schema.json",
+    "identifier": "default",
+    "description": "Capability for the main window",
+    "windows": ["main"],
+    "permissions": [
+        "core:app:default",
+        "core:webview:allow-internal-toggle-devtools",
+        "http:default",
+        {
+            "identifier": "http:default",
+            "allow": [
+                { "url": "https://www.fi.se/*" },
+                { "url": "https://ibindex.se/*" },
+                { "url": "https://fbindex.se/*" }
+            ]
+        },
+        "updater:allow-check",
+        "updater:allow-download",
+        "updater:allow-install",
+        "updater:allow-download-and-install"
+    ]
+}

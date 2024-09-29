@@ -1,0 +1,16 @@
+{
+    "identifier": "desktop-capability",
+    "platforms": ["macOS", "windows", "linux"],
+    "permissions": [
+        "updater:default",
+        "http:default",
+        {
+            "identifier": "http:default",
+            "allow": [
+                { "url": "https://www.fi.se/*" },
+                { "url": "https://www.ibindex.se/*" },
+                { "url": "https://www.fbindex.se/*" }
+            ]
+        }
+    ]
+}

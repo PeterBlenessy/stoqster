@@ -1,75 +1,14 @@
 {
-    "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+    "productName": "Stoqster",
+    "version": "../package.json",
     "build": {
-        "beforeBuildCommand": "yarn build",
         "beforeDevCommand": "yarn dev",
-        "devPath": "http://localhost:1420",
-        "distDir": "../dist",
-        "withGlobalTauri": false
+        "devUrl": "http://localhost:1420",
+        "beforeBuildCommand": "yarn build",
+        "frontendDist": "../dist"
     },
-    "package": {
-        "productName": "Stoqster",
-        "version": "../package.json"
-    },
-    "tauri": {
-        "allowlist": {
-            "all": false,
-            "http": {
-                "all": false,
-                "request": true,
-                "scope": [
-                    "https://*"
-                ]
-            }
-        },
-        "bundle": {
-            "active": true,
-            "category": "Productivity",
-            "copyright": "Copyright © 2021 Péter Blénessy",
-            "deb": {
-                "depends": []
-            },
-            "externalBin": [],
-            "icon": [
-                "icons/32x32.png",
-                "icons/128x128.png",
-                "icons/128x128@2x.png",
-                "icons/icon.icns",
-                "icons/icon.ico"
-            ],
-            "identifier": "com.addable.stoqster",
-            "longDescription": "",
-            "macOS": {
-                "entitlements": "./entitlements.plist",
-                "exceptionDomain": "",
-                "frameworks": [],
-                "providerShortName": null,
-                "signingIdentity": null
-            },
-            "resources": [],
-            "shortDescription": "Follow your favourite stocks and fonds, and your portfolio's performance",
-            "targets": "all",
-            "windows": {
-                "certificateThumbprint": null,
-                "digestAlgorithm": "sha256",
-                "timestampUrl": ""
-            }
-        },
-        "security": {
-            "csp": null
-        },
-        "updater": {
-            "active": true,
-            "dialog": true,
-            "endpoints": [
-                "https://github.com/PeterBlenessy/stoqster/releases/latest/download/latest.json",
-                "https://github.com/PeterBlenessy/stoqster-releases/releases/latest/download/latest.json"
-            ],
-            "pubkey":"dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVGMkIxRjY0MzI2RjJGQ0QKUldUTkwyOHlaQjhyWDdxMTYvYlh5TnV2L3ZvMEdpSGpLTVUxYTRwKzBic3IvQ1o3MzZOMkZiUCsK",
-            "windows": {
-                "installMode": "passive"
-            }
-        },
+    "app": {
+        "withGlobalTauri": false,
         "windows": [
             {
                 "fullscreen": false,
@@ -81,6 +20,88 @@
                 "visible": true,
                 "label": "main"
             }
-        ]
+        ],
+        "security": {
+            "csp": null
+        }
+    },
+    "bundle": {
+        "active": true,
+        "category": "Productivity",
+        "copyright": "Copyright © 2021 Péter Blénessy",
+        "createUpdaterArtifacts": "v1Compatible",
+        "iOS": {
+            "minimumSystemVersion": "13.0"
+        },
+        "icon": [
+            "icons/32x32.png",
+            "icons/128x128.png",
+            "icons/128x128@2x.png",
+            "icons/icon.icns",
+            "icons/icon.ico"
+        ],
+        "linux": {
+            "appimage": {
+                "bundleMediaFramework": false,
+                "files": {}
+            },
+            "deb": {
+                "files": {}
+            },
+            "rpm": {
+                "epoch": 0,
+                "files": {},
+                "release": "1"
+            }
+        },
+        "macOS": {
+            "dmg": {
+                "appPosition": {
+                    "x": 180,
+                    "y": 170
+                },
+                "applicationFolderPosition": {
+                    "x": 480,
+                    "y": 170
+                },
+                "windowSize": {
+                    "height": 400,
+                    "width": 660
+                }
+            },
+            "files": {},
+            "hardenedRuntime": true,
+            "minimumSystemVersion": "10.13"
+        },
+        "shortDescription": "Follow your favourite stocks and fonds, and your portfolio's performance",
+        "targets": "all",
+        "windows": {
+            "allowDowngrades": true,
+            "certificateThumbprint": null,
+            "digestAlgorithm": null,
+            "nsis": null,
+            "signCommand": null,
+            "timestampUrl": null,
+            "tsp": false,
+            "webviewInstallMode": {
+                "silent": true,
+                "type": "downloadBootstrapper"
+            },
+            "wix": null
+        }
+    },
+    "identifier": "com.addable.stoqster",
+    "mainBinaryName": "Stoqster",
+    "plugins": {
+        "updater": {
+            "endpoints": [
+                "https://github.com/PeterBlenessy/stoqster/releases/latest/download/latest.json",
+                "https://github.com/PeterBlenessy/stoqster-releases/releases/latest/download/latest.json"
+            ],
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVGMkIxRjY0MzI2RjJGQ0QKUldUTkwyOHlaQjhyWDdxMTYvYlh5TnV2L3ZvMEdpSGpLTVUxYTRwKzBic3IvQ1o3MzZOMkZiUCsK",
+            "windows": {
+                "installMode": "passive"
+            }
+        }
     }
 }

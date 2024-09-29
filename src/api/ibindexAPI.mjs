@@ -1,264 +1,586 @@
-import {Body, ResponseType} from "@tauri-apps/api/http";
-
-// Set color based on value being negative or positive
-const setStyle = (number, ifNegative = 'red', ifPositive = 'green') => {
-    if (number != 0) {
-        return (number < 0 ? 'color:' + ifNegative : 'color:' + ifPositive)
-    }
-}
-
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat
-const formatter = new Intl.NumberFormat('sv-SE', {
-    // style: 'currency',
-    // currency: 'SEK',
-    //notation: 'compact',
-    //compactDisplay: 'short',
-    // These options are needed to round to whole numbers if that's what you want.
-    //minimumFractionDigits: 0, // (this suffices for whole numbers, but will print 2500.10 as $2,500.1)
-    maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
-
-});
-
+import { setStyle, formatter } from "./helpers.js";
 
 // Returns the url and request options object to be passed to fetch() for the specified ibi api and company, if available
-function ibiRequestOptions(ibiRequest, company = '') {
-    let url = company !== '' ? ibindex.getSpecialURL[ibiRequest][company] : undefined;
-    
-    let options = {
-        method: 'post',
-        responseType: ResponseType.JSON,
-        headers: {
-            'Content-Type': 'application/json;charset=UTF-8'
-        } 
-    }
+function ibiRequestOptions(ibiRequest, company = "") {
+    let url =
+        company !== "" ? ibindex.getSpecialURL[ibiRequest][company] : undefined;
 
-    if (company !== '') options.body = Body.json(company);
-    
+    let options = {
+        method: "post",
+        responseType: "json",
+        headers: {
+            "Content-Type": "application/json;charset=UTF-8",
+        },
+    };
+
+    if (company !== "") options.body = JSON.stringify(company);
+
     return {
         url: url !== undefined ? url : ibindex[ibiRequest].url,
-        options: options
-    }
+        options: options,
+    };
 }
 
-const ibindex = {
+const getRequestOptions = (company, api) => {
+    let options = {
+        method: "post",
+        responseType: "json",
+        headers: {
+            "Content-Type": "application/json;charset=UTF-8",
+        },
+    };
+    if (company !== "") options.body = JSON.stringify(company);
 
+    return {
+        url: ibindex[api].url,
+        options: options,
+    };
+};
+
+const ibindex = {
     // IB companies and their reported and calculated net asset values and price
     getCompanies: {
-        title: 'Ibindex: Rapporterade och beräknade värden',
-        url: 'https://ibindex.se/ibi//index/getProducts.req',
-        fields: ['productName', 'product', 'netAssetValue', 'netAssetValueCalculated', 'netAssetValueCalculatedRebatePremium', 'netAssetValueRebatePremium', 'netAssetValueChangeDate', 'price', 'previousPrice', 'priceChange'],
+        title: "Ibindex: Rapporterade och beräknade värden",
+        url: "https://ibindex.se/ibi//index/getProducts.req",
+        requestOptions: (company) => getRequestOptions(company, "getCompanies"),
+        fields: [
+            "productName",
+            "product",
+            "netAssetValue",
+            "netAssetValueCalculated",
+            "netAssetValueCalculatedRebatePremium",
+            "netAssetValueRebatePremium",
+            "netAssetValueChangeDate",
+            "price",
+            "previousPrice",
+            "priceChange",
+        ],
         columns: [
-            { name: 'productName', label: 'Investmentbolag', field: 'productName', align: 'left', required: true, sortable: true, style:'white-space: nowrap' },
-            { name: 'product', label: 'Aktiekod', field: 'product', sortable: true },
             {
-                name: 'netAssetValue', label: 'Substansvärde', field: 'netAssetValue', sortable: true,
-                format: val => `${val.toFixed(2)}`,
-                style: val => setStyle(val.netAssetValue, 'red', 'primary')
+                name: "productName",
+                label: "Investmentbolag",
+                field: "productName",
+                align: "left",
+                required: true,
+                sortable: true,
+                style: "white-space: nowrap",
             },
             {
-                name: 'netAssetValueCalculated', label: 'Beräknat substansvärde', field: 'netAssetValueCalculated', sortable: true,
-                format: val => `${val.toFixed(2)}`
+                name: "product",
+                label: "Aktiekod",
+                field: "product",
+                sortable: true,
             },
             {
-                name: 'netAssetValueCalculatedRebatePremium', label: 'Beräknad Rabatt/Premie', field: 'netAssetValueCalculatedRebatePremium', sortable: true,
-                format: val => `${val.toFixed(2)}%`,
-                style: val => setStyle(val.netAssetValueCalculatedRebatePremium),
-                required: true
+                name: "netAssetValue",
+                label: "Substansvärde",
+                field: "netAssetValue",
+                sortable: true,
+                format: (val) => `${val.toFixed(2)}`,
+                style: (val) => setStyle(val.netAssetValue, "red", "primary"),
             },
             {
-                name: 'netAssetValueRebatePremium', label: 'Rabatt/Premie', field: 'netAssetValueRebatePremium', sortable: true,
-                format: val => `${val.toFixed(2)}%`,
-                style: val => setStyle(val.netAssetValueRebatePremium),
-                required: true
+                name: "netAssetValueCalculated",
+                label: "Beräknat substansvärde",
+                field: "netAssetValueCalculated",
+                sortable: true,
+                format: (val) => `${val.toFixed(2)}`,
             },
             {
-                name: 'netAssetValueChangeDate', label: 'Ändrat', field: 'netAssetValueChangeDate', sortable: true,
-                format: val => `${new Date(val).toISOString().slice(0, 10)}`,
-                style: 'word-break: keep-all;'
+                name: "netAssetValueCalculatedRebatePremium",
+                label: "Beräknad Rabatt/Premie",
+                field: "netAssetValueCalculatedRebatePremium",
+                sortable: true,
+                format: (val) => `${val.toFixed(2)}%`,
+                style: (val) =>
+                    setStyle(val.netAssetValueCalculatedRebatePremium),
+                required: true,
             },
             {
-                name: 'price', label: 'Pris', field: 'price', sortable: true,
-                format: val => `${val.toFixed(2)}`
+                name: "netAssetValueRebatePremium",
+                label: "Rabatt/Premie",
+                field: "netAssetValueRebatePremium",
+                sortable: true,
+                format: (val) => `${val.toFixed(2)}%`,
+                style: (val) => setStyle(val.netAssetValueRebatePremium),
+                required: true,
             },
             {
-                name: 'previousPrice', label: 'Tidigare pris', field: 'previousPrice', sortable: true,
-                format: val => `${val.toFixed(2)}`
+                name: "netAssetValueChangeDate",
+                label: "Ändrat",
+                field: "netAssetValueChangeDate",
+                sortable: true,
+                format: (val) => `${new Date(val).toISOString().slice(0, 10)}`,
+                style: "word-break: keep-all;",
             },
             {
-                name: 'priceChange', label: 'Prisändring', field: 'priceChange', sortable: true,
-                format: val => `${val.toFixed(2)}%`,
-                style: val => setStyle(val.priceChange)
+                name: "price",
+                label: "Pris",
+                field: "price",
+                sortable: true,
+                format: (val) => `${val.toFixed(2)}`,
+            },
+            {
+                name: "previousPrice",
+                label: "Tidigare pris",
+                field: "previousPrice",
+                sortable: true,
+                format: (val) => `${val.toFixed(2)}`,
+            },
+            {
+                name: "priceChange",
+                label: "Prisändring",
+                field: "priceChange",
+                sortable: true,
+                format: (val) => `${val.toFixed(2)}%`,
+                style: (val) => setStyle(val.priceChange),
             },
         ],
         visibleColumns: [
-            'productName',
-            'netAssetValue', 'netAssetValueCalculated',
-            'netAssetValueRebatePremium', 'netAssetValueCalculatedRebatePremium',
-            'netAssetValueChangeDate',
-            'price', 'priceChange'
+            "productName",
+            "netAssetValue",
+            "netAssetValueCalculated",
+            "netAssetValueRebatePremium",
+            "netAssetValueCalculatedRebatePremium",
+            "netAssetValueChangeDate",
+            "price",
+            "priceChange",
         ],
         localForageConfig: {
-            storeName: 'ibi-companies',
+            storeName: "ibi-companies",
         },
     },
 
     // Index and market weights of IB companies
     getWeights: {
-        title: 'Ibindex: Index- och marknadsvikt',
-        url: 'https://ibindex.se/ibi//companies/getCompanies.req',
-        fields: ['product', 'productName', 'indexWeight', 'marketWeight'],
+        title: "Ibindex: Index- och marknadsvikt",
+        url: "https://ibindex.se/ibi//companies/getCompanies.req",
+        requestOptions: (company) => getRequestOptions(company, "getWeights"),
+        fields: ["product", "productName", "indexWeight", "marketWeight"],
         columns: [
-            { name: 'product', label: 'Aktiekod', field: 'product', sortable: true },
-            { name: 'productName', label: 'Investmentbolag', field: 'productName', align: 'left', required: true, sortable: true },
             {
-                name: 'indexWeight', label: 'Indexvikt', field: 'indexWeight', required: true, sortable: true,
-                format: val => `${val.toFixed(2)}%`
+                name: "product",
+                label: "Aktiekod",
+                field: "product",
+                sortable: true,
             },
             {
-                name: 'marketWeight', label: 'Marknadsvikt', field: 'marketWeight', required: true, sortable: true,
-                format: val => `${val.toFixed(2)}%`
+                name: "productName",
+                label: "Investmentbolag",
+                field: "productName",
+                align: "left",
+                required: true,
+                sortable: true,
+            },
+            {
+                name: "indexWeight",
+                label: "Indexvikt",
+                field: "indexWeight",
+                required: true,
+                sortable: true,
+                format: (val) => `${val.toFixed(2)}%`,
+            },
+            {
+                name: "marketWeight",
+                label: "Marknadsvikt",
+                field: "marketWeight",
+                required: true,
+                sortable: true,
+                format: (val) => `${val.toFixed(2)}%`,
             },
         ],
-        visibleColumns: ['productName', 'indexWeight', 'marketWeight'],
+        visibleColumns: ["productName", "indexWeight", "marketWeight"],
         localForageConfig: {
-            storeName: 'ibi-companies-weights',
+            storeName: "ibi-companies-weights",
         },
     },
 
     // Price and net asset value trends
     getTrends: {
-        title: 'Ibindex: Trender - pris och substansvärde',
-        url: 'https://ibindex.se/ibi//index/getTrends.req',
-        fields: ["product", "productName", "price", "navCalculatedPerShare", "thirtyDaysPriceChange", "sixMonthPriceChange", "oneYearPriceChange", "threeYearPriceChange", "fiveYearPriceChange", "thirtyDaysNavChange", "sixMonthNavChange", "oneYearNavChange", "threeYearNavChange", "fiveYearNavChange"],
-        header: ["Aktiekod", "Investmentbolag", "Pris", "Beräknat substansvärde", "30 dagar", "6 månader", "1 år", "3 år", "5 år", "30 dagar", "6 månader", "1 år", "3 år", "5 år"],
+        title: "Ibindex: Trender - pris och substansvärde",
+        url: "https://ibindex.se/ibi//index/getTrends.req",
+        requestOptions: (company) => getRequestOptions(company, "getTrends"),
+        fields: [
+            "product",
+            "productName",
+            "price",
+            "navCalculatedPerShare",
+            "thirtyDaysPriceChange",
+            "sixMonthPriceChange",
+            "oneYearPriceChange",
+            "threeYearPriceChange",
+            "fiveYearPriceChange",
+            "thirtyDaysNavChange",
+            "sixMonthNavChange",
+            "oneYearNavChange",
+            "threeYearNavChange",
+            "fiveYearNavChange",
+        ],
+        header: [
+            "Aktiekod",
+            "Investmentbolag",
+            "Pris",
+            "Beräknat substansvärde",
+            "30 dagar",
+            "6 månader",
+            "1 år",
+            "3 år",
+            "5 år",
+            "30 dagar",
+            "6 månader",
+            "1 år",
+            "3 år",
+            "5 år",
+        ],
         columns: [
-            { name: 'product', label: 'Aktiekod', field: 'product', type: 'string' },
-            { name: 'productName', label: 'Investmentbolag', field: 'productName', align: 'start', width: '220px', type: 'string' },
-            { name: 'price', label: 'Pris', field: 'price', type: 'currency' },
-            { name: 'navCalculatedPerShare', label: 'Beräknat substansvärde', field: 'navCalculatedPerShare', type: 'percentage' },
-            { name: 'thirtyDaysPriceChange', label: '30 dagar', field: 'thirtyDaysPriceChange', type: 'percentage' },
-            { name: 'sixMonthPriceChange', label: '6 månader', field: 'sixMonthPriceChange', type: 'percentage' },
-            { name: 'oneYearPriceChange', label: '1 år', field: 'oneYearPriceChange', type: 'percentage' },
-            { name: 'threeYearPriceChange', label: '3 år', field: 'threeYearPriceChange', type: 'percentage' },
-            { name: 'fiveYearPriceChange', label: '5 år', field: 'fiveYearPriceChange', type: 'percentage' },
-            { name: 'thirtyDaysNavChange', label: '30 dagar', field: 'thirtyDaysNavChange', type: 'percentage' },
-            { name: 'sixMonthNavChange', label: '6 månader', field: 'sixMonthNavChange', type: 'percentage' },
-            { name: 'oneYearNavChange', label: '1 år', field: 'oneYearNavChange', type: 'percentage' },
-            { name: 'threeYearNavChange', label: '3 år', field: 'threeYearNavChange', type: 'percentage' },
-            { name: 'fiveYearNavChange', label: '5 år', field: 'fiveYearNavChange', type: 'percentage' },
+            {
+                name: "product",
+                label: "Aktiekod",
+                field: "product",
+                type: "string",
+            },
+            {
+                name: "productName",
+                label: "Investmentbolag",
+                field: "productName",
+                align: "start",
+                width: "220px",
+                type: "string",
+            },
+            { name: "price", label: "Pris", field: "price", type: "currency" },
+            {
+                name: "navCalculatedPerShare",
+                label: "Beräknat substansvärde",
+                field: "navCalculatedPerShare",
+                type: "percentage",
+            },
+            {
+                name: "thirtyDaysPriceChange",
+                label: "30 dagar",
+                field: "thirtyDaysPriceChange",
+                type: "percentage",
+            },
+            {
+                name: "sixMonthPriceChange",
+                label: "6 månader",
+                field: "sixMonthPriceChange",
+                type: "percentage",
+            },
+            {
+                name: "oneYearPriceChange",
+                label: "1 år",
+                field: "oneYearPriceChange",
+                type: "percentage",
+            },
+            {
+                name: "threeYearPriceChange",
+                label: "3 år",
+                field: "threeYearPriceChange",
+                type: "percentage",
+            },
+            {
+                name: "fiveYearPriceChange",
+                label: "5 år",
+                field: "fiveYearPriceChange",
+                type: "percentage",
+            },
+            {
+                name: "thirtyDaysNavChange",
+                label: "30 dagar",
+                field: "thirtyDaysNavChange",
+                type: "percentage",
+            },
+            {
+                name: "sixMonthNavChange",
+                label: "6 månader",
+                field: "sixMonthNavChange",
+                type: "percentage",
+            },
+            {
+                name: "oneYearNavChange",
+                label: "1 år",
+                field: "oneYearNavChange",
+                type: "percentage",
+            },
+            {
+                name: "threeYearNavChange",
+                label: "3 år",
+                field: "threeYearNavChange",
+                type: "percentage",
+            },
+            {
+                name: "fiveYearNavChange",
+                label: "5 år",
+                field: "fiveYearNavChange",
+                type: "percentage",
+            },
         ],
 
         localForageConfig: {
-            storeName: 'ibi-companies-trends',
+            storeName: "ibi-companies-trends",
         },
     },
 
     // Net asset value rebate / premium over time
     getRebatePremiums: {
-        title: 'Rabatt & Premium över tid',
-        url: 'https://ibindex.se/ibi//company/getRebatePremiums.req',
-        fields: ['rebatePremium', 'calculatedRebatePremium', 'rebatePremiumMax', 'rebatePremiumMin', 'rebatePremiumAverage', 'calculatedRebatePremiumMax', 'calculatedRebatePremiumMin', 'calculatedRebatePremiumAverage', 'label'],
-        header: ['Rabatt/Premium', 'Beräknad Rabatt/Premium', 'Max', 'Min', 'Medel', 'Max', 'Min', 'Medel', 'Tidsperiod'],
-        columns: [
-            { name: 'label', label: 'Tidsperiod', field: 'label' },
-            { name: 'rebatePremium', label: 'Rabatt/Premium', field: 'rebatePremium', format: val => `${val.toFixed(2)}%`, style: val => setStyle(val.rebatePremium) },
-            { name: 'calculatedRebatePremium', label: 'Beräknad Rabatt/Premium', field: 'calculatedRebatePremium', format: val => `${val.toFixed(2)}%`, style: val => setStyle(val.calculatedRebatePremium) },
-            { name: 'rebatePremiumMax', label: 'Max', field: 'rebatePremiumMax', format: val => `${val.toFixed(2)}%`, style: val => setStyle(val.rebatePremiumMax) },
-            { name: 'rebatePremiumMin', label: 'Min', field: 'rebatePremiumMin', format: val => `${val.toFixed(2)}%`, style: val => setStyle(val.rebatePremiumMin) },
-            { name: 'rebatePremiumAverage', label: 'Medel', field: 'rebatePremiumAverage', format: val => `${val.toFixed(2)}%`, style: val => setStyle(val.rebatePremiumAverage) },
-            { name: 'calculatedRebatePremiumMax', label: 'Max', field: 'calculatedRebatePremiumMax', format: val => `${val.toFixed(2)}%`, style: val => setStyle(val.calculatedRebatePremiumMax) },
-            { name: 'calculatedRebatePremiumMin', label: 'Min', field: 'calculatedRebatePremiumMin', format: val => `${val.toFixed(2)}%`, style: val => setStyle(val.calculatedRebatePremiumMin) },
-            { name: 'calculatedRebatePremiumAverage', label: 'Medel', field: 'calculatedRebatePremiumAverage', format: val => `${val.toFixed(2)}%`, style: val => setStyle(val.calculatedRebatePremiumAverage) }
+        title: "Rabatt & Premium över tid",
+        url: "https://ibindex.se/ibi//company/getRebatePremiums.req",
+        requestOptions: (company) =>
+            getRequestOptions(company, "getRebatePremiums"),
+        fields: [
+            "rebatePremium",
+            "calculatedRebatePremium",
+            "rebatePremiumMax",
+            "rebatePremiumMin",
+            "rebatePremiumAverage",
+            "calculatedRebatePremiumMax",
+            "calculatedRebatePremiumMin",
+            "calculatedRebatePremiumAverage",
+            "label",
         ],
-        visibleColumns: ['label', 'calculatedRebatePremiumMax', 'calculatedRebatePremiumMin', 'calculatedRebatePremiumAverage'],
+        header: [
+            "Rabatt/Premium",
+            "Beräknad Rabatt/Premium",
+            "Max",
+            "Min",
+            "Medel",
+            "Max",
+            "Min",
+            "Medel",
+            "Tidsperiod",
+        ],
+        columns: [
+            { name: "label", label: "Tidsperiod", field: "label" },
+            {
+                name: "rebatePremium",
+                label: "Rabatt/Premium",
+                field: "rebatePremium",
+                format: (val) => `${val.toFixed(2)}%`,
+                style: (val) => setStyle(val.rebatePremium),
+            },
+            {
+                name: "calculatedRebatePremium",
+                label: "Beräknad Rabatt/Premium",
+                field: "calculatedRebatePremium",
+                format: (val) => `${val.toFixed(2)}%`,
+                style: (val) => setStyle(val.calculatedRebatePremium),
+            },
+            {
+                name: "rebatePremiumMax",
+                label: "Max",
+                field: "rebatePremiumMax",
+                format: (val) => `${val.toFixed(2)}%`,
+                style: (val) => setStyle(val.rebatePremiumMax),
+            },
+            {
+                name: "rebatePremiumMin",
+                label: "Min",
+                field: "rebatePremiumMin",
+                format: (val) => `${val.toFixed(2)}%`,
+                style: (val) => setStyle(val.rebatePremiumMin),
+            },
+            {
+                name: "rebatePremiumAverage",
+                label: "Medel",
+                field: "rebatePremiumAverage",
+                format: (val) => `${val.toFixed(2)}%`,
+                style: (val) => setStyle(val.rebatePremiumAverage),
+            },
+            {
+                name: "calculatedRebatePremiumMax",
+                label: "Max",
+                field: "calculatedRebatePremiumMax",
+                format: (val) => `${val.toFixed(2)}%`,
+                style: (val) => setStyle(val.calculatedRebatePremiumMax),
+            },
+            {
+                name: "calculatedRebatePremiumMin",
+                label: "Min",
+                field: "calculatedRebatePremiumMin",
+                format: (val) => `${val.toFixed(2)}%`,
+                style: (val) => setStyle(val.calculatedRebatePremiumMin),
+            },
+            {
+                name: "calculatedRebatePremiumAverage",
+                label: "Medel",
+                field: "calculatedRebatePremiumAverage",
+                format: (val) => `${val.toFixed(2)}%`,
+                style: (val) => setStyle(val.calculatedRebatePremiumAverage),
+            },
+        ],
+        visibleColumns: [
+            "label",
+            "calculatedRebatePremiumMax",
+            "calculatedRebatePremiumMin",
+            "calculatedRebatePremiumAverage",
+        ],
         payload: (company) => JSON.stringify(company),
 
         localForageConfig: {
-            storeName: 'ibi-companies-rebatepremium',
+            storeName: "ibi-companies-rebatepremium",
         },
     },
 
     // IB company holdings
     getHoldings: {
-        title: 'Bolagets innehav',
-        url: 'https://ibindex.se/ibi//company/getHoldings.req',
-        fields: ['holdingName', 'holdingProduct', 'holdingValue', 'holdingValuePrevious', 'listed'],
-        header: ['Bolag', 'Aktie', 'Värde', 'Tidigare värde', 'Noterad'],
-        columns: [
-            { name: 'holdingName', label: 'Bolag', field: 'holdingName', align: 'left', required: true, width: '220px', type: 'string', sortable: true },
-            { name: 'holdingProduct', label: 'Aktiekod', field: 'holdingProduct', type: 'string', sortable: true },
-            {
-                name: 'holdingValue', label: 'Värde', field: 'holdingValue', type: 'currency', sortable: true,
-                format: val => `${formatter.format(val)}`
-            },
-            {
-                name: 'holdingValuePrevious', label: 'Tidigare värde', field: 'holdingValuePrevious', type: 'currency', sortable: true,
-                format: val => `${formatter.format(val)}`
-            },
-            { name: 'listed', label: 'Noterat', field: 'listed', type: 'boolean', sortable: true },
+        title: "Bolagets innehav",
+        url: "https://ibindex.se/ibi//company/getHoldings.req",
+        requestOptions: (company) => getRequestOptions(company, "getHoldings"),
+        fields: [
+            "holdingName",
+            "holdingProduct",
+            "holdingValue",
+            "holdingValuePrevious",
+            "categoryName",
         ],
-        visibleColumns: ['holdingName', 'holdingValue', 'listed'],
+        header: ["Bolag", "Aktie", "Värde", "Tidigare värde", "Kategori"],
+        columns: [
+            {
+                name: "holdingName",
+                label: "Bolag",
+                field: "holdingName",
+                align: "left",
+                required: true,
+                width: "220px",
+                type: "string",
+                sortable: true,
+            },
+            {
+                name: "holdingProduct",
+                label: "Aktiekod",
+                field: "holdingProduct",
+                type: "string",
+                sortable: true,
+            },
+            {
+                name: "holdingValue",
+                label: "Värde",
+                field: "holdingValue",
+                type: "currency",
+                sortable: true,
+                format: (val) => `${formatter.format(val)}`,
+            },
+            {
+                name: "holdingValuePrevious",
+                label: "Tidigare värde",
+                field: "holdingValuePrevious",
+                type: "currency",
+                sortable: true,
+                format: (val) => `${formatter.format(val)}`,
+            },
+            {
+                name: "categoryName",
+                label: "Kategori",
+                field: "categoryName",
+                type: "string",
+                sortable: true,
+            },
+        ],
+        visibleColumns: [
+            "holdingName",
+            "holdingValuePrevious",
+            "holdingValue",
+            "categoryName",
+        ],
         payload: (company) => JSON.stringify(company),
         localForageConfig: {
-            storeName: 'ibi-companies-holdings',
+            storeName: "ibi-companies-holdings",
         },
     },
 
     // Company events
     getEvents: {
-        title: 'Kalender',
-        url: 'https://ibindex.se/ibi//company/getEvents.req',
-        fields: ['product', 'productName', 'eventDate', 'eventType', 'eventName', 'eventDetails'],
-        header: ['Bolag', 'Aktie', 'Datum', 'Händelse', 'Beskrivning'],
-        columns: [
-            { name: 'productName', label: 'Investmentbolag', field: 'productName', align: 'left', width: '220px', type: 'string' },
-            { name: 'product', label: 'Aktiekod', field: 'product', type: 'string' },
-            {
-                name: 'eventDate', label: 'Datum', field: 'eventDate', type: 'datum', align: 'left',
-                format: val => `${new Date(val).toISOString().slice(0, 10)}`
-            },
-            { name: 'eventType', label: 'Typ av händelse', field: 'eventType', type: 'string' },
-            { name: 'eventName', label: 'Händelse', field: 'eventName', type: 'string', align: 'left' },
-            { name: 'eventDetails', label: 'Detaljer', field: 'eventDetails', type: 'string' },
+        title: "Kalender",
+        url: "https://ibindex.se/ibi//company/getEvents.req",
+        requestOptions: (company) => getRequestOptions(company, "getEvents"),
+        fields: [
+            "product",
+            "productName",
+            "eventDate",
+            "eventType",
+            "eventName",
+            "eventDetails",
         ],
-        visibleColumns: ['eventName', 'eventDate'],
+        header: ["Bolag", "Aktie", "Datum", "Händelse", "Beskrivning"],
+        columns: [
+            {
+                name: "productName",
+                label: "Investmentbolag",
+                field: "productName",
+                align: "left",
+                width: "220px",
+                type: "string",
+            },
+            {
+                name: "product",
+                label: "Aktiekod",
+                field: "product",
+                type: "string",
+            },
+            {
+                name: "eventDate",
+                label: "Datum",
+                field: "eventDate",
+                type: "datum",
+                align: "left",
+                format: (val) => `${new Date(val).toISOString().slice(0, 10)}`,
+            },
+            {
+                name: "eventType",
+                label: "Typ av händelse",
+                field: "eventType",
+                type: "string",
+            },
+            {
+                name: "eventName",
+                label: "Händelse",
+                field: "eventName",
+                type: "string",
+                align: "left",
+            },
+            {
+                name: "eventDetails",
+                label: "Detaljer",
+                field: "eventDetails",
+                type: "string",
+            },
+        ],
+        visibleColumns: ["eventName", "eventDate"],
         payload: (company) => JSON.stringify(company),
 
         localForageConfig: {
-            storeName: 'ibi-companies-events',
+            storeName: "ibi-companies-events",
         },
     },
 
     getNetAssetValue: {
-        'url': 'https://ibindex.se/ibi//company/getNetAssetValue.req',
-        'header': '[]',
-        'fields': '[]',
+        url: "https://ibindex.se/ibi//company/getNetAssetValue.req",
+        requestOptions: (company) =>
+            getRequestOptions(company, "getNetAssetValue"),
+        header: "[]",
+        fields: "[]",
         payload: (company) => JSON.stringify(company),
 
         localForageConfig: {
-            storeName: 'ibi-companies-nav',
+            storeName: "ibi-companies-nav",
         },
     },
-
 
     // -----------------------------
     getSpecialURL: {
         getHoldings: {},
         getRebatePremiums: {},
-        getEvents: {}
-    }
-}
+        getEvents: {},
+    },
+};
 
-export {
-    ibindex,
-    ibiRequestOptions
-}
+export { ibindex, ibiRequestOptions };
 
 /*
 
 const watching = {
     product
-    
+
     productName: getCompanyName
 
     netAssetValue: getNetAssetValue
@@ -271,7 +593,7 @@ const watching = {
     price: {
         baseUrl: ibindex.se/ibi//company/,
         request: getPrice.req,
-        
+
         fields: [
             { name: 'product', label: 'Aktie', type: 'string' },
             { name: 'price', label: 'Pris', type: 'string' },
@@ -338,7 +660,7 @@ const fields = {
         indexWeight
         marketWeight
     },
-    
+
     getHoldings: {
         holdingProduct: '',
         holdingName: '',
@@ -346,8 +668,8 @@ const fields = {
         holdingValuePrevious: '',
         listed: ''
     },
-    
-    
+
+
     getPrice: {
         "product":"BURE",
         "price":404.6,
@@ -355,7 +677,7 @@ const fields = {
         "priceChange":1.6072325464590698,
         "timestamp":1635790490000
     },
-    
+
     getAbout: {
         "product":"BURE",
         "productName":"Bure Equity",
@@ -371,7 +693,7 @@ const fields = {
         "productPrice":0.0,
         "product":"BURE"
     },
-    
+
     getChartDataPrice: {
         "product":"BURE",
         "date":1632182400000,
@@ -379,9 +701,9 @@ const fields = {
         "netAssetValuePrice":323.8,
         "netAssetValueCalculatedPrice":329.4913893093416
     },
-    
+
     getHoldingsDate:    1625011200000,
-    
+
     getNetAssetValue: {
         "product":"BURE",
         "netAssetValue":323.8,
@@ -429,7 +751,7 @@ const fields = {
         eventName: '',
         eventDetails: ''
     },
-    
+
 ---------------------
 
 }
@@ -438,7 +760,7 @@ const fields = {
 URL                                                     |   PAYLOAD     |->      RESPONSE
 ---------------------------------------------------------------------------------------------------
 \INDEX
-BASEURL: 
+BASEURL:
 ibindex.se/ibi//index/
 ---------------------------------------------------------------------------------------------------
 ibindex.se/ibi//index/getPreviousIndexPrice.req         |               |->     467.7220662537041
@@ -457,13 +779,13 @@ ibindex.se/ibi//index/getTrends.req                     |               |->     
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------
 \BOLAGEN
-BASEURL: 
+BASEURL:
 ibindex.se/ibi//companies/
 ---------------------------------------------------------------------------------------------------
 ibindex.se/ibi//companies/getCompanies.req              |               |->     [{"product":"BURE","productName":"Bure Equity","indexWeight":5.466406647961071,"marketWeight":2.5431},{"product":"CRED A","productName":"Creades A","indexWeight":4.213734233531307,"marketWeight":0.9649},{"product":"FASTAT","productName":"Fastator","indexWeight":8.159464790488007,"marketWeight":0.1252},{"product":"HAV B","productName":"Havsfrun Investment B","indexWeight":0.23882108515277398,"marketWeight":0.0198},{"product":"INDU C","productName":"Industrivärden C","indexWeight":7.7425795806529765,"marketWeight":10.6292},{"product":"INVE B","productName":"Investor B","indexWeight":8.0042814392779,"marketWeight":52.3434},{"product":"KDEV","productName":"Karolinska Development B","indexWeight":9.379802865465232,"marketWeight":0.0599},{"product":"KINV B","productName":"Kinnevik B","indexWeight":5.55142442734767,"marketWeight":7.9378},{"product":"LATO B","productName":"Latour B","indexWeight":3.002356850199813,"marketWeight":15.7032},{"product":"LINC","productName":"Linc","indexWeight":4.809336147483615,"marketWeight":0.4104},{"product":"LUND B","productName":"Lundbergföretagen B","indexWeight":7.8269615510557475,"marketWeight":6.4156},{"product":"NAXS","productName":"NAXS","indexWeight":8.378404368436808,"marketWeight":0.055},{"product":"SVOL B","productName":"Svolder B","indexWeight":5.505203098695396,"marketWeight":0.7764},{"product":"TRAC B","productName":"Traction  B","indexWeight":7.6295313073016064,"marketWeight":0.2901},{"product":"VNV","productName":"VNV Global","indexWeight":6.939165954600251,"marketWeight":1.1609},{"product":"ORES","productName":"Öresund","indexWeight":7.152525652349821,"marketWeight":0.5649}]
 ---------------------------------------------------------------------------------------------------
 \BURE
-BASEURL: 
+BASEURL:
 ibindex.se/ibi//company/
 ---------------------------------------------------------------------------------------------------
 ibindex.se/ibi//company/getPrice.req                    |  "BURE"       |->     {"product":"BURE","price":404.6,"previousPrice":398.2,"priceChange":1.6072325464590698,"timestamp":1635790490000}
@@ -476,7 +798,7 @@ ibindex.se/ibi//company/getChartDataPercent.req         | {"product":"BURE","int
 ---------------------------------------------------------------------------------------------------
 ibindex.se/ibi//company/getChartDataPrice.req           | {"product":"BURE","interval":"30_DAYS"} |-> [{"product":"BURE","date":1632182400000,"productPrice":374.8,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":329.4913893093416},{"product":"BURE","date":1632268800000,"productPrice":375.0,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":325.0592712582091},{"product":"BURE","date":1632355200000,"productPrice":385.2,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":330.4777485487226},{"product":"BURE","date":1632441600000,"productPrice":380.6,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":327.29997744613024},{"product":"BURE","date":1632700800000,"productPrice":372.6,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":309.8590315881087},{"product":"BURE","date":1632787200000,"productPrice":361.8,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":305.9995874204945},{"product":"BURE","date":1632873600000,"productPrice":359.2,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":303.35812005868723},{"product":"BURE","date":1632960000000,"productPrice":363.2,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":305.89709531026915},{"product":"BURE","date":1633046400000,"productPrice":361.6,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":304.4268965369445},{"product":"BURE","date":1633305600000,"productPrice":352.8,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":299.9817889889184},{"product":"BURE","date":1633392000000,"productPrice":358.8,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":303.19339385515417},{"product":"BURE","date":1633478400000,"productPrice":355.0,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":300.5155354987701},{"product":"BURE","date":1633564800000,"productPrice":360.4,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":303.04651760657737},{"product":"BURE","date":1633651200000,"productPrice":356.6,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":299.78616206598787},{"product":"BURE","date":1633910400000,"productPrice":350.6,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":298.09231771201934},{"product":"BURE","date":1633996800000,"productPrice":359.8,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":298.78306295820425},{"product":"BURE","date":1634083200000,"productPrice":372.6,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":306.3842198288989},{"product":"BURE","date":1634169600000,"productPrice":375.4,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":314.1182000868249},{"product":"BURE","date":1634256000000,"productPrice":382.4,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":315.1984225292376},{"product":"BURE","date":1634515200000,"productPrice":391.0,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":319.81331116230706},{"product":"BURE","date":1634601600000,"productPrice":392.4,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":319.7311388803319},{"product":"BURE","date":1634688000000,"productPrice":391.4,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":322.0540644931163},{"product":"BURE","date":1634774400000,"productPrice":399.0,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":315.1382036295209},{"product":"BURE","date":1634860800000,"productPrice":401.0,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":316.5663590912966},{"product":"BURE","date":1635120000000,"productPrice":399.6,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":316.89068086724734},{"product":"BURE","date":1635206400000,"productPrice":405.8,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":319.26953783286564},{"product":"BURE","date":1635292800000,"productPrice":396.4,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":316.7874085654885},{"product":"BURE","date":1635379200000,"productPrice":404.8,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":320.4492374133782},{"product":"BURE","date":1635465600000,"productPrice":398.2,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":321.59484419589046},{"product":"BURE","date":1635724800000,"productPrice":404.6,"netAssetValuePrice":323.8,"netAssetValueCalculatedPrice":320.20047852425324}]
 ---------------------------------------------------------------------------------------------------
-ibindex.se/ibi//company/getHoldingsDate.req             |  "BURE"       |->    1625011200000 
+ibindex.se/ibi//company/getHoldingsDate.req             |  "BURE"       |->    1625011200000
 ---------------------------------------------------------------------------------------------------
 ibindex.se/ibi//company/getNetAssetValue.req            |  "BURE"       |->    {"product":"BURE","netAssetValue":323.8,"netAssetValueCalculated":320.20047852425324,"netAssetValueChangeDate":1629331200000}
 ---------------------------------------------------------------------------------------------------
