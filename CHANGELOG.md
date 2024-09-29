@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.1.3 - 2024-09-29
+- Fixed issue: yarn.lock missing in the repository.
+
 ## v1.1.2 - 2024-09-29
 - Fixed Linux build issues: must use webkitgtk 4.1 for Tauri v2
 - Fixed Linux build issues: must use ubuntu-22.04 for Tauri v2
