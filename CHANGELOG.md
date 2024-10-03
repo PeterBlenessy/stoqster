@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.2.0 - 2024-10-03
+- Updated dependencies to Tauri v2 stable
+
 ## v1.1.3 - 2024-09-29
 - Fixed issue: yarn.lock missing in the repository.
 
