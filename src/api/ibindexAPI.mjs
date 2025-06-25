@@ -1,17 +1,68 @@
 import { setStyle, formatter } from "./helpers.js";
+import { fetch } from "@tauri-apps/plugin-http";
+
+// Global variable to store the tracking cookie
+let trackingCookie = null;
+
+// Function to get the tracking cookie by visiting the main page
+async function getTrackingCookie() {
+    if (trackingCookie) return trackingCookie;
+    
+    try {
+        const response = await fetch("https://ibindex.se/ibi/", {
+            method: "GET",
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            }
+        });
+        
+        // Extract cookie from response headers
+        const setCookieHeader = response.headers.get('set-cookie');
+        if (setCookieHeader) {
+            const match = setCookieHeader.match(/ibi-tracking=([^;]+)/);
+            if (match) {
+                trackingCookie = `ibi-tracking=${match[1]}`;
+                console.log("Got tracking cookie:", trackingCookie);
+                return trackingCookie;
+            }
+        }
+    } catch (error) {
+        console.error("Failed to get tracking cookie:", error);
+    }
+    
+    return null;
+}
 
 // Returns the url and request options object to be passed to fetch() for the specified ibi api and company, if available
-function ibiRequestOptions(ibiRequest, company = "") {
+async function ibiRequestOptions(ibiRequest, company = "") {
+    // Get the tracking cookie first
+    const cookie = await getTrackingCookie();
+    
     let url =
         company !== "" ? ibindex.getSpecialURL[ibiRequest][company] : undefined;
 
     let options = {
-        method: "post",
-        responseType: "json",
+        method: "POST",
         headers: {
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9",
             "Content-Type": "application/json;charset=UTF-8",
+            "DNT": "1",
+            "Origin": "https://ibindex.se",
+            "Referer": "https://ibindex.se/ibi/",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+            "sec-ch-ua": '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"macOS"',
         },
     };
+
+    // Add cookie if we got one
+    if (cookie) {
+        options.headers["Cookie"] = cookie;
+    }
 
     if (company !== "") options.body = JSON.stringify(company);
 
@@ -21,14 +72,38 @@ function ibiRequestOptions(ibiRequest, company = "") {
     };
 }
 
-const getRequestOptions = (company, api) => {
+const getRequestOptions = async (company, api) => {
+    // Validate API parameter
+    if (!api || !ibindex[api]) {
+        console.error(`Invalid API parameter: ${api}`);
+        throw new Error(`Invalid API parameter: ${api}`);
+    }
+    
+    // Get the tracking cookie first
+    const cookie = await getTrackingCookie();
+    
     let options = {
-        method: "post",
-        responseType: "json",
+        method: "POST",
         headers: {
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9",
             "Content-Type": "application/json;charset=UTF-8",
+            "DNT": "1",
+            "Origin": "https://ibindex.se",
+            "Referer": "https://ibindex.se/ibi/",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+            "sec-ch-ua": '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"macOS"',
         },
     };
+    
+    // Add cookie if we got one
+    if (cookie) {
+        options.headers["Cookie"] = cookie;
+    }
+    
     if (company !== "") options.body = JSON.stringify(company);
 
     return {

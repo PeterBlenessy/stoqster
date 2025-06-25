@@ -46,6 +46,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.3.1 - 2025-06-25
+- Fixed 403 errors when making API calls to fbindex and ibindex by implementing proper request headers and cookie authentication
+- Enabled unsafe-headers feature in tauri-plugin-http to send forbidden headers (e.g., sec-ch-ua)
+- Implemented async cookie fetching logic to retrieve and use tracking cookies for authenticated requests
+- Fixed runtime error "Cannot declare a const variable twice: 'fbindexRequestOptions'" by removing duplicate declarations
+- Fixed dashboard component causing "undefined URL" errors by properly handling async request options
+- Added comprehensive error handling and validation for API requests
+- Updated API request functions to be fully async/await compatible
+- Installed TypeScript and ESLint as dev dependencies to resolve peer dependency warnings
+
 ## v1.2.0 - 2024-10-03
 - Updated dependencies to Tauri v2 stable
 

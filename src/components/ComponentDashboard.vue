@@ -229,58 +229,61 @@ export default {
         const loading = ref(false);
         const refreshColor = ref("primary");
 
-        const requestOptions = ibiRequestOptions(api.value);
-
         // Refresh data
         async function refreshData() {
             let visibleRows = [];
+            loading.value = true;
 
-            fetch(requestOptions.url, requestOptions.options)
-                .then((response) => {
-                    if (!response.ok) {
-                        return Promise.reject(
-                            `Error - fetch() status code: ${response.status}`,
-                        );
-                    }
+            try {
+                // Get request options asynchronously
+                const requestOptions = await ibiRequestOptions(api.value);
+                
+                if (!requestOptions || !requestOptions.url) {
+                    throw new Error(`Invalid request options or URL: ${requestOptions?.url}`);
+                }
 
-                    return response.json();
-                })
-                .then((data) => {
-                    if (data == null || data == undefined) {
-                        throw new Error(
-                            "Error - fetch() data is null or undefined",
-                        );
-                    }
-                    rows.value = [...data];
-                    // Filter out rows that are not in the watchlist
-                    if (watchlist.value !== null) {
-                        Object.entries(watchlist.value).forEach(
-                            ([key, value]) => {
-                                visibleRows.push(value.product);
-                            },
-                        );
-                        rows.value = rows.value.filter((item) =>
-                            visibleRows.includes(item.product),
-                        );
+                const response = await fetch(requestOptions.url, requestOptions.options);
+                
+                if (!response.ok) {
+                    throw new Error(`Error - fetch() status code: ${response.status}`);
+                }
 
-                        watchlist.value = rows.value; // Store current values in watchlist
-                        refreshColor.value = "primary";
-                        $q.notify({
-                            type: "positive",
-                            message: "Uppdateringen gick bra",
-                        });
-                    }
-                })
-                .catch((error) => {
-                    console.log(error);
-                    rows.value = watchlist.value; // Show the latest values in case we have a network error
-                    refreshColor.value = "negative";
+                const data = await response.json();
+                
+                if (data == null || data == undefined) {
+                    throw new Error("Error - fetch() data is null or undefined");
+                }
+                
+                rows.value = [...data];
+                // Filter out rows that are not in the watchlist
+                if (watchlist.value !== null) {
+                    Object.entries(watchlist.value).forEach(
+                        ([key, value]) => {
+                            visibleRows.push(value.product);
+                        },
+                    );
+                    rows.value = rows.value.filter((item) =>
+                        visibleRows.includes(item.product),
+                    );
+
+                    watchlist.value = rows.value; // Store current values in watchlist
+                    refreshColor.value = "primary";
                     $q.notify({
-                        type: "negative",
-                        message: "Något gick fel under uppdatering",
+                        type: "positive",
+                        message: "Uppdateringen gick bra",
                     });
-                })
-                .finally(() => (loading.value = false));
+                }
+            } catch (error) {
+                console.error("Dashboard refresh error:", error);
+                rows.value = watchlist.value; // Show the latest values in case we have a network error
+                refreshColor.value = "negative";
+                $q.notify({
+                    type: "negative",
+                    message: "Något gick fel under uppdatering",
+                });
+            } finally {
+                loading.value = false;
+            }
         }
 
         // Updates the watchlist in Pinia state store. The state is also stored in localStorage.

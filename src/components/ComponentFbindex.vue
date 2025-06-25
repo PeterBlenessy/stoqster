@@ -230,6 +230,13 @@ export default {
         const settingsStore = useSettingsStore();
         const { fbiWatchlist, fbiVisibleColumns } = storeToRefs(settingsStore);
         const api = toRef(props, "api");
+        
+        // Defensive check to ensure API is valid
+        if (!api.value || !fbindex[api.value]) {
+            console.error("Invalid API value:", api.value);
+            throw new Error(`Invalid API value: ${api.value}`);
+        }
+        
         const title = ref(fbindex[api.value].title);
         const visibleColumns = ref(fbindex[api.value].visibleColumns);
         const columns = fbindex[api.value].columns;
@@ -238,7 +245,6 @@ export default {
         const loading = ref(false);
         const refreshColor = ref("primary");
 
-        const requestOptions = fbindexRequestOptions(api.value);
         const fbiStore = localforage.createInstance({
             name: "stoqster",
             storeName: fbindex[api.value].localForageConfig.storeName,
@@ -248,40 +254,50 @@ export default {
         async function refreshData() {
             console.time(`fbiLoadDataFromWeb() \t ${api.value}`);
             loading.value = true;
-            fetch(requestOptions.url, requestOptions.options)
-                .then((response) => {
-                    if (!response.ok) {
-                        return Promise.reject(
-                            `Error - fetch() status code: ${response.status}`,
-                        );
-                    }
-                    return response.json();
-                })
-                .then((data) => {
-                    rows.value = [...data];
-                    // Store new data
-                    data.forEach((item) =>
-                        fbiStore.setItem(item.product, item),
-                    );
+            
+            try {
+                // Validate API before making request
+                if (!api.value || !fbindex[api.value]) {
+                    throw new Error(`Invalid API configuration: ${api.value}`);
+                }
+                
+                // Get request options (this is now async to get the cookie)
+                const requestOptions = await fbindex[api.value].requestOptions("");
+                
+                if (!requestOptions || !requestOptions.url) {
+                    throw new Error(`Invalid request options or URL: ${requestOptions?.url}`);
+                }
+                
+                const response = await fetch(requestOptions.url, requestOptions.options);
+                
+                if (!response.ok) {
+                    throw new Error(`Error - fetch() status code: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                rows.value = [...data];
+                
+                // Store new data
+                data.forEach((item) =>
+                    fbiStore.setItem(item.product, item),
+                );
 
-                    refreshColor.value = "primary";
-                    $q.notify({
-                        type: "positive",
-                        message: "Uppdateringen gick bra",
-                    });
-                })
-                .catch((error) => {
-                    console.log(error);
-                    refreshColor.value = "negative";
-                    $q.notify({
-                        type: "negative",
-                        message: "Något gick fel under uppdateringen",
-                    });
-                })
-                .finally(() => {
-                    loading.value = false;
-                    console.timeEnd(`fbiLoadDataFromWeb() \t ${api.value}`);
+                refreshColor.value = "primary";
+                $q.notify({
+                    type: "positive",
+                    message: "Uppdateringen gick bra",
                 });
+            } catch (error) {
+                console.log(error);
+                refreshColor.value = "negative";
+                $q.notify({
+                    type: "negative",
+                    message: "Något gick fel under uppdateringen",
+                });
+            } finally {
+                loading.value = false;
+                console.timeEnd(`fbiLoadDataFromWeb() \t ${api.value}`);
+            }
         }
 
         // Load data. Try local storage first and online download if that fails.

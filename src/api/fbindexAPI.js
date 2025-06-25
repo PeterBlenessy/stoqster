@@ -1,6 +1,40 @@
 import { setStyle } from "./helpers.js";
+import { fetch } from "@tauri-apps/plugin-http";
 
 const baseUrl = "https://fbindex.se/fbi/";
+
+// Global variable to store the tracking cookie
+let trackingCookie = null;
+
+// Function to get the tracking cookie by visiting the main page
+async function getTrackingCookie() {
+    if (trackingCookie) return trackingCookie;
+    
+    try {
+        const response = await fetch("https://fbindex.se/fbi/", {
+            method: "GET",
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            }
+        });
+        
+        // Extract cookie from response headers
+        const setCookieHeader = response.headers.get('set-cookie');
+        if (setCookieHeader) {
+            const match = setCookieHeader.match(/fbi-tracking=([^;]+)/);
+            if (match) {
+                trackingCookie = `fbi-tracking=${match[1]}`;
+                console.log("Got tracking cookie:", trackingCookie);
+                return trackingCookie;
+            }
+        }
+    } catch (error) {
+        console.error("Failed to get tracking cookie:", error);
+    }
+    
+    return null;
+}
 
 const fbindex = {
     getCompanies: {
@@ -215,32 +249,50 @@ const fbindex = {
     },
 };
 
-function fbindexRequestOptions(apiRequest) {
-    return {
-        url: fbindex[apiRequest].url,
-        options: {
-            method: "get",
-            responseType: "json",
-            headers: {
-                "Content-Type": "application/json;charset=UTF-8",
-            },
-        },
-    };
-}
-const getRequestOptions = (company, api) => {
+
+const getRequestOptions = async (company, api) => {
+    // Validate API parameter
+    if (!api || !fbindex[api]) {
+        console.error(`Invalid API parameter: ${api}`);
+        throw new Error(`Invalid API parameter: ${api}`);
+    }
+    
+    // Get the tracking cookie first
+    const cookie = await getTrackingCookie();
+    
     let options = {
-        method: "post",
-        responseType: "json",
+        method: "POST",
         headers: {
-            "Content-Type": "application/json;charset=utf-8",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Content-Type": "application/json;charset=UTF-8",
+            "DNT": "1",
+            "Origin": "https://fbindex.se",
+            "Referer": "https://fbindex.se/fbi/",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+            "sec-ch-ua": '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"macOS"',
         },
     };
+    
+    // Add cookie if we got one
+    if (cookie) {
+        options.headers["Cookie"] = cookie;
+    }
+    
     if (company !== "") options.body = JSON.stringify(company);
 
     return {
         url: fbindex[api].url,
         options: options,
     };
+};
+
+// Legacy function for backward compatibility
+const fbindexRequestOptions = async (api) => {
+    return await getRequestOptions("", api);
 };
 
 export { fbindex, fbindexRequestOptions };
