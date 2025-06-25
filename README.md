@@ -81,3 +81,4 @@ rustup update stable
 # Check the need for updating the Node.js version using Brew
 brew update
 brew upgrade node
+```
