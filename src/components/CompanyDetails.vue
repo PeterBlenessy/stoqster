@@ -47,7 +47,6 @@ export default {
         const rows = ref([]);
         const loading = ref(false);
 
-        const requestOptions = api.value.requestOptions(companyCode.value);
         const dataStore = localforage.createInstance({
             name: "stoqster",
             storeName: api.value.localForageConfig.storeName,
@@ -60,35 +59,36 @@ export default {
             );
             loading.value = true;
 
-            fetch(requestOptions.url, requestOptions.options)
-                .then((response) => {
-                    if (!response.ok || response.status === 500) {
-                        return Promise.reject(
-                            `Error - fetch() status code: ${response.status}`,
-                        );
-                    }
+            try {
+                // Get request options asynchronously
+                const requestOptions = await api.value.requestOptions(companyCode.value);
+                
+                if (!requestOptions || !requestOptions.url) {
+                    throw new Error(`Invalid request options or URL: ${requestOptions?.url}`);
+                }
 
-                    return response.json();
-                })
-                .then((data) => {
-                    rows.value = [...data];
-                    dataStore.setItem(companyCode.value, data);
-                })
-                .catch((error) => {
-                    $q.notify({
-                        type: "warning",
-                        message: "Något gick fel under uppdateringen",
-                        caption:
-                            title + " info saknas för " + companyCode.value,
-                    });
-                    console.log(error);
-                })
-                .finally(() => {
-                    loading.value = false;
-                    console.timeEnd(
-                        `LoadDataFromWeb() \t ${request.value} \t\t ${companyCode.value}`,
-                    );
+                const response = await fetch(requestOptions.url, requestOptions.options);
+                
+                if (!response.ok || response.status === 500) {
+                    throw new Error(`Error - fetch() status code: ${response.status}`);
+                }
+
+                const data = await response.json();
+                rows.value = [...data];
+                dataStore.setItem(companyCode.value, data);
+            } catch (error) {
+                console.error("CompanyDetails refresh error:", error);
+                $q.notify({
+                    type: "warning",
+                    message: "Något gick fel under uppdateringen",
+                    caption: title + " info saknas för " + companyCode.value,
                 });
+            } finally {
+                loading.value = false;
+                console.timeEnd(
+                    `LoadDataFromWeb() \t ${request.value} \t\t ${companyCode.value}`,
+                );
+            }
         }
 
         async function loadData() {

@@ -117,7 +117,7 @@ const ibindex = {
     getCompanies: {
         title: "Ibindex: Rapporterade och beräknade värden",
         url: "https://ibindex.se/ibi//index/getProducts.req",
-        requestOptions: (company) => getRequestOptions(company, "getCompanies"),
+        requestOptions: async (company) => await getRequestOptions(company, "getCompanies"),
         fields: [
             "productName",
             "product",
@@ -230,7 +230,7 @@ const ibindex = {
     getWeights: {
         title: "Ibindex: Index- och marknadsvikt",
         url: "https://ibindex.se/ibi//companies/getCompanies.req",
-        requestOptions: (company) => getRequestOptions(company, "getWeights"),
+        requestOptions: async (company) => await getRequestOptions(company, "getWeights"),
         fields: ["product", "productName", "indexWeight", "marketWeight"],
         columns: [
             {
@@ -274,7 +274,7 @@ const ibindex = {
     getTrends: {
         title: "Ibindex: Trender - pris och substansvärde",
         url: "https://ibindex.se/ibi//index/getTrends.req",
-        requestOptions: (company) => getRequestOptions(company, "getTrends"),
+        requestOptions: async (company) => await getRequestOptions(company, "getTrends"),
         fields: [
             "product",
             "productName",
@@ -400,8 +400,8 @@ const ibindex = {
     getRebatePremiums: {
         title: "Rabatt & Premium över tid",
         url: "https://ibindex.se/ibi//company/getRebatePremiums.req",
-        requestOptions: (company) =>
-            getRequestOptions(company, "getRebatePremiums"),
+        requestOptions: async (company) =>
+            await getRequestOptions(company, "getRebatePremiums"),
         fields: [
             "rebatePremium",
             "calculatedRebatePremium",
@@ -500,7 +500,7 @@ const ibindex = {
     getHoldings: {
         title: "Bolagets innehav",
         url: "https://ibindex.se/ibi//company/getHoldings.req",
-        requestOptions: (company) => getRequestOptions(company, "getHoldings"),
+        requestOptions: async (company) => await getRequestOptions(company, "getHoldings"),
         fields: [
             "holdingName",
             "holdingProduct",
@@ -567,7 +567,7 @@ const ibindex = {
     getEvents: {
         title: "Kalender",
         url: "https://ibindex.se/ibi//company/getEvents.req",
-        requestOptions: (company) => getRequestOptions(company, "getEvents"),
+        requestOptions: async (company) => await getRequestOptions(company, "getEvents"),
         fields: [
             "product",
             "productName",
@@ -630,8 +630,8 @@ const ibindex = {
 
     getNetAssetValue: {
         url: "https://ibindex.se/ibi//company/getNetAssetValue.req",
-        requestOptions: (company) =>
-            getRequestOptions(company, "getNetAssetValue"),
+        requestOptions: async (company) =>
+            await getRequestOptions(company, "getNetAssetValue"),
         header: "[]",
         fields: "[]",
         payload: (company) => JSON.stringify(company),

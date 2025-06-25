@@ -46,6 +46,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.3.2 - 2025-06-25
+- Fixed all API requestOptions functions to be properly async/await compatible
+- Updated CompanyDetails component to handle async requestOptions correctly
+- Resolved warnings related to synchronous calls to async API functions
+- Ensured all API calls across fbindex and ibindex are consistently async
+
 ## v1.3.1 - 2025-06-25
 - Fixed 403 errors when making API calls to fbindex and ibindex by implementing proper request headers and cookie authentication
 - Enabled unsafe-headers feature in tauri-plugin-http to send forbidden headers (e.g., sec-ch-ua)

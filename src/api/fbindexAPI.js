@@ -40,7 +40,7 @@ const fbindex = {
     getCompanies: {
         title: "Fbindex: Company Information",
         url: baseUrl + "/index/getProducts.req",
-        requestOptions: (company) => getRequestOptions(company, "getCompanies"),
+        requestOptions: async (company) => await getRequestOptions(company, "getCompanies"),
         fields: [
             "productName",
             "product",
@@ -132,8 +132,8 @@ const fbindex = {
     getRebatePremiums: {
         title: "Rabatt & Premium över tid",
         url: baseUrl + "/company/getRebatePremiums.req",
-        requestOptions: (company) =>
-            getRequestOptions(company, "getRebatePremiums"),
+        requestOptions: async (company) =>
+            await getRequestOptions(company, "getRebatePremiums"),
         fields: [
             "label",
             "rebatePremiumMax",
@@ -187,7 +187,7 @@ const fbindex = {
     getEvents: {
         title: "Kalender",
         url: baseUrl + "/company/getEvents.req",
-        requestOptions: (company) => getRequestOptions(company, "getEvents"),
+        requestOptions: async (company) => await getRequestOptions(company, "getEvents"),
         fields: [
             "product",
             "productName",
