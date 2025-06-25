@@ -46,6 +46,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.4.0 - 2025-06-25
+
+- Added robust automatic update system with Tauri updater plugin
+- Added update notifications and dialog with install options (now, later, next restart)
+- Added persistent update check history in localStorage
+- Added current app version display in update menu
+- Added detailed logging with emoji indicators for better debugging
+- Added composables architecture for better code organization
+- Added useUpdater composable for reusable update logic
+- Changed update system to use clean separation of concerns (composable/store/component)
+- Changed menu headers to uppercase Swedish text ("SEKTIONER", "INSTÄLLNINGAR")
+- Changed menu item order to show version before last check time
+- Fixed hardcoded version fallbacks - now uses Tauri API exclusively
+- Refactored update store to focus on global state management only
+- Enhanced error handling throughout update system
+- Improved Swedish UI text consistency
+
 ## v1.3.2 - 2025-06-25
 - Fixed all API requestOptions functions to be properly async/await compatible
 - Updated CompanyDetails component to handle async requestOptions correctly

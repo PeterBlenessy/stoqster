@@ -54,7 +54,7 @@
         <!--  Left drawer listing menu items -->
         <q-drawer v-model="drawer" bordered overlay>
             <q-list>
-                <q-item-label header>Application Links</q-item-label>
+                <q-item-label header>SEKTIONER</q-item-label>
 
                 <q-item
                     clickable
@@ -73,12 +73,55 @@
                         <q-item-label caption>{{ item.caption }}</q-item-label>
                     </q-item-section>
                 </q-item>
+                
+                <q-separator spaced />
+                
+                <q-item-label header>INSTÄLLNINGAR</q-item-label>
+                
+                <!-- Check for updates menu item -->
+                <q-item
+                    clickable
+                    v-ripple
+                    @click="updateAvailable ? showUpdateDialog = true : checkForUpdates()"
+                    :disable="isCheckingForUpdates"
+                >
+                    <q-item-section avatar>
+                        <q-icon 
+                            :name="updateAvailable ? 'mdi-download-circle' : 'mdi-update'" 
+                            :color="updateAvailable ? 'orange' : undefined"
+                        />
+                    </q-item-section>
+
+                    <q-item-section>
+                        <q-item-label>
+                            {{ updateAvailable ? 'Uppdatering tillgänglig' : 'Sök efter uppdateringar' }}
+                        </q-item-label>
+                        <q-item-label caption v-if="currentVersion">
+                            Nuvarande version: {{ currentVersion }}
+                        </q-item-label>
+                        <q-item-label caption v-else-if="!isCheckingForUpdates">
+                            Version: Okänd (utvecklingsläge)
+                        </q-item-label>
+                        <q-item-label caption>
+                            {{ isCheckingForUpdates ? 'Söker...' : `Senast: ${formatLastCheck()}` }}
+                        </q-item-label>
+                    </q-item-section>
+                    
+                    <q-item-section side v-if="updateAvailable">
+                        <q-badge color="orange" floating>
+                            {{ updateInfo?.version }}
+                        </q-badge>
+                    </q-item-section>
+                </q-item>
             </q-list>
         </q-drawer>
 
         <q-page-container>
             <router-view />
         </q-page-container>
+        
+        <!-- Update Dialog -->
+        <UpdateDialog v-model="showUpdateDialog" />
     </q-layout>
 </template>
 
@@ -114,33 +157,282 @@ const links = [
     },
 ];
 
-import { onMounted, watch, ref } from "vue";
+import { onMounted, onUnmounted, watch, ref, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "../stores/settings-store.js";
+import { useUpdateStore } from "../stores/update-store.js";
+import { useUpdater } from "../composables/useUpdater.js";
 import { useQuasar } from "quasar";
 import { useRouter } from "vue-router";
+import UpdateDialog from "../components/UpdateDialog.vue";
+import { getVersion } from '@tauri-apps/api/app';
 // import { invoke } from "@tauri-apps/api";
 
 export default {
     name: "MainLayout",
 
-    components: {},
+    components: {
+        UpdateDialog
+    },
 
     setup() {
         const $q = useQuasar();
         const settingsStore = useSettingsStore();
+        const updateStore = useUpdateStore();
+        const updater = useUpdater();
         const { darkMode, routerPath } = storeToRefs(settingsStore);
+        const { 
+            updateAvailable, 
+            updateInfo, 
+            lastCheckTime,
+            autoCheckEnabled,
+            autoCheckIntervalMinutes
+        } = storeToRefs(updateStore);
+        const { isChecking: isCheckingForUpdates } = storeToRefs(updater);
         const router = useRouter();
         const drawer = ref(false);
+        const showUpdateDialog = ref(false);
+        const currentVersion = ref('');
+        const autoCheckInterval = ref(null);
+
+        // Format last check time for display
+        const formatLastCheck = () => {
+            if (!lastCheckTime.value) return 'Aldrig kontrollerat'
+            
+            const now = new Date()
+            const diff = now - lastCheckTime.value
+            const minutes = Math.floor(diff / 60000)
+            const hours = Math.floor(minutes / 60)
+            const days = Math.floor(hours / 24)
+            
+            if (diff < 30000) return 'Nyss' // Less than 30 seconds
+            if (minutes < 1) return 'Mindre än 1 min sedan'
+            if (minutes < 60) return `${minutes} min sedan`
+            if (hours < 24) return `${hours} tim sedan`
+            if (days === 1) return 'Igår'
+            if (days < 7) return `${days} dagar sedan`
+            
+            return lastCheckTime.value.toLocaleDateString('sv-SE', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+        }
+
+        // Show notification helper
+        const showNotification = (notification) => {
+            $q.notify(notification);
+        }
+
+        // Check for updates manually
+        const checkForUpdates = async () => {
+            console.log('🔄 Manual update check requested')
+            
+            const result = await updater.checkForUpdates()
+            updateStore.setLastCheckTime(new Date())
+            
+            if (result.success) {
+                if (result.updateInfo) {
+                    // Update available
+                    updateStore.setUpdateInfo(result.updateInfo)
+                    
+                    showNotification({
+                        type: 'info',
+                        message: 'Uppdatering tillgänglig',
+                        caption: `Version ${result.updateInfo.version} är redo att installeras`,
+                        icon: 'mdi-download',
+                        timeout: 0,
+                        actions: [
+                            {
+                                label: 'Visa detaljer',
+                                color: 'white',
+                                handler: () => showUpdateDialog.value = true
+                            },
+                            {
+                                label: 'Senare',
+                                color: 'white'
+                            }
+                        ]
+                    })
+                } else {
+                    // No update available
+                    updateStore.clearUpdateInfo()
+                    
+                    showNotification({
+                        type: 'positive',
+                        message: 'Inga uppdateringar',
+                        caption: 'Du har den senaste versionen',
+                        icon: 'mdi-check-circle',
+                        timeout: 3000
+                    })
+                }
+            } else {
+                // Error occurred
+                showNotification({
+                    type: 'negative',
+                    message: 'Kunde inte söka efter uppdateringar',
+                    caption: result.error || 'Okänt fel',
+                    icon: 'mdi-alert-circle',
+                    timeout: 5000
+                })
+            }
+        }
+
+        // Automatic update check
+        const performAutoCheck = async () => {
+            console.log('⏰ Automatic update check')
+            
+            const result = await updater.checkForUpdates()
+            updateStore.setLastCheckTime(new Date())
+            
+            if (result.success && result.updateInfo) {
+                updateStore.setUpdateInfo(result.updateInfo)
+                
+                // Show subtle notification for automatic checks
+                showNotification({
+                    type: 'info',
+                    message: 'Uppdatering tillgänglig',
+                    caption: `Version ${result.updateInfo.version} är redo att installeras`,
+                    icon: 'mdi-download',
+                    timeout: 5000,
+                    actions: [
+                        {
+                            label: 'Visa',
+                            color: 'white',
+                            handler: () => showUpdateDialog.value = true
+                        }
+                    ]
+                })
+            } else if (result.success) {
+                updateStore.clearUpdateInfo()
+            }
+        }
+
+        // Start automatic checking
+        const startAutoCheck = () => {
+            if (autoCheckInterval.value) {
+                clearInterval(autoCheckInterval.value)
+            }
+            
+            if (autoCheckEnabled.value) {
+                autoCheckInterval.value = setInterval(
+                    performAutoCheck,
+                    autoCheckIntervalMinutes.value * 60 * 1000
+                )
+                console.log(`🔄 Auto-update check started (every ${autoCheckIntervalMinutes.value} minutes)`)
+            }
+        }
+
+        // Stop automatic checking
+        const stopAutoCheck = () => {
+            if (autoCheckInterval.value) {
+                clearInterval(autoCheckInterval.value)
+                autoCheckInterval.value = null
+                console.log('🛑 Auto-update check stopped')
+            }
+        }
+
+        // Process scheduled update on startup
+        const processScheduledUpdate = async () => {
+            const scheduledUpdate = updateStore.getScheduledUpdate()
+            if (scheduledUpdate) {
+                console.log('📅 Processing scheduled update on startup')
+                
+                const result = await updater.processScheduledUpdate(scheduledUpdate)
+                
+                // Always clear the scheduled update
+                updateStore.clearScheduledUpdate()
+                
+                if (result.success && result.shouldInstall) {
+                    // Install the scheduled update
+                    showNotification({
+                        type: 'ongoing',
+                        message: 'Installerar schemalagd uppdatering...',
+                        caption: 'Programmet kommer att startas om automatiskt',
+                        icon: 'mdi-download',
+                        timeout: 0,
+                        spinner: true
+                    })
+                    
+                    const installResult = await updater.installUpdate(result.updateInfo)
+                    if (installResult.success) {
+                        showNotification({
+                            type: 'positive',
+                            message: 'Uppdatering installerad',
+                            caption: 'Applikationen startar om automatiskt',
+                            icon: 'mdi-check-circle',
+                            timeout: 3000
+                        })
+                    } else {
+                        showNotification({
+                            type: 'negative',
+                            message: 'Kunde inte installera uppdateringen',
+                            caption: installResult.error || 'Okänt fel',
+                            icon: 'mdi-alert-circle',
+                            timeout: 5000
+                        })
+                    }
+                }
+            }
+        }
 
         // Show the main window when all web content has loaded.
         // This fixes the issue of flickering when the app starts and is in darkMode.
         // onMounted(() => invoke('show_main_window'));
 
-        // Restore application states from last session
-        onMounted(() => {
+        // Restore application states from last session and initialize updater
+        onMounted(async () => {
             $q.dark.set(darkMode.value);
             router.replace(routerPath.value);
+            
+            // Get current app version
+            try {
+                currentVersion.value = await getVersion();
+                console.log('📱 Current app version:', currentVersion.value);
+            } catch (error) {
+                console.error('❌ Error getting app version:', error);
+                // Don't set a fallback - just leave it empty so the UI handles it gracefully
+                currentVersion.value = '';
+            }
+            
+            // Initialize update store
+            updateStore.initialize();
+            
+            // Process any scheduled updates first
+            await processScheduledUpdate();
+            
+            // Start automatic checking if enabled
+            if (autoCheckEnabled.value) {
+                startAutoCheck();
+            }
+            
+            // Do initial update check after a delay
+            setTimeout(() => {
+                console.log('⏰ Running startup update check...');
+                performAutoCheck();
+            }, 5000);
+        });
+
+        // Cleanup on unmount
+        onUnmounted(() => {
+            stopAutoCheck();
+        });
+
+        // Watch for settings changes
+        watch(autoCheckEnabled, (newValue) => {
+            if (newValue) {
+                startAutoCheck();
+            } else {
+                stopAutoCheck();
+            }
+        });
+
+        watch(autoCheckIntervalMinutes, () => {
+            if (autoCheckEnabled.value) {
+                startAutoCheck(); // Restart with new interval
+            }
         });
 
         // Watch for application state changes
@@ -151,9 +443,17 @@ export default {
             menuItems: links,
             darkMode,
             drawer,
+            isCheckingForUpdates,
+            updateAvailable,
+            updateInfo,
+            lastCheckTime,
+            showUpdateDialog,
+            currentVersion,
 
             toggleDarkMode: () => (darkMode.value = !darkMode.value),
             setRouterPath: (newPath) => (routerPath.value = newPath),
+            checkForUpdates,
+            formatLastCheck,
         };
     },
 };
