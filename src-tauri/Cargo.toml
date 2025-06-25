@@ -1,6 +1,6 @@
 [package]
 name = "stoqster"
-version = "2.2.0"
+version = "2.3.0"
 description = "A Tauri App"
 authors = ["Péter Blénessy"]
 edition = "2021"
@@ -24,3 +24,4 @@ crate-type = ["staticlib", "cdylib", "lib"]
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2.0.0"
+tauri-plugin-window-state = "2"

@@ -19,6 +19,24 @@
                 </q-btn>
                 <q-toolbar-title>Stoqster</q-toolbar-title>
 
+                <!-- Populate the toolbar with menu item icons an actions -->
+                <q-btn
+                    flat
+                    round
+                    v-for="item in menuItems"
+                    :key="item.title"
+                    :icon="item.icon"
+                    @click="setRouterPath({ path: item.path })"
+                >
+                    <q-tooltip
+                        transition-show="scale"
+                        transition-hide="scale"
+                        >{{ item.caption }}</q-tooltip
+                    >
+                </q-btn>
+
+                <q-separator vertical inset />
+
                 <!-- Toggle dark / light mode -->
                 <q-btn
                     flat
@@ -33,19 +51,17 @@
                     >
                 </q-btn>
 
-                <!-- Populate the toolbar with menu item icons an actions -->
+                <!-- Settings button -->
                 <q-btn
                     flat
                     round
-                    v-for="item in menuItems"
-                    :key="item.title"
-                    :icon="item.icon"
-                    @click="setRouterPath({ path: item.path })"
+                    icon="mdi-cog"
+                    @click="showSettingsDialog = true"
                 >
                     <q-tooltip
                         transition-show="scale"
                         transition-hide="scale"
-                        >{{ item.caption }}</q-tooltip
+                        >Inställningar</q-tooltip
                     >
                 </q-btn>
             </q-toolbar>
@@ -113,6 +129,24 @@
                         </q-badge>
                     </q-item-section>
                 </q-item>
+                
+                <!-- Settings menu item -->
+                <q-item
+                    clickable
+                    v-ripple
+                    @click="showSettingsDialog = true"
+                >
+                    <q-item-section avatar>
+                        <q-icon name="mdi-cog" />
+                    </q-item-section>
+
+                    <q-item-section>
+                        <q-item-label>Inställningar</q-item-label>
+                        <q-item-label caption>
+                            Konfigurera applikationen
+                        </q-item-label>
+                    </q-item-section>
+                </q-item>
             </q-list>
         </q-drawer>
 
@@ -122,6 +156,12 @@
         
         <!-- Update Dialog -->
         <UpdateDialog v-model="showUpdateDialog" />
+        
+        <!-- Settings Dialog -->
+        <SettingsDialog 
+            v-model="showSettingsDialog" 
+            @check-for-updates="checkForUpdates"
+        />
     </q-layout>
 </template>
 
@@ -165,6 +205,7 @@ import { useUpdater } from "../composables/useUpdater.js";
 import { useQuasar } from "quasar";
 import { useRouter } from "vue-router";
 import UpdateDialog from "../components/UpdateDialog.vue";
+import SettingsDialog from "../components/SettingsDialog.vue";
 import { getVersion } from '@tauri-apps/api/app';
 // import { invoke } from "@tauri-apps/api";
 
@@ -172,7 +213,8 @@ export default {
     name: "MainLayout",
 
     components: {
-        UpdateDialog
+        UpdateDialog,
+        SettingsDialog
     },
 
     setup() {
@@ -192,6 +234,7 @@ export default {
         const router = useRouter();
         const drawer = ref(false);
         const showUpdateDialog = ref(false);
+        const showSettingsDialog = ref(false);
         const currentVersion = ref('');
         const autoCheckInterval = ref(null);
 
@@ -448,6 +491,7 @@ export default {
             updateInfo,
             lastCheckTime,
             showUpdateDialog,
+            showSettingsDialog,
             currentVersion,
 
             toggleDarkMode: () => (darkMode.value = !darkMode.value),

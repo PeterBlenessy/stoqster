@@ -14,6 +14,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed bugs.
 - Security in case of vulnerabilities.
 
+## v1.5.0 - 2024-12-25
+
+### Added
+- Added comprehensive settings dialog accessible from toolbar cog icon and drawer menu item
+- Added window state persistence using Tauri window-state plugin to remember window position and size
+- Added settings for controlling automatic updates, check intervals, and data refresh intervals
+- Added visual toggles for dark mode and automatic updates in settings dialog
+- Added version information display in settings dialog with manual update check button
+
+### Fixed  
+- Fixed critical dark mode toggle bug that required two clicks due to string/boolean type conversion issue
+- Fixed dark mode state persistence to correctly store boolean values instead of strings
+- Fixed version display fallback logic to handle development mode gracefully
+
+### Changed
+- Reorganized toolbar layout: moved dark mode toggle to left of settings button with proper spacing
+- Enhanced settings store to use proper boolean values for dark mode instead of string values
+- Improved UI consistency with Swedish localization throughout settings dialog
+- Updated settings dialog to show current version, last update check time, and update status
+
+### Technical
+- Integrated Tauri window-state plugin v2 for automatic window state persistence
+- Enhanced error handling and logging with emoji-prefixed console messages for better debugging
+- Improved composables architecture with settings dialog following established patterns
+- Added comprehensive validation and error handling in settings component
+
 ## [BACKLOG]
 
 ### [MAJOR]

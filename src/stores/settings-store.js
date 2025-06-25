@@ -13,7 +13,7 @@ export const useSettingsStore = defineStore("settings", () => {
     };
 
     // Load initial state from local storage
-    const darkMode = ref(loadState("darkMode") || "false");
+    const darkMode = ref(loadState("darkMode") ?? false);
     const routerPath = ref(loadState("routerPath") || "/");
     const watchlist = ref(loadState("watchlist") || []);
     const ibiWatchlist = ref(loadState("ibiWatchlist") || []);
