@@ -56,8 +56,28 @@ Read more: https://docs.github.com/en/authentication/keeping-your-account-and-da
 export GH_TOKEN=<YOUR-GH-TOKEN>
 ```
 
-### Keeping packages up to date
+### Keeping package dependencies up to date
 ```bash
+# Update the frontend dependencies
 yarn outdated
-yarn upgrade
+yarn upgrade --latest
 ```
+
+```bash
+# Update the backend dependencies
+cd src-tauri
+cargo outdated
+cargo update
+```
+
+### Keeping development environment dependencies up to date (MacOS)
+```bash
+# Check the need for updating the toolchain
+rustup check
+
+# Update the toolchain
+rustup update stable
+
+# Check the need for updating the Node.js version using Brew
+brew update
+brew upgrade node
