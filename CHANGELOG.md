@@ -14,6 +14,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed bugs.
 - Security in case of vulnerabilities.
 
+## v1.6.0 - 2024-12-26
+
+### Added
+- Added Tauri process plugin for automatic app restart after updates
+- Added automatic app restart functionality after successful update installation
+- Added proper close icons (mdi-close) to both UpdateDialog and SettingsDialog
+- Added visual separators below dialog titles for better UI organization
+- Added fallback notification if automatic restart fails
+
+### Fixed
+- Fixed dialog header vertical centering with proper padding (q-py-md)
+- Fixed close button visibility in both update and settings dialogs
+- Fixed update button color to use primary theme color instead of green
+- Fixed update workflow notifications to reflect actual restart behavior
+
+### Changed
+- Simplified update workflow by removing scheduled update option
+- Changed "Påminn mig senare" button text to "Avfärda" (dismiss) for clarity
+- Enhanced update notifications to show "Applikationen startar om nu" (app restarts now)
+- Updated dialog styling for consistent header layout and visual centering
+- Improved user experience with immediate update installation and automatic restart
+
+### Removed
+- Removed scheduled update functionality to simplify update workflow
+- Removed processScheduledUpdate function from MainLayout
+- Removed scheduled update related code from composables and stores
+
+### Technical
+- Integrated Tauri process plugin v2.3.0 for app lifecycle management
+- Enhanced error handling for restart functionality with user feedback
+- Improved dialog component consistency across UpdateDialog and SettingsDialog
+- Updated import statements to include @tauri-apps/plugin-process for relaunch capability
+
 ## v1.5.0 - 2024-12-25
 
 ### Added

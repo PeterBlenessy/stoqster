@@ -1,11 +1,12 @@
 <template>
     <q-dialog v-model="showDialog">
         <q-card style="min-width: 600px">
-            <q-card-section class="row items-center q-pb-none">
+            <q-card-section class="row items-center q-py-md">
                 <div class="text-h6">Inställningar</div>
                 <q-space />
-                <q-btn icon="close" flat round dense @click="showDialog = false" />
+                <q-btn icon="mdi-close" flat round dense @click="showDialog = false" />
             </q-card-section>
+            
             <q-separator />
 
             <q-card-section>

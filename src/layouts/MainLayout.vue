@@ -377,50 +377,6 @@ export default {
             }
         }
 
-        // Process scheduled update on startup
-        const processScheduledUpdate = async () => {
-            const scheduledUpdate = updateStore.getScheduledUpdate()
-            if (scheduledUpdate) {
-                console.log('📅 Processing scheduled update on startup')
-                
-                const result = await updater.processScheduledUpdate(scheduledUpdate)
-                
-                // Always clear the scheduled update
-                updateStore.clearScheduledUpdate()
-                
-                if (result.success && result.shouldInstall) {
-                    // Install the scheduled update
-                    showNotification({
-                        type: 'ongoing',
-                        message: 'Installerar schemalagd uppdatering...',
-                        caption: 'Programmet kommer att startas om automatiskt',
-                        icon: 'mdi-download',
-                        timeout: 0,
-                        spinner: true
-                    })
-                    
-                    const installResult = await updater.installUpdate(result.updateInfo)
-                    if (installResult.success) {
-                        showNotification({
-                            type: 'positive',
-                            message: 'Uppdatering installerad',
-                            caption: 'Applikationen startar om automatiskt',
-                            icon: 'mdi-check-circle',
-                            timeout: 3000
-                        })
-                    } else {
-                        showNotification({
-                            type: 'negative',
-                            message: 'Kunde inte installera uppdateringen',
-                            caption: installResult.error || 'Okänt fel',
-                            icon: 'mdi-alert-circle',
-                            timeout: 5000
-                        })
-                    }
-                }
-            }
-        }
-
         // Show the main window when all web content has loaded.
         // This fixes the issue of flickering when the app starts and is in darkMode.
         // onMounted(() => invoke('show_main_window'));
@@ -442,9 +398,6 @@ export default {
             
             // Initialize update store
             updateStore.initialize();
-            
-            // Process any scheduled updates first
-            await processScheduledUpdate();
             
             // Start automatic checking if enabled
             if (autoCheckEnabled.value) {

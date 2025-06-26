@@ -1,11 +1,13 @@
 <template>
     <q-dialog v-model="showDialog" persistent>
         <q-card style="min-width: 400px">
-            <q-card-section class="row items-center q-pb-none">
+            <q-card-section class="row items-center q-py-md">
                 <div class="text-h6">Uppdatering tillgänglig</div>
                 <q-space />
-                <q-btn icon="close" flat round dense v-close-popup />
+                <q-btn icon="mdi-close" flat round dense v-close-popup />
             </q-card-section>
+
+            <q-separator />
 
             <q-card-section>
                 <div class="text-subtitle2 q-mb-sm">
@@ -27,20 +29,14 @@
             <q-card-actions align="right">
                 <q-btn 
                     flat 
-                    label="Påminn mig senare" 
+                    label="Avfärda" 
                     color="grey-7" 
                     @click="deferUpdate" 
                 />
                 <q-btn 
-                    flat 
-                    label="Uppdatera vid nästa start" 
-                    color="primary" 
-                    @click="scheduleUpdate"
-                />
-                <q-btn 
                     unelevated 
                     label="Uppdatera nu" 
-                    color="positive" 
+                    color="primary" 
                     :loading="isInstalling"
                     @click="handleInstallUpdate"
                 />
@@ -55,6 +51,7 @@ import { useUpdater } from '../composables/useUpdater.js'
 import { useUpdateStore } from '../stores/update-store.js'
 import { storeToRefs } from 'pinia'
 import { useQuasar } from 'quasar'
+import { relaunch } from '@tauri-apps/plugin-process'
 
 // Props
 const props = defineProps({
@@ -121,11 +118,29 @@ const handleInstallUpdate = async () => {
             $q.notify({
                 type: 'positive',
                 message: 'Uppdatering installerad',
-                caption: 'Applikationen startar om automatiskt',
+                caption: 'Applikationen startar om nu',
                 icon: 'mdi-check-circle',
-                timeout: 3000
+                timeout: 2000
             })
+            
+            // Close dialog
             showDialog.value = false
+            
+            // Restart the app
+            setTimeout(async () => {
+                try {
+                    await relaunch()
+                } catch (error) {
+                    console.error('❌ Failed to restart app:', error)
+                    $q.notify({
+                        type: 'warning',
+                        message: 'Uppdatering installerad',
+                        caption: 'Starta om appen manuellt för att se ändringarna',
+                        icon: 'mdi-restart',
+                        timeout: 5000
+                    })
+                }
+            }, 1000)
         } else {
             $q.notify({
                 type: 'negative',
@@ -152,36 +167,6 @@ const handleInstallUpdate = async () => {
 const deferUpdate = () => {
     // Simply close the dialog without doing anything
     showDialog.value = false
-}
-
-const scheduleUpdate = () => {
-    if (!updateInfo.value) return
-    
-    // Prepare schedule data using composable
-    const result = updater.prepareScheduledUpdate(updateInfo.value)
-    
-    if (result.success) {
-        // Save to store
-        updateStore.setScheduledUpdate(result.scheduleData)
-        
-        $q.notify({
-            type: 'positive',
-            message: 'Uppdatering schemalagd',
-            caption: 'Uppdateringen installeras när appen startas om',
-            icon: 'mdi-calendar-clock',
-            timeout: 3000
-        })
-        
-        showDialog.value = false
-    } else {
-        $q.notify({
-            type: 'negative',
-            message: 'Kunde inte schemalägga uppdateringen',
-            caption: result.error || 'Okänt fel',
-            icon: 'mdi-alert-circle',
-            timeout: 5000
-        })
-    }
 }
 </script>
 
