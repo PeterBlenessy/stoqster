@@ -35,12 +35,12 @@ async function getTrackingCookie() {
 }
 
 // Returns the url and request options object to be passed to fetch() for the specified ibi api and company, if available
-async function ibiRequestOptions(ibiRequest, company = "") {
+async function ibiRequestOptions(api, company = "") {
     // Get the tracking cookie first
     const cookie = await getTrackingCookie();
     
     let url =
-        company !== "" ? ibindex.getSpecialURL[ibiRequest][company] : undefined;
+        company !== "" ? ibindex.getSpecialURL[api][company] : undefined;
 
     let options = {
         method: "POST",
@@ -67,7 +67,7 @@ async function ibiRequestOptions(ibiRequest, company = "") {
     if (company !== "") options.body = JSON.stringify(company);
 
     return {
-        url: url !== undefined ? url : ibindex[ibiRequest].url,
+        url: url !== undefined ? url : ibindex[api].url,
         options: options,
     };
 }

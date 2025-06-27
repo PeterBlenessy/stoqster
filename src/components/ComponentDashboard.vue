@@ -218,7 +218,7 @@ async function refreshData() {
 
     try {
         const data = await makeRequest({
-            requestOptionsGetter: ibiRequestOptions,
+            requestOptionsGetter: ibindex[api.value].requestOptions,
             apiName: api.value
         });
         
