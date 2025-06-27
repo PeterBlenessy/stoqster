@@ -14,6 +14,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed bugs.
 - Security in case of vulnerabilities.
 
+## [BACKLOG]
+
+### [MAJOR]
+- Add info about the funds' manager
+- Add latest price info for the funds and for the funds' holdings
+- Add support for handling dB version changes when app is upgraded.
+- Add support for connecting Avanza account.
+- Add support for creating a manually uppdated portfolio.
+
+### [MINOR]
+- Change: Refactor components. (1). Create composables, abstracting getting data from dB. (2). Move fetch() operations to pine store layer.
+- Add: selectable rows in funds holdings tables.
+- Add support for user settings and app configuration.
+- Add historical rebate/premioum to expanded row in ibindex component.
+- Add support for displaying release notes in application.
+
+- Change yarn from v1 -> v2 (https://yarnpkg.com/getting-started/migration)
+
+### [PATCH]
+- Fix: refresh does not seem to propagate to child components on ibindex pages
+- Fix: dashboard refreshed when alarm trigger is saved and refresh success notification is shown
+- Fix: toggle dark/light mode takes 2 clicks the first time
+- Refactor watchlist solution to include watched items from Ibindex, Fbindex, and FI
+- Update dependencies: @intlify/unplugin-vue-i18n 4.0.0 -> 5.2.0 - major update
+
+### [FUTURE]
+- Change: change from localforage -> Dexie
+
+## [IN-PROGRESS]
+
+## [UNRELEASED]
+
+## v1.6.1 - 2024-12-27
+- Simplified settings dialog by removing unnecessary headings and updater functionality
+- Updated application toolbar background color to bg-grey-10 for better look and feel
+- Updated color of separator in the toolbar to match the toolbar icon color for consistency
+
 ## v1.6.0 - 2024-12-26
 
 ### Added
@@ -72,38 +109,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced error handling and logging with emoji-prefixed console messages for better debugging
 - Improved composables architecture with settings dialog following established patterns
 - Added comprehensive validation and error handling in settings component
-
-## [BACKLOG]
-
-### [MAJOR]
-- Add info about the funds' manager
-- Add latest price info for the funds and for the funds' holdings
-- Add support for handling dB version changes when app is upgraded.
-- Add support for connecting Avanza account.
-- Add support for creating a manually uppdated portfolio.
-
-### [MINOR]
-- Change: Refactor components. (1). Create composables, abstracting getting data from dB. (2). Move fetch() operations to pine store layer.
-- Add: selectable rows in funds holdings tables.
-- Add support for user settings and app configuration.
-- Add historical rebate/premioum to expanded row in ibindex component.
-- Add support for displaying release notes in application.
-
-- Change yarn from v1 -> v2 (https://yarnpkg.com/getting-started/migration)
-
-### [PATCH]
-- Fix: refresh does not seem to propagate to child components on ibindex pages
-- Fix: dashboard refreshed when alarm trigger is saved and refresh success notification is shown
-- Fix: toggle dark/light mode takes 2 clicks the first time
-- Refactor watchlist solution to include watched items from Ibindex, Fbindex, and FI
-- Update dependencies: @intlify/unplugin-vue-i18n 4.0.0 -> 5.2.0 - major update
-
-### [FUTURE]
-- Change: change from localforage -> Dexie
-
-## [IN-PROGRESS]
-
-## [UNRELEASED]
 
 ## v1.4.0 - 2025-06-25
 

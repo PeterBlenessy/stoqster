@@ -1,8 +1,8 @@
 <template>
     <q-layout view="hHh lpr fFf">
-        <q-header elevated>
+        <q-header>
             <!--  Top toolbar -->
-            <q-toolbar>
+            <q-toolbar class="bg-dark text-white">
                 <q-btn
                     flat
                     dense
@@ -35,7 +35,7 @@
                     >
                 </q-btn>
 
-                <q-separator vertical inset />
+                <q-separator vertical inset spaced size="1px" color="grey-3" />
 
                 <!-- Toggle dark / light mode -->
                 <q-btn
@@ -304,7 +304,7 @@ export default {
                     updateStore.clearUpdateInfo()
                     
                     showNotification({
-                        type: 'positive',
+                        type: 'dark',
                         message: 'Inga uppdateringar',
                         caption: 'Du har den senaste versionen',
                         icon: 'mdi-check-circle',
