@@ -46,6 +46,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.6.2 - 2025-06-27
+
+### Added
+- Implemented separate FBI and IBI watchlists on dashboard with visual separation
+- Added proper encoding support for FBI APIs (ISO-8859-1 to UTF-8 conversion)
+- Introduced nested details refresh tracking system for better data organization
+- Created centralized API request handling through useApiRequest composable
+
+### Changed
+- Renamed "watchlist" to "ibiWatchlist" throughout the application for clarity
+- Refactored dashboard to display both FBI and IBI companies with distinct badges
+- Updated all components to use new watchlist naming convention
+- Migrated localStorage data structure for watchlist compatibility
+- Improved details refresh tracking with nested object structure (company -> request type -> timestamp)
+
+### Fixed
+- Resolved character encoding issues for Swedish characters in FBI API responses
+- Fixed duplicate variable declaration error in ComponentDashboard.vue
+- Improved cache invalidation logic for company details when parent data is refreshed
+- Enhanced error handling and logging throughout API request chain
+
+### Technical Improvements
+- Centralized all external API calls through useApiRequest composable
+- Implemented automatic ISO-8859-1 detection and conversion for FBI APIs
+- Added robust timestamp-based cache invalidation system
+- Improved localStorage organization with nested object structure for details refresh tracking
+- Enhanced debugging with consistent emoji-based logging across components
+
 ## v1.6.1 - 2024-12-27
 - Simplified settings dialog by removing unnecessary headings and updater functionality
 - Updated application toolbar background color to bg-grey-10 for better look and feel

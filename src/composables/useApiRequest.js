@@ -37,7 +37,27 @@ export function useApiRequest() {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`)
             }
             
-            const data = await response.json()
+            // Check the content-type header for character encoding
+            const contentType = response.headers.get('content-type') || ''
+            const isISO88591 = contentType.includes('charset=ISO-8859-1')
+            
+            let data
+            if (isISO88591) {
+                console.log(`🔄 Detected ISO-8859-1 encoding for ${apiName}, converting to UTF-8`)
+                
+                // Get response as array buffer first
+                const arrayBuffer = await response.arrayBuffer()
+                
+                // Decode ISO-8859-1 to text
+                const decoder = new TextDecoder('iso-8859-1')
+                const textData = decoder.decode(arrayBuffer)
+                
+                // Parse the decoded text as JSON
+                data = JSON.parse(textData)
+            } else {
+                // Standard JSON parsing for UTF-8
+                data = await response.json()
+            }
             
             if (data == null || data == undefined) {
                 throw new Error('Response data is null or undefined')

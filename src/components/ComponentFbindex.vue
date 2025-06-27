@@ -23,7 +23,7 @@
                     v-model:filter="filter"
                     :loading="loading"
                     :refresh-color="refreshColor"
-                    @refresh="refreshData"
+                    @refresh="refreshTableData"
                 />
             </template>
 
@@ -158,6 +158,7 @@
                                             :api="fbindex.getRebatePremiums"
                                             request="getRebatePremiums"
                                             :company="props.row.product"
+                                            :force-refresh="detailsRefreshTrigger"
                                             :key="props.row.product"
                                         />
                                     </q-card-section>
@@ -170,6 +171,7 @@
                                             :api="fbindex.getEvents"
                                             request="getEvents"
                                             :company="props.row.product"
+                                            :force-refresh="detailsRefreshTrigger"
                                             :key="props.row.product"
                                         />
                                     </q-card-section>
@@ -214,6 +216,9 @@ if (!api.value || !fbindex[api.value]) {
 const title = ref(fbindex[api.value].title);
 const columns = fbindex[api.value].columns;
 const rows = ref([]);
+
+// Refresh trigger for child components
+const detailsRefreshTrigger = ref(0);
 
 // Use composables
 const { loading, refreshColor, loadData, refreshData } = useDataLoader();
@@ -267,6 +272,13 @@ async function refreshTableData() {
         apiName: api.value,
         onSuccess: (data) => {
             rows.value = [...data];
+            // Store refresh timestamp in localStorage for child components to check
+            localStorage.setItem('lastRefresh_fbi', Date.now().toString());
+            console.log(`📅 Stored FBI refresh timestamp: ${new Date().toLocaleTimeString()}`);
+            
+            // Trigger refresh for child components (for already mounted ones)
+            detailsRefreshTrigger.value = Date.now();
+            console.log(`🔄 Triggered child component refresh: ${detailsRefreshTrigger.value}`);
         }
     });
 }

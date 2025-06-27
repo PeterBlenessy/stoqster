@@ -19,7 +19,7 @@ Ibindex is a web page presenting information about investment companies in Swede
 - [x] Set/delete alarm on the dashboard: current value crossing 30 days' average. Persisted alarms.
 - [x] Searchable table showing market weights of investment companies.
 - [x] Display notification when refresh of data is done.
-- [x] Display notification when alarm ir triggered.
+- [x] Display notification when alarm is triggered.
 
 ## Display information fetched from www.fi.se
 

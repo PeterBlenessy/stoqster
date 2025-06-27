@@ -15,8 +15,7 @@ export const useSettingsStore = defineStore("settings", () => {
     // Load initial state from local storage
     const darkMode = ref(loadState("darkMode") ?? false);
     const routerPath = ref(loadState("routerPath") || "/");
-    const watchlist = ref(loadState("watchlist") || []);
-    const ibiWatchlist = ref(loadState("ibiWatchlist") || []);
+    const ibiWatchlist = ref(loadState("ibiWatchlist") || loadState("watchlist") || []);
     const fbiWatchlist = ref(loadState("fbiWatchlist") || []);
     const alerts = ref(loadState("alerts") || []);
     const refreshInterval = ref(loadState("refreshInterval") || 60 * 60 * 1000);
@@ -31,10 +30,11 @@ export const useSettingsStore = defineStore("settings", () => {
     watch(routerPath, (newValue) => saveState("routerPath", newValue), {
         deep: true,
     });
-    watch(watchlist, (newValue) => saveState("watchlist", newValue), {
-        deep: true,
-    });
-    watch(ibiWatchlist, (newValue) => saveState("ibiWatchlist", newValue), {
+    watch(ibiWatchlist, (newValue) => {
+        saveState("ibiWatchlist", newValue);
+        // Also clear the old watchlist key when ibiWatchlist is updated
+        localStorage.removeItem("watchlist");
+    }, {
         deep: true,
     });
     watch(fbiWatchlist, (newValue) => saveState("fbiWatchlist", newValue), {
@@ -65,7 +65,6 @@ export const useSettingsStore = defineStore("settings", () => {
     return {
         darkMode,
         routerPath,
-        watchlist,
         ibiWatchlist,
         fbiWatchlist,
         alerts,

@@ -4,7 +4,7 @@
             :title="title"
             dense
             :rows="rows"
-            :columns="columns"
+            :columns="unifiedColumns"
             row-key="product"
             :rows-per-page-options="[0]"
             :filter="filter"
@@ -26,35 +26,40 @@
             <template v-slot:item="props">
                 <div class="q-pa-xs col-4">
                     <q-card>
-                        <q-card-section class="text-center text-subtitle2">{{
-                            props.row.productName
-                        }}</q-card-section>
+                        <q-card-section class="text-center text-subtitle2">
+                            {{ props.row.productName }}
+                            <q-badge 
+                                :color="props.row._sourceType === 'fbi' ? 'orange' : 'blue'" 
+                                class="q-ml-sm"
+                            >
+                                {{ props.row._sourceType?.toUpperCase() }}
+                            </q-badge>
+                        </q-card-section>
                         <q-separator inset />
                         <q-card-section>
                             <div class="text-center text-overline">
                                 {{
-                                    props.colsMap
-                                        .netAssetValueCalculatedRebatePremium
-                                        .label
+                                    getFieldLabel(props.row._sourceType, 'netAssetValueRebatePremium')
                                 }}
                             </div>
                             <div
                                 class="flex flex-center text-h6"
                                 :style="{
                                     color:
-                                        props.row
-                                            .netAssetValueCalculatedRebatePremium <
-                                        0
-                                            ? 'red'
-                                            : 'green',
+                                        (() => {
+                                            const value = getFieldValue(props.row, 'netAssetValueRebatePremium');
+                                            return value != null && value < 0 ? 'red' : 'green';
+                                        })()
                                 }"
                             >
                                 {{
-                                    props.row.netAssetValueCalculatedRebatePremium.toFixed(
-                                        2,
-                                    )
-                                }}%
+                                    (() => {
+                                        const value = getFieldValue(props.row, 'netAssetValueRebatePremium');
+                                        return value != null ? `${value.toFixed(2)}%` : 'N/A';
+                                    })()
+                                }}
                                 <q-icon
+                                    v-if="props.row.priceChange != null"
                                     :name="
                                         props.row.priceChange < 0
                                             ? 'mdi-trending-down'
@@ -105,14 +110,9 @@
                                     onAddAlert(
                                         props.row.product,
                                         props.row.productName,
-                                        props.colsMap
-                                            .netAssetValueCalculatedRebatePremium
-                                            .field,
-                                        props.colsMap
-                                            .netAssetValueCalculatedRebatePremium
-                                            .label,
-                                        props.row
-                                            .netAssetValueCalculatedRebatePremium,
+                                        'netAssetValueRebatePremium',
+                                        getFieldLabel(props.row._sourceType, 'netAssetValueRebatePremium'),
+                                        getFieldValue(props.row, 'netAssetValueRebatePremium') || 0,
                                     )
                                 "
                             >
@@ -158,9 +158,10 @@
                         <!-- Expandable historical info about Rebate/Premiums -->
                         <div class="q-pa-md" v-show="props.expand">
                             <CompanyDetails
-                                :api="ibindex.getRebatePremiums"
+                                :api="getCompanyApi(props.row.product).api.getRebatePremiums"
                                 request="getRebatePremiums"
                                 :company="props.row.product"
+                                :force-refresh="detailsRefreshTrigger"
                                 :key="props.row.product"
                             />
                         </div>
@@ -173,10 +174,11 @@
 
 <script setup>
 import { ibindex, ibiRequestOptions } from "../api/ibindexAPI.mjs";
+import { fbindex } from "../api/fbindexAPI.js";
 import CompanyDetails from "./CompanyDetails.vue";
 import AlertDialog from "./ComponentAlertDialog.vue";
 import TableToolbar from "./TableToolbar.vue";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "../stores/settings-store.js";
@@ -189,54 +191,212 @@ const {
     alerts,
     fbiWatchlist,
     ibiWatchlist,
-    watchlist,
     refreshInterval,
 } = storeToRefs(settingsStore);
 
 const { makeRequest } = useApiRequest();
 const { createWatchlistFilter } = useTableState();
 
-const api = ref("getCompanies");
-const title = "Bevakningar: beräknad rabatt/premie"; //ibindex[ibiAPI].title;
-const visibleColumns = ibindex[api.value].visibleColumns;
-const columns = ibindex[api.value].columns;
+const title = computed(() => {
+    const ibiCount = ibiWatchlist.value?.length || 0;
+    const fbiCount = fbiWatchlist.value?.length || 0;
+    const totalCount = ibiCount + fbiCount;
+    return `Bevakningar: beräknad rabatt/premie (${totalCount} företag)`;
+});
+
+// Separate APIs for IBI and FBI
+const ibiApi = ref("getCompanies");
+const fbiApi = ref("getCompanies");
+const ibiColumns = ibindex[ibiApi.value].columns;
+const fbiColumns = fbindex[fbiApi.value].columns;
+
+// Create unified columns that work for both FBI and IBI data
+const unifiedColumns = [
+    {
+        name: "productName",
+        label: "Företag",
+        field: "productName",
+        sortable: true,
+        align: "left",
+    },
+    {
+        name: "rebatePremium",
+        label: "Rabatt/Premie %",
+        field: (row) => getFieldValue(row, 'netAssetValueRebatePremium'),
+        sortable: true,
+        format: (val) => val != null ? `${val.toFixed(2)}%` : 'N/A',
+        style: (val) => ({
+            color: val != null && val < 0 ? 'red' : 'green'
+        }),
+    },
+    {
+        name: "price",
+        label: "Pris",
+        field: "price",
+        sortable: true,
+        format: (val) => val != null ? `${val.toFixed(2)}` : 'N/A',
+    },
+    {
+        name: "priceChange",
+        label: "Prisändring %",
+        field: "priceChange", 
+        sortable: true,
+        format: (val) => val != null ? `${val.toFixed(2)}%` : 'N/A',
+        style: (val) => ({
+            color: val != null && val < 0 ? 'red' : 'green'
+        }),
+    },
+];
+
+// Combined rows from both watchlists
 const rows = ref([]);
 const loading = ref(false);
 const refreshColor = ref("primary");
 const filter = ref("");
 const expandedCards = ref([]);
 
-const { filterWatchlistRows, updateWatchlistValues } = createWatchlistFilter({ 
-    rows, 
-    watchlistStore: watchlist 
+// Refresh trigger for child components
+const detailsRefreshTrigger = ref(0);
+
+// Create separate watchlist filters for IBI and FBI
+const { filterWatchlistRows: filterIbiRows, updateWatchlistValues: updateIbiValues } = createWatchlistFilter({ 
+    rows: ref([]), 
+    watchlistStore: ibiWatchlist 
 });
+
+const { filterWatchlistRows: filterFbiRows, updateWatchlistValues: updateFbiValues } = createWatchlistFilter({ 
+    rows: ref([]), 
+    watchlistStore: fbiWatchlist 
+});
+
+// Get the appropriate API and columns based on company type
+function getCompanyApi(companyProduct) {
+    // Check if it's an FBI company (exists in FBI watchlist)
+    if (fbiWatchlist.value?.some(item => item.product === companyProduct)) {
+        return { api: fbindex, apiKey: fbiApi.value, type: 'fbi' };
+    }
+    // Default to IBI
+    return { api: ibindex, apiKey: ibiApi.value, type: 'ibi' };
+}
+
+// Get appropriate columns for a company
+function getCompanyColumns(companyProduct) {
+    const { type } = getCompanyApi(companyProduct);
+    return type === 'fbi' ? fbiColumns : ibiColumns;
+}
+
+// Get field value with fallback handling for different APIs
+function getFieldValue(row, fieldName) {
+    if (!row) return null;
+    
+    // Handle the different field names between FBI and IBI APIs
+    if (fieldName === 'netAssetValueRebatePremium') {
+        // FBI uses 'netAssetValueRebatePremium', IBI uses 'netAssetValueCalculatedRebatePremium'
+        const value = row._sourceType === 'fbi' 
+            ? row.netAssetValueRebatePremium 
+            : row.netAssetValueCalculatedRebatePremium;
+        
+        // Return null if value is undefined, null, or NaN
+        return (value != null && !isNaN(value)) ? value : null;
+    }
+    
+    const value = row[fieldName];
+    return (value != null && !isNaN(value)) ? value : null;
+}
+
+// Get field label based on company type
+function getFieldLabel(sourceType, fieldName) {
+    if (fieldName === 'netAssetValueRebatePremium') {
+        const columns = sourceType === 'fbi' ? fbiColumns : ibiColumns;
+        const field = sourceType === 'fbi' ? 'netAssetValueRebatePremium' : 'netAssetValueCalculatedRebatePremium';
+        const column = columns.find(col => col.field === field);
+        return column?.label || 'Rabatt/Premium';
+    }
+    return fieldName;
+}
 
 // Refresh data
 async function refreshData() {
     loading.value = true;
     refreshColor.value = "primary";
-
+    
     try {
-        const data = await makeRequest({
-            requestOptionsGetter: ibindex[api.value].requestOptions,
-            apiName: api.value
-        });
+        const allRows = [];
         
-        rows.value = [...data];
+        // Fetch IBI companies data if there are any in the watchlist
+        if (ibiWatchlist.value && ibiWatchlist.value.length > 0) {
+            console.log("🔄 Fetching IBI companies data for dashboard");
+            const ibiData = await makeRequest({
+                requestOptionsGetter: ibindex[ibiApi.value].requestOptions,
+                apiName: ibiApi.value
+            });
+            
+            // Filter IBI companies to only include those in the watchlist
+            const filteredIbiRows = filterIbiRows(ibiData);
+            updateIbiValues(filteredIbiRows);
+            
+            // Add source type to distinguish between FBI and IBI
+            const ibiRowsWithSource = filteredIbiRows.map(row => ({
+                ...row,
+                _sourceType: 'ibi'
+            }));
+            
+            allRows.push(...ibiRowsWithSource);
+            console.log(`✅ Loaded ${filteredIbiRows.length} IBI companies for dashboard`);
+        }
         
-        // Filter out rows that are not in the watchlist
-        if (watchlist.value !== null) {
-            rows.value = filterWatchlistRows(rows.value);
-            updateWatchlistValues(rows.value);
+        // Fetch FBI companies data if there are any in the watchlist  
+        if (fbiWatchlist.value && fbiWatchlist.value.length > 0) {
+            console.log("🔄 Fetching FBI companies data for dashboard");
+            const fbiData = await makeRequest({
+                requestOptionsGetter: fbindex[fbiApi.value].requestOptions,
+                apiName: fbiApi.value
+            });
+            
+            // Filter FBI companies to only include those in the watchlist
+            const filteredFbiRows = filterFbiRows(fbiData);
+            updateFbiValues(filteredFbiRows);
+            
+            // Add source type to distinguish between FBI and IBI
+            const fbiRowsWithSource = filteredFbiRows.map(row => ({
+                ...row,
+                _sourceType: 'fbi'
+            }));
+            
+            allRows.push(...fbiRowsWithSource);
+            console.log(`✅ Loaded ${filteredFbiRows.length} FBI companies for dashboard`);
+        }
+        
+        rows.value = allRows;
+        
+        if (allRows.length > 0) {
+            // Store refresh timestamps for both FBI and IBI data
+            localStorage.setItem('lastRefresh_fbi', Date.now().toString());
+            localStorage.setItem('lastRefresh_ibi', Date.now().toString());
+            console.log(`📅 Stored dashboard refresh timestamps: ${new Date().toLocaleTimeString()}`);
+            
+            // Trigger refresh for child components (for already mounted ones)
+            detailsRefreshTrigger.value = Date.now();
+            console.log(`🔄 Triggered dashboard child component refresh: ${detailsRefreshTrigger.value}`);
             
             $q.notify({
                 type: "positive",
                 message: "Uppdateringen gick bra",
             });
+        } else {
+            $q.notify({
+                type: "info",
+                message: "Inga företag i bevakningslistan",
+            });
         }
     } catch (error) {
-        console.error("Dashboard refresh error:", error);
-        rows.value = watchlist.value || []; // Show the latest values in case we have a network error
+        console.error("❌ Dashboard refresh error:", error);
+        // Show the latest values from watchlists in case of network error
+        const fallbackRows = [
+            ...(ibiWatchlist.value || []).map(row => ({ ...row, _sourceType: 'ibi' })),
+            ...(fbiWatchlist.value || []).map(row => ({ ...row, _sourceType: 'fbi' }))
+        ];
+        rows.value = fallbackRows;
         refreshColor.value = "negative";
         $q.notify({
             type: "negative",
@@ -247,12 +407,32 @@ async function refreshData() {
     }
 }
 
-// Updates the watchlist in Pinia state store. The state is also stored in localStorage.
+// Updates the appropriate watchlist in Pinia state store. The state is also stored in localStorage.
 function removeWatchlistItem(removedItem) {
+    // Find the item in the current rows to determine its source type
+    const itemToRemove = rows.value.find(item => item.product === removedItem);
+    
+    if (itemToRemove) {
+        const sourceType = itemToRemove._sourceType;
+        
+        // Remove from the appropriate watchlist
+        if (sourceType === 'fbi') {
+            fbiWatchlist.value = fbiWatchlist.value.filter(
+                (item) => item.product !== removedItem,
+            );
+            console.log(`🧹 Removed ${removedItem} from FBI watchlist`);
+        } else {
+            ibiWatchlist.value = ibiWatchlist.value.filter(
+                (item) => item.product !== removedItem,
+            );
+            console.log(`🧹 Removed ${removedItem} from IBI watchlist`);
+        }
+    }
+    
+    // Remove from displayed rows
     rows.value = rows.value.filter(
         (item) => item.product !== removedItem,
     );
-    watchlist.value = rows.value;
 }
 
 // Checks if an alert has been registered for a company
@@ -306,4 +486,3 @@ onMounted(() => {
     }, refreshInterval.value);
 });
 </script>
-../api/ibindexAPI.jsm

@@ -23,7 +23,7 @@
                     v-model:filter="filter"
                     :loading="loading"
                     :refresh-color="refreshColor"
-                    @refresh="refreshData"
+                    @refresh="refreshTableData"
                 />
             </template>
 
@@ -159,6 +159,7 @@
                                             :api="ibindex.getHoldings"
                                             request="getHoldings"
                                             :company="props.row.product"
+                                            :force-refresh="detailsRefreshTrigger"
                                             :key="props.row.product"
                                         />
                                     </q-card-section>
@@ -171,6 +172,7 @@
                                             :api="ibindex.getEvents"
                                             request="getEvents"
                                             :company="props.row.product"
+                                            :force-refresh="detailsRefreshTrigger"
                                             :key="props.row.product"
                                         />
                                     </q-card-section>
@@ -203,7 +205,7 @@ const props = defineProps({
 
 const $q = useQuasar();
 const settingsStore = useSettingsStore();
-const { watchlist, ibiVisibleColumns } = storeToRefs(settingsStore);
+const { ibiWatchlist, ibiVisibleColumns } = storeToRefs(settingsStore);
 const api = toRef(props, "api");
 
 // Defensive check to ensure API is valid
@@ -215,6 +217,9 @@ if (!api.value || !ibindex[api.value]) {
 const title = ref(ibindex[api.value].title);
 const columns = ibindex[api.value].columns;
 const rows = ref([]);
+
+// Refresh trigger for child components
+const detailsRefreshTrigger = ref(0);
 
 // Use composables
 const { loading, refreshColor, loadData, refreshData } = useDataLoader();
@@ -236,7 +241,7 @@ const {
     initializeFromStores
 } = createTableState({
     initialColumns: ibindex[api.value].visibleColumns,
-    watchlistStore: watchlist,
+    watchlistStore: ibiWatchlist,
     visibleColumnsStore: ibiVisibleColumns
 });
 
@@ -268,6 +273,13 @@ async function refreshTableData() {
         apiName: api.value,
         onSuccess: (data) => {
             rows.value = [...data];
+            // Store refresh timestamp in localStorage for child components to check
+            localStorage.setItem('lastRefresh_ibi', Date.now().toString());
+            console.log(`📅 Stored IBI refresh timestamp: ${new Date().toLocaleTimeString()}`);
+            
+            // Trigger refresh for child components (for already mounted ones)
+            detailsRefreshTrigger.value = Date.now();
+            console.log(`🔄 Triggered child component refresh: ${detailsRefreshTrigger.value}`);
         }
     });
 }
