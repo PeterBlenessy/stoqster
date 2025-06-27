@@ -24,35 +24,12 @@
         >
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
-                <!-- Search input -->
-                <q-input
-                    dense
-                    debounce="300"
-                    v-model="filter"
-                    placeholder="Sök i listan"
-                    style="width: 500px"
-                >
-                    <template v-slot:append>
-                        <q-icon name="mdi-filter-variant" />
-                    </template>
-                </q-input>
-
-                <!-- Refresh data -->
-                <q-btn
-                    dense
-                    flat
-                    round
-                    icon="mdi-refresh"
-                    :color="refreshColor"
+                <TableToolbar
+                    v-model:filter="filter"
                     :loading="loading"
-                    @click="loadDataFromWeb()"
-                >
-                    <q-tooltip
-                        transition-show="scale"
-                        transition-hide="scale"
-                        >{{ "Uppdatera" }}</q-tooltip
-                    >
-                </q-btn>
+                    :refresh-color="refreshColor"
+                    @refresh="loadDataFromWeb"
+                />
             </template>
 
             <!-- Table header row -->
@@ -190,12 +167,14 @@ import localforage from "localforage";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "../stores/settings-store.js";
 import ComponentFundHoldings from "./ComponentFundHoldings.vue";
+import TableToolbar from "./TableToolbar.vue";
 import { fetch } from "@tauri-apps/plugin-http";
 
 export default {
     name: "ComponentFunds",
     components: {
         ComponentFundHoldings,
+        TableToolbar,
     },
     setup() {
         // IndexedDB stores used by this component

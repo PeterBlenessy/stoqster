@@ -19,35 +19,12 @@
         >
             <!-- Configure top-right part of the data table component -->
             <template v-slot:top-right>
-                <!-- Filter input -->
-                <q-input
-                    dense
-                    debounce="300"
-                    v-model="filter"
-                    placeholder="Sök i listan"
-                    style="width: 500px"
-                >
-                    <template v-slot:append>
-                        <q-icon name="mdi-filter-variant" />
-                    </template>
-                </q-input>
-
-                <!-- Refresh data -->
-                <q-btn
-                    dense
-                    flat
-                    round
-                    icon="mdi-refresh"
-                    :color="refreshColor"
+                <TableToolbar
+                    v-model:filter="filter"
                     :loading="loading"
-                    @click="refreshData()"
-                >
-                    <q-tooltip
-                        transition-show="scale"
-                        transition-hide="scale"
-                        >{{ "Uppdatera" }}</q-tooltip
-                    >
-                </q-btn>
+                    :refresh-color="refreshColor"
+                    @refresh="refreshData"
+                />
             </template>
 
             <!-- Table header row -->
@@ -207,172 +184,98 @@
     </div>
 </template>
 
-<script>
-import { ibindex, ibiRequestOptions } from "../api/ibindexAPI.mjs";
+<script setup>
+import { ibindex } from "../api/ibindexAPI.mjs";
 import CompanyDetails from "./CompanyDetails.vue";
-import { ref, toRef, onMounted, watch } from "vue";
+import TableToolbar from "./TableToolbar.vue";
+import { ref, toRef, onMounted } from "vue";
 import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "../stores/settings-store.js";
-import localforage from "localforage";
-import { fetch } from "@tauri-apps/plugin-http";
+import { useDataLoader } from "../composables/useDataLoader.js";
+import { useApiRequest } from "../composables/useApiRequest.js";
+import { useLocalStorage } from "../composables/useLocalStorage.js";
+import { useTableState } from "../composables/useTableState.js";
 
-export default {
-    name: "ComponentIbindex",
-    components: {
-        CompanyDetails,
-    },
-    props: {
-        api: { type: String, required: true },
-    },
+const props = defineProps({
+    api: { type: String, required: true },
+})
 
-    setup(props) {
-        const $q = useQuasar();
-        const settingsStore = useSettingsStore();
-        const { watchlist, ibiVisibleColumns } = storeToRefs(settingsStore);
-        const api = toRef(props, "api");
-        
-        // Defensive check to ensure API is valid
-        if (!api.value || !ibindex[api.value]) {
-            console.error("Invalid API value:", api.value);
-            throw new Error(`Invalid API value: ${api.value}`);
+const $q = useQuasar();
+const settingsStore = useSettingsStore();
+const { watchlist, ibiVisibleColumns } = storeToRefs(settingsStore);
+const api = toRef(props, "api");
+
+// Defensive check to ensure API is valid
+if (!api.value || !ibindex[api.value]) {
+    console.error("Invalid API value:", api.value);
+    throw new Error(`Invalid API value: ${api.value}`);
+}
+
+const title = ref(ibindex[api.value].title);
+const columns = ibindex[api.value].columns;
+const rows = ref([]);
+
+// Use composables
+const { loading, refreshColor, loadData, refreshData } = useDataLoader();
+const { makeRequest } = useApiRequest();
+const { createStore } = useLocalStorage();
+const { createTableState } = useTableState();
+
+// Create LocalForage store
+const ibiStore = createStore({
+    storeName: ibindex[api.value].localForageConfig.storeName
+});
+
+// Create table state management
+const {
+    selectedRows,
+    visibleColumns,
+    filter,
+    onUpdateSelected,
+    initializeFromStores
+} = createTableState({
+    initialColumns: ibindex[api.value].visibleColumns,
+    watchlistStore: watchlist,
+    visibleColumnsStore: ibiVisibleColumns
+});
+
+// Web fetcher function for the data loader
+async function fetchFromWeb() {
+    return await makeRequest({
+        requestOptionsGetter: ibindex[api.value].requestOptions,
+        apiName: api.value
+    });
+}
+
+// Load data with cache fallback
+async function loadTableData() {
+    const data = await loadData({
+        store: ibiStore,
+        webFetcher: fetchFromWeb,
+        apiName: api.value,
+        onSuccess: (data) => {
+            rows.value = [...data];
         }
-        
-        const title = ref(ibindex[api.value].title);
-        const visibleColumns = ref(ibindex[api.value].visibleColumns);
-        const columns = ibindex[api.value].columns;
-        const rows = ref([]);
-        const selectedRows = ref([]);
-        const loading = ref(false);
-        const refreshColor = ref("primary");
+    });
+}
 
-        const ibiStore = localforage.createInstance({
-            name: "stoqster",
-            storeName: ibindex[api.value].localForageConfig.storeName,
-        });
-
-        // Fetch data from ibindex using the provided api reference
-        async function refreshData() {
-            console.time(`ibiLoadDataFromWeb() \t ${api.value}`);
-            loading.value = true;
-            
-            try {
-                // Validate API before making request
-                if (!api.value || !ibindex[api.value]) {
-                    throw new Error(`Invalid API configuration: ${api.value}`);
-                }
-                
-                // Get request options (this is now async to get the cookie)
-                const requestOptions = await ibindex[api.value].requestOptions("");
-                
-                if (!requestOptions || !requestOptions.url) {
-                    throw new Error(`Invalid request options or URL: ${requestOptions?.url}`);
-                }
-                
-                const response = await fetch(requestOptions.url, requestOptions.options);
-                
-                if (!response.ok) {
-                    throw new Error(`Error - fetch() status code: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                rows.value = [...data];
-                
-                // Store new data
-                data.forEach((item) =>
-                    ibiStore.setItem(item.product, item),
-                );
-
-                refreshColor.value = "primary";
-                $q.notify({
-                    type: "positive",
-                    message: "Uppdateringen gick bra",
-                });
-            } catch (error) {
-                console.log(error);
-                refreshColor.value = "negative";
-                $q.notify({
-                    type: "negative",
-                    message: "Något gick fel under uppdateringen",
-                });
-            } finally {
-                loading.value = false;
-                console.timeEnd(`ibiLoadDataFromWeb() \t ${api.value}`);
-            }
+// Refresh data from web
+async function refreshTableData() {
+    const data = await refreshData({
+        webFetcher: fetchFromWeb,
+        store: ibiStore,
+        apiName: api.value,
+        onSuccess: (data) => {
+            rows.value = [...data];
         }
+    });
+}
 
-        // Load data. Try local storage first and online download if that fails.
-        async function loadData() {
-            console.time(`ibiLoadData() \t ${api.value}`);
-            loading.value = true;
-
-            let data = [];
-            ibiStore
-                .iterate((value, key, iterationNumber) => {
-                    data.push(value);
-                })
-                .then(() => {
-                    if (data.length === 0) {
-                        return refreshData();
-                    }
-
-                    rows.value = [...data];
-                    // Make sure we have a unique index for each row
-                    rows.value.forEach((row, index) => {
-                        rows.value.index = index;
-                    });
-                })
-                .catch((error) => console.log(error))
-                .finally(() => {
-                    loading.value = false;
-                    console.timeEnd(`ibiLoadData() \t ${api.value}`);
-                });
-        }
-
-        // Save the selected rows to Pinia store. These rows represent the watchlist and will also be saved to the localStorage.
-        function onUpdateSelected(newSelection) {
-            watchlist.value = newSelection;
-        }
-
-        // Restore selected rows from Pinia store. These rows represent the watchlist.
-        function restoreSelectedRows() {
-            selectedRows.value = watchlist.value;
-        }
-        // Restore visible columns from Pinia store.
-        const restoreVisibleColumns = () => {
-            if (ibiVisibleColumns.value.length != 0) {
-                visibleColumns.value = ibiVisibleColumns.value;
-            }
-        };
-
-        onMounted(() => {
-            loadData();
-            restoreSelectedRows();
-            restoreVisibleColumns();
-        });
-
-        watch(
-            visibleColumns,
-            (newVal) => (ibiVisibleColumns.value = [...newVal]),
-        );
-
-        return {
-            ibindex,
-            title,
-            columns,
-            visibleColumns,
-            rows,
-            selectedRows,
-            filter: ref(""),
-
-            loading,
-            refreshColor,
-            refreshData,
-            restoreSelectedRows,
-            onUpdateSelected,
-        };
-    },
-};
+onMounted(() => {
+    loadTableData();
+    initializeFromStores();
+});
 </script>
 
 <style>

@@ -13,35 +13,13 @@
             v-model:expanded="expandedCards"
         >
             <template v-slot:top-right>
-                <!-- Filter input -->
-                <q-input
-                    dense
-                    debounce="300"
-                    v-model="filter"
-                    placeholder="Filter"
-                    style="width: 500px"
-                >
-                    <template v-slot:append>
-                        <q-icon name="mdi-filter-variant" />
-                    </template>
-                </q-input>
-
-                <!-- Refresh button -->
-                <q-btn
-                    flat
-                    round
-                    dense
-                    icon="mdi-refresh"
-                    :color="refreshColor"
+                <TableToolbar
+                    v-model:filter="filter"
                     :loading="loading"
-                    @click="refreshData()"
-                >
-                    <q-tooltip
-                        transition-show="scale"
-                        transition-hide="scale"
-                        >{{ "Uppdatera" }}</q-tooltip
-                    >
-                </q-btn>
+                    :refresh-color="refreshColor"
+                    placeholder="Filter"
+                    @refresh="refreshData"
+                />
             </template>
 
             <!-- Card items -->
@@ -193,176 +171,139 @@
     </div>
 </template>
 
-<script>
+<script setup>
 import { ibindex, ibiRequestOptions } from "../api/ibindexAPI.mjs";
 import CompanyDetails from "./CompanyDetails.vue";
 import AlertDialog from "./ComponentAlertDialog.vue";
+import TableToolbar from "./TableToolbar.vue";
 import { ref, onMounted } from "vue";
 import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "../stores/settings-store.js";
-import { fetch } from "@tauri-apps/plugin-http";
+import { useApiRequest } from "../composables/useApiRequest.js";
+import { useTableState } from "../composables/useTableState.js";
 
-export default {
-    name: "ComponentDashboard",
-    components: {
-        CompanyDetails,
-    },
-    props: {},
+const $q = useQuasar();
+const settingsStore = useSettingsStore();
+const {
+    alerts,
+    fbiWatchlist,
+    ibiWatchlist,
+    watchlist,
+    refreshInterval,
+} = storeToRefs(settingsStore);
 
-    setup() {
-        const $q = useQuasar();
-        const settingsStore = useSettingsStore();
-        const {
-            alerts,
-            fbiWatchlist,
-            ibiWatchlist,
-            watchlist,
-            refreshInterval,
-        } = storeToRefs(settingsStore);
+const { makeRequest } = useApiRequest();
+const { createWatchlistFilter } = useTableState();
 
-        const api = ref("getCompanies");
-        const title = "Bevakningar: beräknad rabatt/premie"; //ibindex[ibiAPI].title;
-        const visibleColumns = ibindex[api.value].visibleColumns;
-        const columns = ibindex[api.value].columns;
-        const rows = ref([]);
-        const loading = ref(false);
-        const refreshColor = ref("primary");
+const api = ref("getCompanies");
+const title = "Bevakningar: beräknad rabatt/premie"; //ibindex[ibiAPI].title;
+const visibleColumns = ibindex[api.value].visibleColumns;
+const columns = ibindex[api.value].columns;
+const rows = ref([]);
+const loading = ref(false);
+const refreshColor = ref("primary");
+const filter = ref("");
+const expandedCards = ref([]);
 
-        // Refresh data
-        async function refreshData() {
-            let visibleRows = [];
-            loading.value = true;
+const { filterWatchlistRows, updateWatchlistValues } = createWatchlistFilter({ 
+    rows, 
+    watchlistStore: watchlist 
+});
 
-            try {
-                // Get request options asynchronously
-                const requestOptions = await ibiRequestOptions(api.value);
-                
-                if (!requestOptions || !requestOptions.url) {
-                    throw new Error(`Invalid request options or URL: ${requestOptions?.url}`);
-                }
+// Refresh data
+async function refreshData() {
+    loading.value = true;
+    refreshColor.value = "primary";
 
-                const response = await fetch(requestOptions.url, requestOptions.options);
-                
-                if (!response.ok) {
-                    throw new Error(`Error - fetch() status code: ${response.status}`);
-                }
-
-                const data = await response.json();
-                
-                if (data == null || data == undefined) {
-                    throw new Error("Error - fetch() data is null or undefined");
-                }
-                
-                rows.value = [...data];
-                // Filter out rows that are not in the watchlist
-                if (watchlist.value !== null) {
-                    Object.entries(watchlist.value).forEach(
-                        ([key, value]) => {
-                            visibleRows.push(value.product);
-                        },
-                    );
-                    rows.value = rows.value.filter((item) =>
-                        visibleRows.includes(item.product),
-                    );
-
-                    watchlist.value = rows.value; // Store current values in watchlist
-                    refreshColor.value = "primary";
-                    $q.notify({
-                        type: "positive",
-                        message: "Uppdateringen gick bra",
-                    });
-                }
-            } catch (error) {
-                console.error("Dashboard refresh error:", error);
-                rows.value = watchlist.value; // Show the latest values in case we have a network error
-                refreshColor.value = "negative";
-                $q.notify({
-                    type: "negative",
-                    message: "Något gick fel under uppdatering",
-                });
-            } finally {
-                loading.value = false;
-            }
-        }
-
-        // Updates the watchlist in Pinia state store. The state is also stored in localStorage.
-        function removeWatchlistItem(removedItem) {
-            rows.value = rows.value.filter(
-                (item) => item.product !== removedItem,
-            );
-            watchlist.value = rows.value;
-        }
-
-        // Checks if an alert has been registered for a company
-        function hasAlert(companyCode) {
-            return alerts.value.some(
-                (item) => item.companyCode === companyCode,
-            );
-        }
-
-        function onAddAlert(
-            product,
-            productName,
-            field,
-            fieldLabel,
-            fieldValue,
-        ) {
-            $q.dialog({
-                component: AlertDialog,
-
-                // props forwarded to your custom component
-                componentProps: {
-                    companyCode: product,
-                    companyName: productName,
-                    field: field,
-                    fieldLabel: fieldLabel,
-                    fieldValue: fieldValue,
-
-                    title: "Alarm: " + productName,
-                    cancel: true,
-                    persistent: true,
-                },
-            })
-                .onOk((data) => {
-                    // console.log('>>>> OK, received', data)
-                })
-                .onCancel(() => {
-                    // console.log('>>>> Cancel')
-                })
-                .onDismiss(() => {
-                    // console.log('I am triggered on both OK and Cancel')
-                    // todo: There has to be a better way to force refresh of add alert icon color
-                    this.refreshData();
-                });
-        }
-
-        onMounted(() => {
-            refreshData();
-
-            setInterval(() => {
-                refreshData();
-            }, refreshInterval.value);
+    try {
+        const data = await makeRequest({
+            requestOptionsGetter: ibindex[api.value].requestOptions,
+            apiName: api.value
         });
+        
+        rows.value = [...data];
+        
+        // Filter out rows that are not in the watchlist
+        if (watchlist.value !== null) {
+            rows.value = filterWatchlistRows(rows.value);
+            updateWatchlistValues(rows.value);
+            
+            $q.notify({
+                type: "positive",
+                message: "Uppdateringen gick bra",
+            });
+        }
+    } catch (error) {
+        console.error("Dashboard refresh error:", error);
+        rows.value = watchlist.value || []; // Show the latest values in case we have a network error
+        refreshColor.value = "negative";
+        $q.notify({
+            type: "negative",
+            message: "Något gick fel under uppdatering",
+        });
+    } finally {
+        loading.value = false;
+    }
+}
 
-        return {
-            ibindex,
-            title,
-            columns,
-            visibleColumns,
-            rows,
-            filter: ref(""),
-            expandedCards: ref([]),
+// Updates the watchlist in Pinia state store. The state is also stored in localStorage.
+function removeWatchlistItem(removedItem) {
+    rows.value = rows.value.filter(
+        (item) => item.product !== removedItem,
+    );
+    watchlist.value = rows.value;
+}
 
-            loading,
-            refreshColor,
+// Checks if an alert has been registered for a company
+function hasAlert(companyCode) {
+    return alerts.value.some(
+        (item) => item.companyCode === companyCode,
+    );
+}
 
-            refreshData,
-            removeWatchlistItem,
-            hasAlert,
-            onAddAlert,
-        };
-    },
-};
+function onAddAlert(
+    product,
+    productName,
+    field,
+    fieldLabel,
+    fieldValue,
+) {
+    $q.dialog({
+        component: AlertDialog,
+
+        // props forwarded to your custom component
+        componentProps: {
+            companyCode: product,
+            companyName: productName,
+            field: field,
+            fieldLabel: fieldLabel,
+            fieldValue: fieldValue,
+
+            title: "Alarm: " + productName,
+            cancel: true,
+            persistent: true,
+        },
+    })
+        .onOk((data) => {
+            // console.log('>>>> OK, received', data)
+        })
+        .onCancel(() => {
+            // console.log('>>>> Cancel')
+        })
+        .onDismiss(() => {
+            // console.log('I am triggered on both OK and Cancel')
+            // todo: There has to be a better way to force refresh of add alert icon color
+            refreshData();
+        });
+}
+
+onMounted(() => {
+    refreshData();
+
+    setInterval(() => {
+        refreshData();
+    }, refreshInterval.value);
+});
 </script>
 ../api/ibindexAPI.jsm
