@@ -29,7 +29,7 @@
         "active": true,
         "category": "Productivity",
         "copyright": "Copyright © 2021 Péter Blénessy",
-        "createUpdaterArtifacts": "v1Compatible",
+        "createUpdaterArtifacts": true,
         "iOS": {
             "minimumSystemVersion": "13.0"
         },

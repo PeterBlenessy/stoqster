@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.6.4 - 2025-06-28
+- Updated `bundle` configuration change from `v1Compatible` to `true` in `tauri.conf.json`.
+
 ## v1.6.3 - 2025-06-28
 
 ### Fixed
