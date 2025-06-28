@@ -13,6 +13,258 @@ Stoqster is a Tauri-based desktop application for tracking Swedish investment co
 - **HTTP Requests**: Tauri HTTP plugin with browser fetch fallback
 - **Language**: Swedish UI (all user-facing text should be in Swedish)
 
+## Agentic Programming Guidelines
+
+### Understanding the Codebase
+
+When working on this project, always start by:
+
+1. **Explore the docs/ directory** for comprehensive project documentation
+2. **Review existing patterns** in similar components before implementing new features
+3. **Check the API integrations** in src/api/ to understand data flow
+4. **Examine composables** in src/composables/ for reusable business logic
+5. **Look at stores** in src/stores/ for state management patterns
+
+### Making Changes Safely
+
+#### Before Making Changes
+- [ ] Run `yarn build` to ensure the project builds successfully
+- [ ] Check `git status` to understand current repository state
+- [ ] Read relevant documentation in docs/ directory
+- [ ] Identify similar existing patterns in the codebase
+
+#### Change Strategy
+- [ ] Make minimal, surgical changes that preserve existing functionality
+- [ ] Follow established patterns and conventions
+- [ ] Test changes incrementally with `yarn dev`
+- [ ] Validate that changes don't break existing features
+
+#### After Making Changes
+- [ ] Run `yarn build` to verify builds still work
+- [ ] Test the specific feature you modified
+- [ ] Check for console errors or warnings
+- [ ] Verify Swedish text for any user-facing changes
+
+### Troubleshooting Common Issues
+
+#### Build Failures
+```bash
+# Clear dependencies and reinstall
+rm -rf node_modules yarn.lock
+yarn install
+
+# Clear Tauri cache
+rm -rf src-tauri/target
+
+# Check for TypeScript/ESLint errors
+yarn build
+```
+
+#### Development Server Issues
+```bash
+# Kill existing processes
+pkill -f "vite|tauri"
+
+# Restart development server
+yarn dev
+```
+
+#### API Connection Problems
+1. Check browser DevTools Network tab for failed requests
+2. Verify API endpoints in src/api/ files
+3. Check cookie authentication in browser
+4. Review console logs for authentication errors
+5. Test API endpoints manually in browser
+
+#### State Management Issues
+1. Check localStorage in browser DevTools Application tab
+2. Verify LocalForage data in IndexedDB
+3. Review Pinia store state in Vue DevTools
+4. Check for state persistence logic in stores
+
+#### Component Rendering Issues
+1. Use Vue DevTools to inspect component state
+2. Check for reactive data updates
+3. Verify computed properties and watchers
+4. Review component lifecycle hooks
+
+### Debugging Patterns
+
+#### Console Logging Strategy
+Always use emoji prefixes for consistent debugging:
+```javascript
+console.log('🔄 Initializing component')
+console.log('✅ Operation completed successfully') 
+console.log('❌ Operation failed:', error)
+console.log('⚠️ Warning condition detected')
+console.log('🌐 Making API request to:', url)
+console.log('💾 Saving data to storage')
+console.log('🔍 Searching/filtering data')
+console.log('📱 App lifecycle event')
+console.log('⏰ Timer/interval operation')
+```
+
+#### Error Investigation Process
+1. **Identify the error location** using stack traces
+2. **Check recent changes** that might have caused the issue
+3. **Review similar working code** for patterns
+4. **Test with minimal reproduction** cases
+5. **Verify dependencies** and imports are correct
+
+#### Performance Debugging
+1. Use browser Performance tab for profiling
+2. Check Network tab for slow API calls
+3. Monitor memory usage in Task Manager
+4. Profile component rendering with Vue DevTools
+
+### Problem-Solving Approach
+
+#### Understanding Existing Code
+When modifying existing functionality:
+1. **Read the component thoroughly** before making changes
+2. **Understand data flow** from API → Composable → Store → Component
+3. **Check related components** that might be affected
+4. **Review git history** to understand why code was written that way
+5. **Look for TODOs and comments** that explain context
+
+#### Implementing New Features
+1. **Find similar existing features** to use as templates
+2. **Start with the simplest implementation** possible
+3. **Follow the established architecture** (composables → stores → components)
+4. **Add error handling** and loading states from the beginning
+5. **Test edge cases** and error conditions
+
+#### API Integration Best Practices
+```javascript
+// Always use the established pattern
+async function newApiFunction(params) {
+  // 1. Validate parameters
+  if (!params?.required) {
+    throw new Error('Required parameter missing')
+  }
+  
+  try {
+    // 2. Use centralized request handling
+    const requestOptions = await getRequestOptions(params, 'apiName')
+    
+    // 3. Make request with proper error handling
+    const response = await fetch(requestOptions.url, requestOptions.options)
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    
+    // 4. Process and validate response
+    const data = await response.json()
+    console.log('✅ API request successful')
+    return data
+    
+  } catch (error) {
+    console.error('❌ API request failed:', error)
+    throw error
+  }
+}
+```
+
+### Testing and Validation Approaches
+
+#### Manual Testing Checklist
+For any changes made, verify:
+- [ ] Application starts without errors (`yarn dev`)
+- [ ] All pages load correctly without console errors
+- [ ] API calls complete successfully
+- [ ] Data persists correctly (check localStorage/IndexedDB)
+- [ ] Swedish text displays properly for any UI changes
+- [ ] Dark/light mode toggle works if UI was modified
+- [ ] Responsive design works on different window sizes
+
+#### Feature-Specific Testing
+- **IBIndex Integration**: Test company listings, details, holdings, events
+- **FBIndex Integration**: Test real estate company data and encoding
+- **FI Integration**: Test fund data download and processing
+- **Update System**: Test update checks and installation process
+- **Settings**: Test preferences persistence and restoration
+- **Watchlists**: Test adding/removing items and alerts
+
+#### Performance Validation
+- **Startup Time**: Application should start in < 3 seconds
+- **Navigation**: Page transitions should be < 500ms
+- **API Calls**: Should complete in < 5 seconds
+- **Memory**: Monitor for memory leaks during extended use
+- **Build Size**: Keep bundle size under control
+
+#### Error Scenarios Testing
+Always test these common error scenarios:
+- Network disconnection during API calls
+- Invalid API responses or timeouts
+- LocalForage storage failures
+- Missing or corrupted user preferences
+- Update server unavailability
+
+### Code Modification Best Practices
+
+#### When Adding New Features
+1. **Follow the composables pattern**: Business logic goes in src/composables/
+2. **Use Pinia for state**: Global state in src/stores/
+3. **Implement caching**: Use LocalForage for data persistence
+4. **Add loading states**: Show spinners/indicators for async operations
+5. **Handle errors gracefully**: Show Swedish error messages to users
+
+#### When Fixing Bugs
+1. **Reproduce the bug** first in development environment
+2. **Identify the root cause** using debugging tools and logs
+3. **Make minimal changes** to fix only the specific issue
+4. **Test the fix thoroughly** including edge cases
+5. **Verify no regressions** in related functionality
+
+#### When Refactoring Code
+1. **Understand the current behavior** completely first
+2. **Make incremental changes** rather than large rewrites
+3. **Preserve existing APIs** that other components depend on
+4. **Test after each small change** to catch issues early
+5. **Document any behavior changes** in comments
+
+### Working with External APIs
+
+#### Understanding API Integration Architecture
+```
+Component → Store → Composable → API Service → External API
+                               ↓
+                          LocalForage Cache
+```
+
+#### API Request Flow
+1. **Component** triggers action (user interaction)
+2. **Store** manages loading state and data
+3. **Composable** handles business logic and caching
+4. **API Service** manages authentication and requests
+5. **Cache** provides fallback and performance
+
+#### Authentication Handling
+All external APIs use cookie-based authentication:
+- IBIndex: `ibi-tracking` cookie
+- FBIndex: `fbi-tracking` cookie  
+- FI: No authentication required
+
+Cookies are automatically acquired by visiting the main page and stored globally in the API modules.
+
+#### Error Recovery Patterns
+```javascript
+// Implement automatic retry with cookie refresh
+async function resilientApiCall(apiFunction, ...args) {
+  try {
+    return await apiFunction(...args)
+  } catch (error) {
+    if (error.message.includes('401') || error.message.includes('403')) {
+      // Clear cookies and retry
+      trackingCookie = null
+      console.log('🔄 Retrying API call with fresh authentication')
+      return await apiFunction(...args)
+    }
+    throw error
+  }
+}
+```
+
 ## Coding Standards
 
 ### Vue/JavaScript Guidelines
