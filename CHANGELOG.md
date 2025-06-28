@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.6.6 - 2025-06-28
+Fix: Application does not restart as expected after update installation.
+- Added `process:allow-restart` to `src-tauri/capabilities/default.json`.
+
 ## v1.6.5 - 2025-06-28
 Fix: Signature not found for the updater JSON. Skipping upload...
 - Updated `tauri-apps/tauri-action` version in `release.yml` to `v0.5.20` from `v0` pointing to latest `v0.5.21` causing the error.
