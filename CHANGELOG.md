@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.6.5 - 2025-06-28
+Fix: Signature not found for the updater JSON. Skipping upload...
+- Updated `tauri-apps/tauri-action` version in `release.yml` to `v0.5.20` from `v0` pointing to latest `v0.5.21` causing the error.
+
 ## v1.6.4 - 2025-06-28
 - Updated `bundle` configuration change from `v1Compatible` to `true` in `tauri.conf.json`.
 
