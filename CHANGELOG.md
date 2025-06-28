@@ -46,6 +46,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.6.3 - 2025-06-28
+
+### Fixed
+Fix: validate and reset invalid router paths to dashboard
+- Added logic to check if stored routerPath is valid on startup and change
+- Automatically reset to dashboard if path is invalid
+- Prevents blank page or layout errors after route refactors or updates
+
 ## v1.6.2 - 2025-06-27
 
 ### Added

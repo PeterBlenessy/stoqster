@@ -173,7 +173,7 @@
 </template>
 
 <script setup>
-import { ibindex, ibiRequestOptions } from "../api/ibindexAPI.mjs";
+import { ibindex } from "../api/ibindexAPI.mjs";
 import { fbindex } from "../api/fbindexAPI.js";
 import CompanyDetails from "./CompanyDetails.vue";
 import AlertDialog from "./ComponentAlertDialog.vue";

@@ -190,7 +190,6 @@ import { fbindex } from "../api/fbindexAPI.js";
 import CompanyDetails from "./CompanyDetails.vue";
 import TableToolbar from "./TableToolbar.vue";
 import { ref, toRef, onMounted } from "vue";
-import { useQuasar } from "quasar";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "../stores/settings-store.js";
 import { useDataLoader } from "../composables/useDataLoader.js";
@@ -202,7 +201,6 @@ const props = defineProps({
     api: { type: String, required: true },
 })
 
-const $q = useQuasar();
 const settingsStore = useSettingsStore();
 const { fbiWatchlist, fbiVisibleColumns } = storeToRefs(settingsStore);
 const api = toRef(props, "api");

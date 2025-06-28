@@ -159,6 +159,15 @@ rustup update stable
 
 brew update       # Update Node.js
 brew upgrade node
+
+# If you get an error about Node.js version:
+# Ensure you have the correct version installed
+# For example, if you need Node.js 22:
+brew install node@22 && brew link --overwrite --force node@22
+
+# Add Node.js 22 to PATH
+# This is necessary if you have multiple Node.js versions installed
+export PATH="/opt/homebrew/opt/node@22/bin:$PATH"
 ```
 
 ## 📊 Project Status

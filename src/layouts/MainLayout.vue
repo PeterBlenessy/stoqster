@@ -238,6 +238,13 @@ export default {
         const currentVersion = ref('');
         const autoCheckInterval = ref(null);
 
+        // Helper: Validate a path against current router routes
+        function isValidRoute(path) {
+            // Remove query/hash for matching
+            const cleanPath = path && typeof path === 'object' ? path.path : path;
+            return router.getRoutes().some(r => r.path === cleanPath || r.path === (cleanPath || '').replace(/\/$/, ''));
+        }
+
         // Format last check time for display
         const formatLastCheck = () => {
             if (!lastCheckTime.value) return 'Aldrig kontrollerat'
@@ -384,6 +391,10 @@ export default {
         // Restore application states from last session and initialize updater
         onMounted(async () => {
             $q.dark.set(darkMode.value);
+            // Validate routerPath before navigating
+            if (!isValidRoute(routerPath.value)) {
+                routerPath.value = '/';
+            }
             router.replace(routerPath.value);
             
             // Get current app version
@@ -433,7 +444,14 @@ export default {
 
         // Watch for application state changes
         watch(darkMode, () => $q.dark.set(darkMode.value));
-        watch(routerPath, () => router.replace(routerPath.value));
+        watch(routerPath, (newPath) => {
+            if (!isValidRoute(newPath)) {
+                routerPath.value = '/';
+                router.replace('/');
+            } else {
+                router.replace(newPath);
+            }
+        });
 
         return {
             menuItems: links,
