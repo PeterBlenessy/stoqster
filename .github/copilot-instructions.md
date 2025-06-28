@@ -36,11 +36,11 @@ When working on this project, always start by:
 #### Change Strategy
 - [ ] Make minimal, surgical changes that preserve existing functionality
 - [ ] Follow established patterns and conventions
-- [ ] Test changes incrementally with `yarn dev`
+- [ ] Test changes incrementally with `yarn tauri dev`
 - [ ] Validate that changes don't break existing features
 
 #### After Making Changes
-- [ ] Run `yarn build` to verify builds still work
+- [ ] Run `yarn tauri build` to verify builds still work
 - [ ] Test the specific feature you modified
 - [ ] Check for console errors or warnings
 - [ ] Verify Swedish text for any user-facing changes
@@ -66,7 +66,7 @@ yarn build
 pkill -f "vite|tauri"
 
 # Restart development server
-yarn dev
+yarn tauri dev
 ```
 
 #### API Connection Problems
@@ -169,7 +169,7 @@ async function newApiFunction(params) {
 
 #### Manual Testing Checklist
 For any changes made, verify:
-- [ ] Application starts without errors (`yarn dev`)
+- [ ] Application starts without errors (`yarn tauri dev`)
 - [ ] All pages load correctly without console errors
 - [ ] API calls complete successfully
 - [ ] Data persists correctly (check localStorage/IndexedDB)
@@ -218,10 +218,12 @@ Always test these common error scenarios:
 
 #### When Refactoring Code
 1. **Understand the current behavior** completely first
-2. **Make incremental changes** rather than large rewrites
-3. **Preserve existing APIs** that other components depend on
-4. **Test after each small change** to catch issues early
-5. **Document any behavior changes** in comments
+2. **Create before/after diagrams** illustrating component and composable structure changes
+3. **Make incremental changes** rather than large rewrites
+4. **Preserve existing APIs** that other components depend on
+5. **Test after each small change** to catch issues early
+6. **Document any behavior changes** in comments
+7. **Update architecture documentation** with final diagrams and design decisions
 
 ### Working with External APIs
 

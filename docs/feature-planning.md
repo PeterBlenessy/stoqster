@@ -234,29 +234,6 @@ function getTestVariant(testName, userId) {
 - **Accessibility**: WCAG 2.1 AA compliance
 - **Security Scan**: No high-severity vulnerabilities
 
-## Resource Planning
-
-### Sprint Capacity Planning
-```
-Available Developer Hours per Sprint (2 weeks):
-- Senior Developer: 60 hours
-- Junior Developer: 60 hours
-- Total Capacity: 120 hours
-
-Allocation:
-- New Features: 60 hours (50%)
-- Bug Fixes: 24 hours (20%)
-- Technical Debt: 18 hours (15%)
-- Code Review & Testing: 18 hours (15%)
-```
-
-### Skill Development Areas
-- **Frontend**: Advanced Vue 3 patterns, Quasar optimization
-- **Backend**: Rust/Tauri performance optimization
-- **APIs**: External API integration best practices
-- **Testing**: Automated testing strategy implementation
-- **DevOps**: CI/CD pipeline improvements
-
 ## Communication and Collaboration
 
 ### Regular Meetings

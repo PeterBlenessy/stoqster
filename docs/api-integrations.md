@@ -12,7 +12,13 @@ Stoqster integrates with three main data sources:
 
 All APIs use cookie-based authentication and require careful handling of CORS and encoding issues.
 
-## IBIndex API Integration
+## Individual API Documentation
+
+For detailed information about each API integration, see:
+
+- **[IBIndex API Integration](api-integrations-ibi.md)** - Swedish investment companies data
+- **[FBIndex API Integration](api-integrations-fbi.md)** - Real estate investment companies data  
+- **[FI API Integration](api-integrations-fi.md)** - Swedish fund data from Finansinspektionen
 
 ### Purpose
 Provides comprehensive data about Swedish investment companies including holdings, events, and performance metrics.
@@ -290,6 +296,275 @@ for (const file of xmlFiles) {
 - **Key Structure**: `fi-funds-{quarter}-{year}`
 
 ## Common Patterns
+
+### Authentication Flow
+```javascript
+// 1. Check for existing cookie
+if (!trackingCookie) {
+  // 2. Visit main page to get cookie
+  const response = await fetch(baseUrl, { method: "GET" })
+  const setCookieHeader = response.headers.get('set-cookie')
+  
+  // 3. Extract and store cookie
+  if (setCookieHeader) {
+    const match = setCookieHeader.match(/tracking-cookie=([^;]+)/)
+    if (match) {
+      trackingCookie = `tracking-cookie=${match[1]}`
+    }
+  }
+}
+
+// 4. Use cookie in subsequent requests
+const options = {
+  headers: {
+    "Cookie": trackingCookie,
+    // ... other headers
+  }
+}
+```
+
+### Error Handling Pattern
+```javascript
+async function apiRequest(url, options) {
+  try {
+    const response = await fetch(url, options)
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    
+    const data = await response.json()
+    console.log('✅ API request successful')
+    return data
+    
+  } catch (error) {
+    console.error('❌ API request failed:', {
+      url,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    })
+    
+    // Retry logic for specific errors
+    if (error.message.includes('401') || error.message.includes('403')) {
+      // Clear cookie and retry
+      trackingCookie = null
+      return apiRequest(url, options)
+    }
+    
+    throw error
+  }
+}
+```
+
+### Caching Strategy
+```javascript
+// Check cache first
+const cacheKey = `api-${endpoint}-${JSON.stringify(params)}`
+const cached = await localforage.getItem(cacheKey)
+
+if (cached && !isCacheExpired(cached.timestamp)) {
+  console.log('📦 Using cached data')
+  return cached.data
+}
+
+// Fetch fresh data
+const data = await apiRequest(url, options)
+
+// Cache with timestamp
+await localforage.setItem(cacheKey, {
+  data,
+  timestamp: Date.now()
+})
+
+return data
+```
+
+## Rate Limiting and Best Practices
+
+### Request Throttling
+```javascript
+// Implement request delays to avoid overwhelming servers
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+async function throttledRequest(url, options) {
+  await delay(500) // 500ms delay between requests
+  return fetch(url, options)
+}
+```
+
+### Concurrent Request Management
+```javascript
+// Limit concurrent requests
+const CONCURRENT_LIMIT = 3
+const requestQueue = []
+let activeRequests = 0
+
+async function queuedRequest(url, options) {
+  return new Promise((resolve, reject) => {
+    requestQueue.push({ url, options, resolve, reject })
+    processQueue()
+  })
+}
+
+async function processQueue() {
+  if (activeRequests >= CONCURRENT_LIMIT || requestQueue.length === 0) {
+    return
+  }
+  
+  const { url, options, resolve, reject } = requestQueue.shift()
+  activeRequests++
+  
+  try {
+    const result = await fetch(url, options)
+    resolve(result)
+  } catch (error) {
+    reject(error)
+  } finally {
+    activeRequests--
+    processQueue()
+  }
+}
+```
+
+### Error Recovery
+```javascript
+async function resilientRequest(url, options, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fetch(url, options)
+    } catch (error) {
+      console.warn(`⚠️ Request attempt ${attempt} failed:`, error.message)
+      
+      if (attempt === maxRetries) {
+        throw error
+      }
+      
+      // Exponential backoff
+      const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 10000)
+      await delay(delayMs)
+    }
+  }
+}
+```
+
+## Security Considerations
+
+### CORS Configuration
+- Use Tauri HTTP plugin with `unsafe-headers` feature
+- Proper origin and referer headers for API compliance
+- User-Agent strings matching browser requests
+
+### Data Validation
+```javascript
+function validateApiResponse(data, expectedFields) {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid response format')
+  }
+  
+  for (const field of expectedFields) {
+    if (!(field in data)) {
+      throw new Error(`Missing required field: ${field}`)
+    }
+  }
+  
+  return true
+}
+```
+
+### Cookie Management
+- Secure storage of authentication cookies
+- Automatic refresh on expiration
+- Proper cleanup on application exit
+
+## Monitoring and Debugging
+
+### Request Logging
+```javascript
+function logRequest(url, options, response, duration) {
+  console.log('🌐 API Request:', {
+    url: url.replace(/\/[^\/]*$/, '/***'), // Hide sensitive parts
+    method: options.method,
+    status: response.status,
+    duration: `${duration}ms`,
+    timestamp: new Date().toISOString()
+  })
+}
+```
+
+### Performance Monitoring
+```javascript
+async function monitoredRequest(url, options) {
+  const startTime = performance.now()
+  
+  try {
+    const response = await fetch(url, options)
+    const duration = Math.round(performance.now() - startTime)
+    
+    logRequest(url, options, response, duration)
+    
+    // Alert on slow requests
+    if (duration > 5000) {
+      console.warn('⏰ Slow API request detected:', { url, duration })
+    }
+    
+    return response
+  } catch (error) {
+    const duration = Math.round(performance.now() - startTime)
+    console.error('❌ API request failed:', { url, duration, error: error.message })
+    throw error
+  }
+}
+```
+
+## Testing API Integrations
+
+### Manual Testing
+1. **Authentication**: Verify cookie acquisition works
+2. **Data Fetching**: Test each endpoint individually
+3. **Error Handling**: Test with invalid parameters
+4. **Rate Limiting**: Test concurrent requests
+5. **Caching**: Verify cache hit/miss behavior
+
+### Integration Testing
+```javascript
+// Test API connectivity
+async function testApiHealth() {
+  const tests = [
+    { name: 'IBIndex', test: () => ibiRequestOptions('getCompanies') },
+    { name: 'FBIndex', test: () => fbiRequestOptions('getCompanies') },
+    { name: 'FI', test: () => fiDownload() }
+  ]
+  
+  for (const { name, test } of tests) {
+    try {
+      await test()
+      console.log(`✅ ${name} API: OK`)
+    } catch (error) {
+      console.error(`❌ ${name} API: ${error.message}`)
+    }
+  }
+}
+```
+
+## Future Improvements
+
+### Performance Optimization
+- Implement GraphQL-like field selection
+- Add compression for large responses
+- Use streaming for large file downloads
+- Implement request deduplication
+
+### Reliability Enhancements
+- Circuit breaker pattern for failing APIs
+- Health check endpoints
+- Automatic failover mechanisms
+- Request timeout configuration
+
+### Developer Experience
+- API response type definitions
+- Mock API for development/testing
+- API documentation generator
+- Request/response interceptors for debugging## Common Patterns
 
 ### Authentication Flow
 ```javascript

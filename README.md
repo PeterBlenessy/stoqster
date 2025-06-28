@@ -72,13 +72,13 @@ cd stoqster
 yarn install
 
 # Start development server
-yarn dev
+yarn tauri dev
 ```
 
 ### Building for Production
 ```bash
 # Build the application
-yarn build
+yarn tauri build
 ```
 
 For detailed setup instructions, see the [Development Guide](docs/development.md).
@@ -116,23 +116,22 @@ We welcome contributions! Please see our [Development Guide](docs/development.md
 
 ## 📝 Release Process
 
-### Automated Release
+### Manual Steps Required
 ```bash
-# Automated build and release
+# 1. Update version in package.json
+# 2. Update CHANGELOG.md following the existing pattern
+# 3. Test thoroughly: yarn tauri build
+# 4. Create release
 yarn cicd
 ```
 
-This will:
-- Update CHANGELOG.md with version details
-- Commit changes and create GitHub release
-- Build and upload application bundles
-- Publish the release automatically
-
-### Manual Process
-1. Update versions in `package.json` and `src-tauri/Cargo.toml`
-2. Add entry to `CHANGELOG.md`
-3. Test thoroughly: `yarn build`
-4. Create release with build artifacts
+This process requires manual preparation:
+- **CHANGELOG.md** must be manually updated with version details
+- **package.json** version must be bumped manually
+- Based on the version in package.json, `yarn cicd` parses changes from CHANGELOG.md
+- Creates a draft GitHub release with version tag and extracted changes as description  
+- The application gets built using the GitHub workflow triggered by the new release
+- Finally publishes the release automatically
 
 For detailed release instructions, see the [Development Guide](docs/development.md#release-process).
 
@@ -164,7 +163,7 @@ brew upgrade node
 
 ## 📊 Project Status
 
-- **Current Version**: v1.6.2
+- **Current Version**: See [package.json](package.json) version field
 - **Development Status**: Active
 - **Platform Support**: macOS, Windows, Linux
 - **License**: [Add License Info]

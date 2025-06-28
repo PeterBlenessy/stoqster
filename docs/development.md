@@ -76,7 +76,7 @@ cargo --version
 ### Starting Development Server
 ```bash
 # Start the development server with hot reloading
-yarn dev
+yarn tauri dev
 
 # This will:
 # - Start Vite development server on http://localhost:5173
@@ -87,15 +87,9 @@ yarn dev
 ### Building the Application
 ```bash
 # Build for production
-yarn build
+yarn tauri build
 
 # This creates optimized bundles in the dist/ directory
-```
-
-### Preview Production Build
-```bash
-# Preview the production build locally
-yarn preview
 ```
 
 ## Project Structure Understanding
