@@ -1,84 +1,197 @@
 # Stoqster
 
-Stoqster provides information about Swedish investment companies and funds, in particular information about the holdings.
+**A comprehensive desktop application for tracking Swedish investment companies and funds**
 
-## Features
+Stoqster is a Tauri-based desktop application that provides detailed information about Swedish investment companies (investmentbolag), real estate companies, and funds. Built with Vue 3 and Quasar UI, it offers real-time data, portfolio tracking, and comprehensive analytics for Swedish financial markets.
 
-- [x] List investment companies and their holdings
-- [x] List funds and their holdings
-- [x] Add/remove investment company to watch list
-- [x] Display company performance in watch list
-- [x] Set simple alarm in watchlist
-- [ ] List real estate companies and their holdings
-- [ ] List publicly listed companies
-- [ ] List indexes and their holdings
-- [x] List company information from fbindex.se
+## 🚀 Key Features
 
-More details are available in the [use cases](USECASES.md).
+### Investment Company Tracking
+- [x] **IBIndex Integration**: Complete data from Swedish investment companies
+- [x] **Real Estate Companies**: Information from FBIndex for real estate investments  
+- [x] **Fund Holdings**: Quarterly fund data from Finansinspektionen (FI)
+- [x] **Company Details**: Holdings, events, performance metrics, and rebate/premium calculations
 
-## Data origin
-Stoqster uses information freely available on the web, specifically from [Investmentbolags Index](https://ibindex.se), [Finansinspektionen](https://www.fi.se/sv/vara-register/fondinnehav-per-kvartal/), and [Fbindex](https://www.fbindex.se).
+### Portfolio & Watchlist Management
+- [x] **Custom Watchlists**: Track your favorite companies and funds
+- [x] **Performance Monitoring**: Real-time performance tracking and alerts
+- [x] **Smart Alerts**: Notifications when values cross 30-day averages
+- [x] **Dashboard**: Personalized dashboard with key metrics and trends
 
-[![Investmentbolags Index](https://ibindex.se/ibi/assets/images/logo.png)](https://ibindex.se)
-[![Fbindex](https://www.fbindex.se/fbi/assets/images/logo.png)](https://www.fbindex.se)
-[![Finansinspektionen](https://www.fi.se/static/gfx/images/fi-logotyp.svg)](https://www.fi.se/sv/vara-register/fondinnehav-per-kvartal/)
+### User Experience
+- [x] **Dark/Light Mode**: Customizable themes for comfortable viewing
+- [x] **Swedish Interface**: Native Swedish language support
+- [x] **Automatic Updates**: Built-in update system with scheduled installations
+- [x] **Persistent Settings**: Your preferences and data sync across sessions
+- [x] **Responsive Design**: Optimized for desktop with filtering and sorting
 
-## License
+## 📚 Documentation
 
-## Contributors
+Comprehensive documentation is available in the [docs/](docs/) directory:
 
-### Install the dependencies
+- **[Architecture Guide](docs/architecture.md)** - Technical architecture and design decisions
+- **[Development Guide](docs/development.md)** - Setup, coding standards, and contribution guidelines  
+- **[API Integrations](docs/api-integrations.md)** - External API documentation and usage
+- **[Use Cases](docs/use-cases.md)** - Detailed application features and functionality
+- **[Project Roadmap](docs/roadmap.md)** - Planned features and development timeline
+- **[Feature Planning](docs/feature-planning.md)** - Development process and planning framework
+
+## 🏗️ Technology Stack
+
+- **Frontend**: Vue 3 (Composition API) + Quasar UI Framework
+- **Backend**: Tauri v2 with Rust
+- **Build Tool**: Vite with hot reloading
+- **State Management**: Pinia stores with LocalForage persistence
+- **APIs**: IBIndex, FBIndex, and Finansinspektionen integration
+
+## 📊 Data Sources
+
+Stoqster aggregates data from official Swedish financial sources:
+
+- **[IBIndex](https://ibindex.se)** - Investment companies data and analytics
+- **[FBIndex](https://www.fbindex.se)** - Real estate investment companies  
+- **[Finansinspektionen](https://www.fi.se/sv/vara-register/fondinnehav-per-kvartal/)** - Official fund holdings (quarterly)
+
+All data is sourced from publicly available APIs and maintained with proper attribution.
+
+## 🚦 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- Rust (latest stable)
+- Yarn package manager
+
+### Installation
+
 ```bash
-yarn
+# Clone the repository
+git clone https://github.com/PeterBlenessy/stoqster.git
+cd stoqster
+
+# Install dependencies
+yarn install
+
+# Start development server
+yarn tauri dev
 ```
 
-### Start the app in development mode (hot-code reloading, error reporting, etc.)
+### Building for Production
 ```bash
-yarn dev
+# Build the application
+yarn tauri build
 ```
 
-### Lint the files
-```bash
-yarn run lint
+For detailed setup instructions, see the [Development Guide](docs/development.md).
+
+## 🛠️ Development
+
+### Project Structure
+```
+src/
+├── api/           # External API integrations (IBIndex, FBIndex, FI)
+├── components/    # Reusable Vue components
+├── composables/   # Business logic and utilities  
+├── stores/        # Pinia state management
+├── pages/         # Route-level components
+└── layouts/       # Application layouts
+
+docs/              # Project documentation
+src-tauri/         # Rust backend code
 ```
 
-### Build the app for production
+### Contributing
+
+We welcome contributions! Please see our [Development Guide](docs/development.md) for:
+- Coding standards and patterns
+- Testing guidelines  
+- Pull request process
+- Development environment setup
+
+### Key Development Principles
+- **Swedish UI**: All user-facing text in Swedish
+- **Composition API**: Vue 3 with `<script setup>` syntax
+- **Error Handling**: Comprehensive error handling with user-friendly messages
+- **Performance**: Efficient caching and data management
+- **Accessibility**: Following WCAG guidelines
+
+## 📝 Release Process
+
+### Manual Steps Required
 ```bash
-yarn build
+# 1. Update version in package.json
+# 2. Update CHANGELOG.md following the existing pattern
+# 3. Test thoroughly: yarn tauri build
+# 4. Create release
+yarn cicd
 ```
 
-### Publishing to GitHub
-To be able to publish to github a `GH_TOKEN` needs to be generated and exported as an environment variable.
+This process requires manual preparation:
+- **CHANGELOG.md** must be manually updated with version details
+- **package.json** version must be bumped manually
+- Based on the version in package.json, `yarn cicd` parses changes from CHANGELOG.md
+- Creates a draft GitHub release with version tag and extracted changes as description  
+- The application gets built using the GitHub workflow triggered by the new release
+- Finally publishes the release automatically
 
-Read more: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
+For detailed release instructions, see the [Development Guide](docs/development.md#release-process).
 
+## 🔧 Maintenance
+
+### Keeping Dependencies Updated
+
+#### Frontend Dependencies
 ```bash
-export GH_TOKEN=<YOUR-GH-TOKEN>
-```
-
-### Keeping package dependencies up to date
-```bash
-# Update the frontend dependencies
-yarn outdated
+yarn outdated      # Check for updates
 yarn upgrade --latest
 ```
 
+#### Backend Dependencies  
 ```bash
-# Update the backend dependencies
 cd src-tauri
-cargo outdated
+cargo outdated     # Check for updates  
 cargo update
 ```
 
-### Keeping development environment dependencies up to date (MacOS)
+#### Development Environment (macOS)
 ```bash
-# Check the need for updating the toolchain
-rustup check
-
-# Update the toolchain
+rustup check      # Check Rust toolchain
 rustup update stable
 
-# Check the need for updating the Node.js version using Brew
-brew update
+brew update       # Update Node.js
 brew upgrade node
 ```
+
+## 📊 Project Status
+
+- **Current Version**: See [package.json](package.json) version field
+- **Development Status**: Active
+- **Platform Support**: macOS, Windows, Linux
+- **License**: [Add License Info]
+
+### Recent Updates
+- ✅ Centralized API request handling
+- ✅ Enhanced error handling and logging
+- ✅ Automatic update system
+- ✅ Improved data caching and performance
+
+See [CHANGELOG.md](CHANGELOG.md) for complete version history and [docs/roadmap.md](docs/roadmap.md) for planned features.
+
+## 🤝 Community
+
+### Getting Help
+- 📖 Check the [documentation](docs/) 
+- 🐛 Report bugs via [GitHub Issues](https://github.com/PeterBlenessy/stoqster/issues)
+- 💡 Request features via [GitHub Discussions](https://github.com/PeterBlenessy/stoqster/discussions)
+
+### Contributing
+- 🔧 See [Development Guide](docs/development.md) for technical details
+- 📋 Check [Feature Planning](docs/feature-planning.md) for development process
+- 🗺️ View [Roadmap](docs/roadmap.md) for planned features
+
+## 📜 License
+
+[Add license information here]
+
+---
+
+**Made with ❤️ for the Swedish investment community**
