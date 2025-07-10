@@ -22,6 +22,7 @@ export const useSettingsStore = defineStore("settings", () => {
     const ibiVisibleColumns = ref(loadState("ibiVisibleColumns") || []);
     const fbiVisibleColumns = ref(loadState("fbiVisibleColumns") || []);
     const fiVisibleColumns = ref(loadState("fiVisibleColumns") || []);
+    const stocksVisibleColumns = ref(loadState("stocksVisibleColumns") || []);
 
     // Watch and save changes to local storage
     watch(darkMode, (newValue) => saveState("darkMode", newValue), {
@@ -61,6 +62,11 @@ export const useSettingsStore = defineStore("settings", () => {
         (newValue) => saveState("fiVisibleColumns", newValue),
         { deep: true },
     );
+    watch(
+        stocksVisibleColumns,
+        (newValue) => saveState("stocksVisibleColumns", newValue),
+        { deep: true },
+    );
 
     return {
         darkMode,
@@ -72,5 +78,6 @@ export const useSettingsStore = defineStore("settings", () => {
         ibiVisibleColumns,
         fbiVisibleColumns,
         fiVisibleColumns,
+        stocksVisibleColumns,
     };
 });
