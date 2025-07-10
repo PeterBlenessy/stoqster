@@ -151,10 +151,6 @@ const stocks = {
                 sort: (a, b) => parseFloat(a) - parseFloat(b),
                 format: (val) =>
                     `${isValidNumber(val) ? (val >= 0 ? '+' : '') + val.toFixed(2) : ""} $`,
-                style: (row) => {
-                    if (!isValidNumber(row.Förändring)) return "";
-                    return row.Förändring >= 0 ? "color: green;" : "color: red;";
-                },
             },
             {
                 name: "Förändring_procent",
@@ -166,10 +162,6 @@ const stocks = {
                 sort: (a, b) => parseFloat(a) - parseFloat(b),
                 format: (val) =>
                     `${isValidNumber(val) ? (val >= 0 ? '+' : '') + val.toFixed(2) : ""}%`,
-                style: (row) => {
-                    if (!isValidNumber(row.Förändring_procent)) return "";
-                    return row.Förändring_procent >= 0 ? "color: green;" : "color: red;";
-                },
             },
             {
                 name: "Volym",

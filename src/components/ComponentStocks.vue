@@ -12,13 +12,6 @@
             :visible-columns="visibleColumns"
             :filter="filter"
             binary-state-sort
-            virtual-scroll
-            virtual-scroll-slice-size="100"
-            virtual-scroll-slice-ratio-before="2"
-            virtual-scroll-slice-ratio-after="2"
-            virtual-scroll-sticky-size-start="28"
-            virtual-scroll-item-size="28"
-            virtual-scroll-sticky-size-end="33"
             v-model:pagination="pagination"
             :rows-per-page-options="[0]"
         >
@@ -108,7 +101,7 @@
                         v-for="col in props.cols"
                         :key="col.name"
                         :props="props"
-                        :style="col.style ? col.style(props.row) : ''"
+                        :style="getColumnStyle(col, props.row)"
                     >
                         {{ col.value }}
                         <q-tooltip
@@ -295,6 +288,17 @@ export default {
             }
         };
 
+        // Get column styling based on data
+        const getColumnStyle = (col, row) => {
+            if (col.name === "Förändring" && row.Förändring !== undefined) {
+                return row.Förändring >= 0 ? "color: green;" : "color: red;";
+            }
+            if (col.name === "Förändring_procent" && row.Förändring_procent !== undefined) {
+                return row.Förändring_procent >= 0 ? "color: green;" : "color: red;";
+            }
+            return "";
+        };
+
         onMounted(() => {
             console.log('🔄 ComponentStocks mounted, loading data');
             loadData();
@@ -330,6 +334,7 @@ export default {
             columns,
             visibleColumns,
             rows,
+            getColumnStyle,
             pagination: ref({
                 rowsPerPage: 0,
             }),
