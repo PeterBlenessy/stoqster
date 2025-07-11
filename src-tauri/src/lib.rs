@@ -12,6 +12,7 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_opener::init())
         // .invoke_handler(tauri::generate_handler![show_main_window])
         .run(tauri::generate_context!())
         .expect("Some error occured while running application");

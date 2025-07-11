@@ -1,3 +1,5 @@
+import { fetch } from "@tauri-apps/plugin-http";
+
 /**
  * Base class for market data providers
  * Defines the standard interface that all market data providers must implement
@@ -169,11 +171,14 @@ export class BaseMarketDataProvider {
             console.log(`🌐 Making request to ${this.name}: ${url}`)
             
             const response = await fetch(url, {
-                ...options,
+                method: 'GET',
                 headers: {
-                    'User-Agent': 'Stoqster/1.0',
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+                    'Accept': 'application/json, text/plain, */*',
+                    'Accept-Language': 'en-US,en;q=0.9',
                     ...options.headers
-                }
+                },
+                ...options
             })
 
             if (!response.ok) {

@@ -12,7 +12,22 @@
             "allow": [
                 { "url": "https://www.fi.se/*" },
                 { "url": "https://ibindex.se/*" },
-                { "url": "https://fbindex.se/*" }
+                { "url": "https://fbindex.se/*" },
+                { "url": "https://query1.finance.yahoo.com/*" },
+                { "url": "https://finance.yahoo.com/*" },
+                { "url": "https://www.alphavantage.co/*" },
+                { "url": "https://finnhub.io/*" },
+                { "url": "https://financialmodelingprep.com/*" },
+                { "url": "https://rapidapi.com/*" }
+            ]
+        },
+        {
+            "identifier": "opener:allow-open-url",
+            "allow": [
+                { "url": "https://www.alphavantage.co/*" },
+                { "url": "https://finnhub.io/*" },
+                { "url": "https://financialmodelingprep.com/*" },
+                { "url": "https://rapidapi.com/*" }
             ]
         },
         "updater:allow-check",

@@ -10,6 +10,61 @@ import {
 let marketDataManager = null;
 
 /**
+ * Test connectivity for a single provider
+ * @param {string} providerKey - The provider key to test
+ * @returns {Promise<Object>} Test result for the specific provider
+ */
+async function testSingleProviderConnectivity(providerKey) {
+    console.log(`🧪 Testing connectivity for single provider: ${providerKey}`);
+    
+    try {
+        const manager = getMarketDataManager();
+        const providers = manager.getProviderInfo();
+        
+        if (!providers[providerKey]) {
+            throw new Error(`Provider '${providerKey}' not found`);
+        }
+        
+        const provider = manager.providers.get(providerKey);
+        if (!provider) {
+            throw new Error(`Provider '${providerKey}' not available`);
+        }
+
+        console.log(`🔍 Testing connectivity for ${provider.name}...`);
+        
+        try {
+            // Try to get a quote directly to capture the actual error
+            await provider.getQuote('AAPL');
+            const result = {
+                success: true,
+                provider: provider.name,
+                rateLimit: provider.getRateLimitInfo()
+            };
+            console.log(`✅ Single provider connectivity test completed for ${provider.name}`);
+            return result;
+        } catch (testError) {
+            // Return the actual API error message
+            const result = {
+                success: false,
+                error: testError.message,
+                provider: provider.name,
+                rateLimit: provider.getRateLimitInfo()
+            };
+            console.log(`❌ Single provider connectivity test failed for ${provider.name}: ${testError.message}`);
+            return result;
+        }
+        
+    } catch (error) {
+        console.error(`❌ Single provider connectivity test failed for ${providerKey}:`, error.message);
+        return {
+            success: false,
+            error: error.message,
+            provider: providerKey
+        };
+    }
+}
+
+/**
  * Initialize the market data manager with configuration
  * @param {Object} config - Configuration object
  */
@@ -403,6 +458,7 @@ export {
     searchStocks,
     getHistoricalData,
     testProviderConnectivity,
+    testSingleProviderConnectivity,
     getProviderUsageStats,
     generateMockOwnership 
 };

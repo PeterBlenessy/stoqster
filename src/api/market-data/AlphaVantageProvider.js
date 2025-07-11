@@ -39,6 +39,11 @@ export class AlphaVantageProvider extends BaseMarketDataProvider {
         const url = `${this.baseUrl}?function=GLOBAL_QUOTE&symbol=${symbol.toUpperCase()}&apikey=${this.apiKey}`
         const data = await this.makeRequest(url)
 
+        console.log('🔍 Alpha Vantage API response:', JSON.stringify(data, null, 2))
+        console.log('🔍 Global Quote content:', JSON.stringify(data['Global Quote'], null, 2))
+        console.log('🔍 API Key being used:', this.apiKey)
+
+        // Check for various error conditions
         if (data['Error Message']) {
             throw new Error(`Alpha Vantage API Error: ${data['Error Message']}`)
         }
@@ -47,9 +52,42 @@ export class AlphaVantageProvider extends BaseMarketDataProvider {
             throw new Error('Alpha Vantage API rate limit exceeded')
         }
 
+        // Check for invalid API key response (premium endpoint message)
+        if (data['Information']) {
+            throw new Error(`Alpha Vantage API Error: ${data['Information']}`)
+        }
+
+        // For invalid API keys, Alpha Vantage still returns data but may have restrictions
+        // Let's check if this looks like a demo/limited response by validating the API key format
+        if (this.apiKey && this.apiKey.length < 16) {
+            // Alpha Vantage API keys are typically 16+ characters
+            throw new Error('Invalid Alpha Vantage API key format - API keys should be 16+ characters')
+        }
+
+        // Additional check: if API key contains only simple characters, it's likely invalid
+        if (this.apiKey && !/^[A-Z0-9]{16,}$/i.test(this.apiKey)) {
+            throw new Error('Invalid Alpha Vantage API key format - should contain only alphanumeric characters')
+        }
+
+        // Check if the response is completely empty or invalid
+        if (!data || Object.keys(data).length === 0) {
+            throw new Error('Empty response from Alpha Vantage API - possibly invalid API key')
+        }
+
         const quote = data['Global Quote']
-        if (!quote) {
-            throw new Error(`No data found for symbol ${symbol}`)
+        if (!quote || Object.keys(quote).length === 0) {
+            // If there's no Global Quote and no error message, it might be an invalid API key
+            throw new Error('Invalid response from Alpha Vantage API - possibly invalid API key or unsupported symbol')
+        }
+
+        // Check if all the quote values are empty or "0.0000" (common for invalid API keys)
+        const price = quote['05. price']
+        const quoteSymbol = quote['01. symbol']
+        
+        console.log('🔍 Quote price:', price, 'Quote symbol:', quoteSymbol)
+        
+        if (!price || price === '0.0000' || !quoteSymbol) {
+            throw new Error('Alpha Vantage API returned empty data - likely invalid API key')
         }
 
         const currentPrice = parseFloat(quote['05. price']) || 0

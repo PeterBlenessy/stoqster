@@ -33,6 +33,59 @@ export class YahooFinanceProvider extends BaseMarketDataProvider {
             throw new Error('Symbol is required')
         }
 
+        return await this.getSingleQuoteData(symbol)
+    }
+
+    /**
+     * Get stock quote data for multiple symbols
+     * @param {Array<string>} symbols - Array of stock symbols
+     * @returns {Promise<Array<Object>>} Array of standardized stock data
+     */
+    async getBatchQuotes(symbols) {
+        if (!symbols || symbols.length === 0) {
+            return []
+        }
+
+        // Yahoo Finance chart endpoint doesn't support comma-separated symbols
+        // We need to make individual requests for each symbol
+        console.log(`🚀 NEW YAHOO BATCH IMPLEMENTATION: Making individual requests for ${symbols.length} symbols`)
+        
+        const results = []
+        const maxConcurrent = 5 // Limit concurrent requests to avoid rate limiting
+        
+        for (let i = 0; i < symbols.length; i += maxConcurrent) {
+            const batch = symbols.slice(i, i + maxConcurrent)
+            const promises = batch.map(symbol => this.getSingleQuoteData(symbol))
+            
+            try {
+                const batchResults = await Promise.allSettled(promises)
+                
+                for (const result of batchResults) {
+                    if (result.status === 'fulfilled' && result.value) {
+                        results.push(result.value)
+                    } else if (result.status === 'rejected') {
+                        console.warn(`⚠️ Failed to fetch data for symbol:`, result.reason?.message)
+                    }
+                }
+            } catch (error) {
+                console.error(`❌ Error in batch ${i}-${i + maxConcurrent}:`, error)
+            }
+            
+            // Add a small delay between batches to respect rate limits
+            if (i + maxConcurrent < symbols.length) {
+                await new Promise(resolve => setTimeout(resolve, 100))
+            }
+        }
+
+        return results
+    }
+
+    /**
+     * Get stock quote data for a single symbol (internal method)
+     * @param {string} symbol - Stock symbol
+     * @returns {Promise<Object>} Standardized stock data
+     */
+    async getSingleQuoteData(symbol) {
         const url = `${this.baseUrl}/${symbol.toUpperCase()}`
         const data = await this.makeRequest(url)
 
@@ -48,7 +101,6 @@ export class YahooFinanceProvider extends BaseMarketDataProvider {
             throw new Error(`Invalid data structure for symbol ${symbol}`)
         }
 
-        // Get the latest values from the arrays
         const latestIndex = quote.close.length - 1
         const currentPrice = quote.close[latestIndex]
         const previousClose = meta.previousClose || quote.close[latestIndex - 1] || currentPrice
@@ -68,64 +120,6 @@ export class YahooFinanceProvider extends BaseMarketDataProvider {
             currency: meta.currency || 'USD',
             lastUpdated: new Date(meta.regularMarketTime * 1000).toISOString()
         })
-    }
-
-    /**
-     * Get stock quote data for multiple symbols
-     * @param {Array<string>} symbols - Array of stock symbols
-     * @returns {Promise<Array<Object>>} Array of standardized stock data
-     */
-    async getBatchQuotes(symbols) {
-        if (!symbols || symbols.length === 0) {
-            return []
-        }
-
-        // Yahoo Finance allows batch requests with comma-separated symbols
-        const symbolString = symbols.map(s => s.toUpperCase()).join(',')
-        const url = `${this.baseUrl}/${symbolString}`
-        
-        const data = await this.makeRequest(url)
-
-        if (!data.chart || !data.chart.result) {
-            throw new Error('No data found for symbols')
-        }
-
-        const results = []
-        for (const result of data.chart.result) {
-            try {
-                const meta = result.meta
-                const quote = result.indicators?.quote?.[0]
-
-                if (!meta || !quote) {
-                    console.warn(`⚠️ Invalid data structure for symbol ${result.meta?.symbol}`)
-                    continue
-                }
-
-                const latestIndex = quote.close.length - 1
-                const currentPrice = quote.close[latestIndex]
-                const previousClose = meta.previousClose || quote.close[latestIndex - 1] || currentPrice
-                const change = currentPrice - previousClose
-                const changePercent = previousClose ? (change / previousClose) * 100 : 0
-
-                results.push(this.transformToStandardFormat({
-                    symbol: meta.symbol,
-                    name: meta.longName || meta.shortName || meta.symbol,
-                    price: currentPrice,
-                    change: change,
-                    changePercent: changePercent,
-                    volume: quote.volume[latestIndex] || 0,
-                    marketCap: meta.marketCap || 0,
-                    sector: meta.sector || '',
-                    country: meta.exchangeTimezoneName?.includes('America') ? 'US' : 'Unknown',
-                    currency: meta.currency || 'USD',
-                    lastUpdated: new Date(meta.regularMarketTime * 1000).toISOString()
-                }))
-            } catch (error) {
-                console.error(`❌ Error processing symbol ${result.meta?.symbol}:`, error.message)
-            }
-        }
-
-        return results
     }
 
     /**
