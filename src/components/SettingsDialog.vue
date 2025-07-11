@@ -1,6 +1,6 @@
 <template>
     <q-dialog v-model="showDialog">
-        <q-card style="min-width: 600px">
+        <q-card style="width: 700px; max-width: 75vw;">
             <q-card-section class="row items-center q-py-md">
                 <div class="text-h6">Inställningar</div>
                 <q-space />
@@ -9,83 +9,52 @@
 
             <q-separator />
 
-            <q-card-section>
-                <q-list dense>
-                    <!-- Appearance Section -->
-                    <q-item>
-                        <q-item-section>
-                            <q-item-label>Mörkt läge</q-item-label>
-                            <q-item-label caption>
-                                Växla mellan ljust och mörkt tema
-                            </q-item-label>
-                        </q-item-section>
-                        <q-item-section side>
-                            <q-toggle v-model="darkMode" color="primary"
-                                :icon="darkMode ? 'mdi-weather-night' : 'mdi-weather-sunny'" />
-                        </q-item-section>
-                    </q-item>
+            <q-card-section class="q-pa-none">
+                <q-splitter v-model="splitterModel" style="min-height: 300px" disable separator-style="width: 1px; background-color: rgba(0,0,0,0.12);">
+                    <template v-slot:before>
+                        <q-list dense class="full-height">
+                            <q-item 
+                                v-for="tab in tabs" 
+                                :key="tab.name" 
+                                clickable
+                                @click="activeTab = tab.name" 
+                                :active="tab.name === activeTab"
+                                active-class="text-primary"
+                            >
+                                <q-item-section avatar>
+                                    <q-icon :name="tab.icon" />
+                                </q-item-section>
+                                <q-item-section>
+                                    {{ tab.label }}
+                                </q-item-section>
+                            </q-item>
+                        </q-list>
+                    </template>
 
-                    <q-separator spaced />
+                    <template v-slot:after>
+                        <q-tab-panels v-model="activeTab" class="q-pa-none full-height">
+                            <!-- General Settings Panel -->
+                            <q-tab-panel name="general" class="q-pa-md">
+                                <ComponentGeneralSettings />
+                            </q-tab-panel>
 
-                    <!-- Application Updates -->
-                    <q-item>
-                        <q-item-section>
-                            <q-item-label>Automatiska uppdateringar</q-item-label>
-                            <q-item-label caption>
-                                Sök automatiskt efter uppdateringar
-                            </q-item-label>
-                        </q-item-section>
-                        <q-item-section side>
-                            <q-toggle v-model="autoCheckEnabled" color="primary" icon="mdi-update" />
-                        </q-item-section>
-                    </q-item>
-
-                    <q-item v-if="autoCheckEnabled">
-                        <q-item-section>
-                            <q-item-label>Kontrollintervall</q-item-label>
-                            <q-item-label caption>
-                                Hur ofta ska appen söka efter uppdateringar
-                            </q-item-label>
-                        </q-item-section>
-                        <q-item-section side style="min-width: 120px">
-                            <q-select v-model="autoCheckIntervalMinutes" :options="intervalOptions" option-value="value"
-                                option-label="label" emit-value map-options dense outlined options-dense/>
-                        </q-item-section>
-                    </q-item>
-
-                    <q-separator spaced />
-
-                    <!-- Data Section -->
-                    <q-item>
-                        <q-item-section>
-                            <q-item-label>Uppdateringsintervall av data</q-item-label>
-                            <q-item-label caption>
-                                Hur ofta ska data uppdateras automatiskt
-                            </q-item-label>
-                        </q-item-section>
-                        <q-item-section side style="min-width: 120px">
-                            <q-select v-model="refreshInterval" :options="refreshIntervalOptions" option-value="value"
-                                option-label="label" emit-value map-options dense outlined options-dense/>
-                        </q-item-section>
-                    </q-item>
-
-                </q-list>
+                            <!-- Market Data API Settings Panel -->
+                            <q-tab-panel name="market-data" class="q-pa-md">
+                                <ComponentMarketDataSettings ref="marketDataSettingsRef" />
+                            </q-tab-panel>
+                        </q-tab-panels>
+                    </template>
+                </q-splitter>
             </q-card-section>
-
-            <q-card-actions align="right">
-                <q-btn flat label="Stäng" color="primary" @click="showDialog = false" />
-            </q-card-actions>
         </q-card>
     </q-dialog>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useSettingsStore } from '../stores/settings-store.js'
-import { useUpdateStore } from '../stores/update-store.js'
-import { useQuasar } from 'quasar'
 import { getVersion } from '@tauri-apps/api/app'
+import ComponentGeneralSettings from './ComponentGeneralSettings.vue'
+import ComponentMarketDataSettings from './ComponentMarketDataSettings.vue'
 
 // Props
 const props = defineProps({
@@ -98,43 +67,21 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['update:modelValue', 'checkForUpdates'])
 
-// Composables
-const settingsStore = useSettingsStore()
-const updateStore = useUpdateStore()
-
 // Reactive refs
-const { darkMode, refreshInterval } = storeToRefs(settingsStore)
-const {
-    autoCheckEnabled,
-    autoCheckIntervalMinutes
-} = storeToRefs(updateStore)
-
 const currentVersion = ref('')
+const activeTab = ref('general')
+const marketDataSettingsRef = ref(null)
+const splitterModel = ref(30)
+
 const showDialog = computed({
     get: () => props.modelValue,
     set: (value) => emit('update:modelValue', value)
 })
 
-// Options for intervals
-const intervalOptions = [
-    { label: '15 minuter', value: 15 },
-    { label: '30 minuter', value: 30 },
-    { label: '1 timme', value: 60 },
-    { label: '2 timmar', value: 120 },
-    { label: '4 timmar', value: 240 },
-    { label: '8 timmar', value: 480 },
-    { label: '24 timmar', value: 1440 }
-]
-
-const refreshIntervalOptions = [
-    { label: '30 sekunder', value: 30 * 1000 },
-    { label: '1 minut', value: 60 * 1000 },
-    { label: '5 minuter', value: 5 * 60 * 1000 },
-    { label: '15 minuter', value: 15 * 60 * 1000 },
-    { label: '30 minuter', value: 30 * 60 * 1000 },
-    { label: '1 timme', value: 60 * 60 * 1000 },
-    { label: '2 timmar', value: 2 * 60 * 60 * 1000 },
-    { label: '4 timmar', value: 4 * 60 * 60 * 1000 }
+// Tab configuration
+const tabs = [
+    { name: 'general', label: 'Allmänt', icon: 'mdi-cog' },
+    { name: 'market-data', label: 'Marknadsdata API', icon: 'mdi-chart-line' }
 ]
 
 // Get current version on mount
@@ -148,10 +95,24 @@ const getCurrentVersion = async () => {
     }
 }
 
-// Watch for dialog opening to get version
+// Watch for dialog opening to initialize
 watch(showDialog, (newValue) => {
     if (newValue) {
         getCurrentVersion()
+        
+        // Initialize market data settings if on that tab or switching to it
+        if (activeTab.value === 'market-data' && marketDataSettingsRef.value) {
+            marketDataSettingsRef.value.initialize()
+        }
+    }
+})
+
+// Watch for tab changes to initialize market data settings when needed
+watch(activeTab, (newTab) => {
+    if (newTab === 'market-data' && showDialog.value && marketDataSettingsRef.value) {
+        marketDataSettingsRef.value.initialize()
     }
 })
 </script>
+
+

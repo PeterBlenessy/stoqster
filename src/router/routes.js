@@ -7,6 +7,7 @@ const routes = [
       { path: 'ibindex', component: () => import('../pages/PageIbindex.vue') },
       { path: 'fbindex', component: () => import('../pages/PageFbindex.vue') },
       { path: 'funds', component: () => import('../pages/PageFunds.vue') },
+      { path: 'stocks', component: () => import('../pages/PageStocks.vue') },
     ]
   },
 

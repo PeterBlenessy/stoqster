@@ -195,6 +195,13 @@ const links = [
         iconUrl: "https://www.fi.se/static/gfx/images/fi-logotyp.svg",
         path: "/funds",
     },
+    {
+        title: "Aktier",
+        caption: "Aktieöversikt",
+        icon: "mdi-chart-line",
+        iconUrl: "",
+        path: "/stocks",
+    },
 ];
 
 import { onMounted, onUnmounted, watch, ref, computed } from "vue";

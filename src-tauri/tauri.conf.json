@@ -102,6 +102,7 @@
             "windows": {
                 "installMode": "passive"
             }
-        }
+        },
+        "opener": {}
     }
 }
