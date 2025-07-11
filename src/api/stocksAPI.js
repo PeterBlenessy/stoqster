@@ -1,229 +1,138 @@
 import { setStyle, formatter, isValidNumber } from "./helpers.js";
+import { 
+    MarketDataManager, 
+    FieldTranslator, 
+    ColumnConfigHelper, 
+    stockFields 
+} from "./market-data/index.js";
 
-// For now, we'll use mock data to establish the structure
-// In a real implementation, this would connect to Yahoo Finance, Alpha Vantage, or similar
-const baseUrl = "https://api.example.com"; // Placeholder
-
-// Return an object for stocks API holding the url and fetch() request options
-const stocksApi = {
-    url: baseUrl + "/stocks",
-    options: {
-        method: "get",
-        responseType: "json",
-    },
-};
+// Initialize market data manager (configuration will come from settings)
+let marketDataManager = null;
 
 /**
- * Mock stock data for development
- * In production, this would be fetched from a real financial API
+ * Initialize the market data manager with configuration
+ * @param {Object} config - Configuration object
  */
-const mockStockData = [
-    {
-        "Symbol": "AAPL",
-        "Namn": "Apple Inc.",
-        "Pris": 175.43,
-        "Förändring": 2.34,
-        "Förändring_procent": 1.35,
-        "Volym": 52840000,
-        "Marknadsvärde": 2750000000000,
-        "ISIN": "US0378331005",
-        "Bransch": "Technology",
-        "Land": "US"
-    },
-    {
-        "Symbol": "MSFT",
-        "Namn": "Microsoft Corporation",
-        "Pris": 378.85,
-        "Förändring": -1.23,
-        "Förändring_procent": -0.32,
-        "Volym": 28350000,
-        "Marknadsvärde": 2820000000000,
-        "ISIN": "US5949181045",
-        "Bransch": "Technology",
-        "Land": "US"
-    },
-    {
-        "Symbol": "GOOGL",
-        "Namn": "Alphabet Inc.",
-        "Pris": 138.21,
-        "Förändring": 0.87,
-        "Förändring_procent": 0.63,
-        "Volym": 31250000,
-        "Marknadsvärde": 1740000000000,
-        "ISIN": "US02079K3059",
-        "Bransch": "Technology",
-        "Land": "US"
-    },
-    {
-        "Symbol": "TSLA",
-        "Namn": "Tesla, Inc.",
-        "Pris": 238.59,
-        "Förändring": 12.45,
-        "Förändring_procent": 5.51,
-        "Volym": 84320000,
-        "Marknadsvärde": 756000000000,
-        "ISIN": "US88160R1014",
-        "Bransch": "Consumer Cyclical",
-        "Land": "US"
-    },
-    {
-        "Symbol": "AMZN",
-        "Namn": "Amazon.com, Inc.",
-        "Pris": 145.86,
-        "Förändring": -2.14,
-        "Förändring_procent": -1.45,
-        "Volym": 42180000,
-        "Marknadsvärde": 1520000000000,
-        "ISIN": "US0231351067",
-        "Bransch": "Consumer Cyclical",
-        "Land": "US"
-    },
-    {
-        "Symbol": "NVDA",
-        "Namn": "NVIDIA Corporation",
-        "Pris": 875.28,
-        "Förändring": 23.45,
-        "Förändring_procent": 2.75,
-        "Volym": 19580000,
-        "Marknadsvärde": 2160000000000,
-        "ISIN": "US67066G1040",
-        "Bransch": "Technology",
-        "Land": "US"
+function initializeMarketData(config = {}) {
+    console.log('🔄 Initializing market data manager...');
+    
+    const defaultConfig = {
+        activeProvider: 'yahoo',
+        fallbackEnabled: true,
+        yahoo: { enabled: true },
+        alphaVantage: { enabled: false, apiKey: null },
+        finnhub: { enabled: false, apiKey: null },
+        financialModelingPrep: { enabled: false, apiKey: null }
+    };
+
+    const mergedConfig = { ...defaultConfig, ...config };
+    marketDataManager = new MarketDataManager(mergedConfig);
+    
+    console.log('✅ Market data manager initialized');
+    return marketDataManager;
+}
+
+/**
+ * Get the market data manager instance
+ * @returns {MarketDataManager} Market data manager
+ */
+function getMarketDataManager() {
+    if (!marketDataManager) {
+        console.log('⚠️ Market data manager not initialized, using default configuration');
+        return initializeMarketData();
     }
+    return marketDataManager;
+}
+
+/**
+ * Default stock symbols to display when no user selection is available
+ */
+const defaultStockSymbols = [
+    'AAPL', 'MSFT', 'GOOGL', 'TSLA', 'AMZN', 'NVDA', 'META', 'NFLX', 'ORCL', 'CRM'
 ];
 
+/**
+ * Stock table configuration using the new field translation system
+ */
 const stocks = {
     title: "Aktier: Marknadsöversikt",
     url: "",
     localForageConfig: {
         storeName: "stocks",
     },
+    // Use English field names internally
     fields: [
-        "Symbol",
-        "Namn",
-        "Pris",
-        "Förändring",
-        "Förändring_procent",
-        "Volym",
-        "Marknadsvärde",
-        "ISIN",
-        "Bransch",
-        "Land"
+        "symbol",
+        "name", 
+        "price",
+        "change",
+        "changePercent",
+        "volume",
+        "marketCap",
+        "sector",
+        "country",
+        "provider"
     ],
     qTableConfig: {
-        columns: [
-            {
-                name: "Symbol",
-                label: "Symbol",
-                field: "Symbol",
-                align: "left",
-                required: true,
-                sortable: true,
-                style: "font-weight: bold; min-width: 80px;",
-            },
-            {
-                name: "Namn",
-                label: "Namn",
-                field: "Namn",
-                align: "left",
-                required: true,
-                sortable: true,
-                style: "white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis;",
-            },
-            {
-                name: "Pris",
-                label: "Pris",
-                field: "Pris",
-                align: "right",
-                required: true,
-                sortable: true,
-                sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: (val) =>
-                    `${isValidNumber(val) ? val.toFixed(2) : ""} $`,
-            },
-            {
-                name: "Förändring",
-                label: "Förändring",
-                field: "Förändring",
-                align: "right",
-                required: true,
-                sortable: true,
-                sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: (val) =>
-                    `${isValidNumber(val) ? (val >= 0 ? '+' : '') + val.toFixed(2) : ""} $`,
-            },
-            {
-                name: "Förändring_procent",
-                label: "Förändring %",
-                field: "Förändring_procent",
-                align: "right",
-                required: true,
-                sortable: true,
-                sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: (val) =>
-                    `${isValidNumber(val) ? (val >= 0 ? '+' : '') + val.toFixed(2) : ""}%`,
-            },
-            {
-                name: "Volym",
-                label: "Volym",
-                field: "Volym",
-                align: "right",
-                required: false,
-                sortable: true,
-                sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: (val) =>
-                    `${isValidNumber(val) ? formatter.format(val) : ""}`,
-            },
-            {
-                name: "Marknadsvärde",
-                label: "Marknadsvärde",
-                field: "Marknadsvärde",
-                align: "right",
-                required: false,
-                sortable: true,
-                sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: (val) => {
-                    if (!isValidNumber(val)) return "";
-                    if (val >= 1e12) return `${(val / 1e12).toFixed(2)}T $`;
-                    if (val >= 1e9) return `${(val / 1e9).toFixed(2)}B $`;
-                    if (val >= 1e6) return `${(val / 1e6).toFixed(2)}M $`;
-                    return formatter.format(val) + " $";
+        // Generate columns using the translation system
+        columns: ColumnConfigHelper.createColumns([
+            "symbol",
+            "name",
+            "price", 
+            "change",
+            "changePercent",
+            "volume",
+            "marketCap",
+            "sector"
+        ], {
+            fieldDefinitions: stockFields,
+            formatters: {
+                symbol: (val) => val || '',
+                name: (val) => val || '',
+                price: (val) => {
+                    if (!isValidNumber(val)) return '';
+                    return `${parseFloat(val).toFixed(2)} $`;
                 },
-            },
-            {
-                name: "Bransch",
-                label: "Bransch",
-                field: "Bransch",
-                align: "left",
-                required: false,
-                sortable: true,
-                style: "white-space: nowrap; max-width: 150px; overflow: hidden; text-overflow: ellipsis;",
-            },
-            {
-                name: "ISIN",
-                label: "ISIN",
-                field: "ISIN",
-                align: "left",
-                required: false,
-                sortable: true,
-            },
-        ],
+                change: (val) => {
+                    if (!isValidNumber(val)) return '';
+                    const num = parseFloat(val);
+                    return `${num >= 0 ? '+' : ''}${num.toFixed(2)} $`;
+                },
+                changePercent: (val) => {
+                    if (!isValidNumber(val)) return '';
+                    const num = parseFloat(val);
+                    return `${num >= 0 ? '+' : ''}${num.toFixed(2)}%`;
+                },
+                volume: (val) => {
+                    if (!isValidNumber(val)) return '';
+                    return formatter.format(parseInt(val));
+                },
+                marketCap: (val) => {
+                    if (!isValidNumber(val)) return '';
+                    const num = parseFloat(val);
+                    if (num >= 1e12) return `${(num / 1e12).toFixed(2)}T $`;
+                    if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B $`;
+                    if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M $`;
+                    return formatter.format(num) + ' $';
+                },
+                sector: (val) => val || ''
+            }
+        }),
         visibleColumns: [
-            "Symbol",
-            "Namn",
-            "Pris",
-            "Förändring",
-            "Förändring_procent",
-            "Volym",
-            "Marknadsvärde",
-            "Bransch",
+            "symbol",
+            "name",
+            "price",
+            "change", 
+            "changePercent",
+            "volume",
+            "marketCap",
+            "sector"
         ],
     },
 };
 
 /**
- * Fund ownership data structure for stocks
- * This shows which funds own each stock and their ownership percentage
+ * Fund ownership data structure using English field names
  */
 const stockOwnership = {
     title: "Fondägande",
@@ -231,92 +140,213 @@ const stockOwnership = {
     localForageConfig: {
         storeName: "stock-ownership",
     },
+    // Use English field names internally
     fields: [
-        "Fond_namn",
-        "Ägarandel_procent",
-        "Marknadsvärde_innehav",
-        "Antal_aktier",
-        "Andel_av_fondförmögenhet",
+        "fundName",
+        "ownershipPercent", 
+        "fundAllocationPercent",
+        "marketValue",
+        "shareCount"
     ],
     qTableConfig: {
-        columns: [
-            {
-                name: "Fond_namn",
-                label: "Fondnamn",
-                field: "Fond_namn",
-                align: "left",
-                required: true,
-                sortable: true,
-                style: "white-space: nowrap; max-width: 250px; overflow: hidden; text-overflow: ellipsis;",
+        // Generate columns using the translation system
+        columns: ColumnConfigHelper.createColumns([
+            "fundName",
+            "ownershipPercent",
+            "fundAllocationPercent", 
+            "marketValue"
+        ], {
+            fieldDefinitions: {
+                fundName: {
+                    en: 'fundName',
+                    sv: 'Fond_namn',
+                    description: 'Name of the fund'
+                },
+                ownershipPercent: {
+                    en: 'ownershipPercent',
+                    sv: 'Ägarandel_procent',
+                    description: 'Percentage of company owned by fund'
+                },
+                fundAllocationPercent: {
+                    en: 'fundAllocationPercent',
+                    sv: 'Andel_av_fondförmögenhet',
+                    description: 'Percentage of fund assets allocated to this stock'
+                },
+                marketValue: {
+                    en: 'marketValue',
+                    sv: 'Marknadsvärde_innehav',
+                    description: 'Market value of holdings'
+                },
+                shareCount: {
+                    en: 'shareCount',
+                    sv: 'Antal_aktier',
+                    description: 'Number of shares held'
+                }
             },
-            {
-                name: "Ägarandel_procent",
-                label: "Ägarandel %",
-                field: "Ägarandel_procent",
-                align: "right",
-                required: true,
-                sortable: true,
-                sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: (val) =>
-                    isValidNumber(val) ? Number.parseFloat(val).toFixed(2) + "%" : "",
-            },
-            {
-                name: "Andel_av_fondförmögenhet",
-                label: "Andel av fond",
-                field: "Andel_av_fondförmögenhet",
-                align: "right",
-                required: true,
-                sortable: true,
-                sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: (val) =>
-                    isValidNumber(val) ? Number.parseFloat(val).toFixed(2) + "%" : "",
-            },
-            {
-                name: "Marknadsvärde_innehav",
-                label: "Marknadsvärde",
-                field: "Marknadsvärde_innehav",
-                align: "right",
-                required: false,
-                sortable: true,
-                sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: (val) =>
-                    isValidNumber(val) ? formatter.format(val) + " SEK" : "",
-            },
-            {
-                name: "Antal_aktier",
-                label: "Antal aktier",
-                field: "Antal_aktier",
-                align: "right",
-                required: false,
-                sortable: true,
-                sort: (a, b) => parseFloat(a) - parseFloat(b),
-                format: (val) =>
-                    isValidNumber(val) ? formatter.format(val) : "",
-            },
-        ],
+            formatters: {
+                fundName: (val) => val || '',
+                ownershipPercent: (val) => {
+                    if (!isValidNumber(val)) return '';
+                    return parseFloat(val).toFixed(2) + '%';
+                },
+                fundAllocationPercent: (val) => {
+                    if (!isValidNumber(val)) return '';
+                    return parseFloat(val).toFixed(2) + '%';
+                },
+                marketValue: (val) => {
+                    if (!isValidNumber(val)) return '';
+                    return formatter.format(parseInt(val)) + ' SEK';
+                },
+                shareCount: (val) => {
+                    if (!isValidNumber(val)) return '';
+                    return formatter.format(parseInt(val));
+                }
+            }
+        }),
         visibleColumns: [
-            "Fond_namn",
-            "Ägarandel_procent",
-            "Andel_av_fondförmögenhet",
-            "Marknadsvärde_innehav",
+            "fundName",
+            "ownershipPercent",
+            "fundAllocationPercent",
+            "marketValue"
         ],
     },
 };
 
 /**
- * Get mock stock data
- * In production, this would fetch from a real API
+ * Fetch stock data using the market data providers
+ * @param {Array<string>} symbols - Optional array of symbols to fetch
+ * @returns {Promise<Array<Object>>} Array of stock data with Swedish field names for UI
  */
-async function fetchStockData() {
-    console.log('🌐 Fetching stock data (mock)');
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockStockData;
+async function fetchStockData(symbols = null) {
+    console.log('🌐 Fetching stock data from market data providers');
+    
+    try {
+        const manager = getMarketDataManager();
+        const symbolsToFetch = symbols || defaultStockSymbols;
+        
+        console.log('🔍 Fetching data for symbols:', symbolsToFetch);
+        
+        // Fetch data from providers (returns English field names)
+        const stockData = await manager.getBatchQuotes(symbolsToFetch);
+        
+        console.log('✅ Received stock data:', stockData.length, 'stocks');
+        
+        // Transform to Swedish field names for UI compatibility
+        const translatedData = FieldTranslator.translateToSwedish(stockData, stockFields);
+        
+        console.log('🔄 Translated stock data for UI display');
+        
+        return translatedData;
+        
+    } catch (error) {
+        console.error('❌ Failed to fetch stock data:', error.message);
+        
+        // Return empty array on error rather than throwing
+        // The UI should handle empty data gracefully
+        return [];
+    }
+}
+
+/**
+ * Search for stocks using market data providers
+ * @param {string} query - Search query
+ * @returns {Promise<Array<Object>>} Array of search results
+ */
+async function searchStocks(query) {
+    console.log('🔍 Searching for stocks:', query);
+    
+    try {
+        const manager = getMarketDataManager();
+        const results = await manager.searchStocks(query);
+        
+        console.log('✅ Found', results.length, 'search results');
+        return results;
+        
+    } catch (error) {
+        console.error('❌ Failed to search stocks:', error.message);
+        return [];
+    }
+}
+
+/**
+ * Get historical data for a stock
+ * @param {string} symbol - Stock symbol
+ * @param {string} period - Time period
+ * @returns {Promise<Array<Object>>} Historical price data
+ */
+async function getHistoricalData(symbol, period = '1y') {
+    console.log('📈 Fetching historical data for:', symbol, period);
+    
+    try {
+        const manager = getMarketDataManager();
+        const data = await manager.getHistoricalData(symbol, period);
+        
+        console.log('✅ Received', data.length, 'historical data points');
+        return data;
+        
+    } catch (error) {
+        console.error('❌ Failed to fetch historical data:', error.message);
+        return [];
+    }
+}
+
+/**
+ * Test connectivity to all configured providers
+ * @returns {Promise<Object>} Test results
+ */
+async function testProviderConnectivity() {
+    console.log('🧪 Testing provider connectivity...');
+    
+    try {
+        const manager = getMarketDataManager();
+        const results = await manager.testAllProviders();
+        
+        console.log('✅ Provider connectivity test completed');
+        return results;
+        
+    } catch (error) {
+        console.error('❌ Provider connectivity test failed:', error.message);
+        return {};
+    }
+}
+
+/**
+ * Get provider usage statistics
+ * @returns {Object} Usage statistics for all providers
+ */
+function getProviderUsageStats() {
+    try {
+        const manager = getMarketDataManager();
+        return manager.getUsageStatistics();
+    } catch (error) {
+        console.error('❌ Failed to get provider usage stats:', error.message);
+        return {};
+    }
+}
+
+/**
+ * Update market data provider configuration
+ * @param {Object} config - New configuration
+ */
+function updateMarketDataConfig(config) {
+    console.log('🔧 Updating market data configuration');
+    
+    try {
+        // Reinitialize with new configuration
+        initializeMarketData(config);
+        console.log('✅ Market data configuration updated');
+    } catch (error) {
+        console.error('❌ Failed to update market data configuration:', error.message);
+        throw error;
+    }
 }
 
 /**
  * Generate mock fund ownership data for a given stock
- * In production, this would cross-reference with actual fund holdings
+ * This is still mock data - in production, this would cross-reference with actual fund holdings
+ * @param {string} stockSymbol - Stock symbol
+ * @param {string} stockISIN - Stock ISIN (optional)
+ * @returns {Array<Object>} Array of fund ownership data with Swedish field names
  */
 function generateMockOwnership(stockSymbol, stockISIN) {
     const mockFunds = [
@@ -333,21 +363,46 @@ function generateMockOwnership(stockSymbol, stockISIN) {
     
     for (let i = 0; i < numOwners; i++) {
         const fundName = mockFunds[Math.floor(Math.random() * mockFunds.length)];
-        if (ownership.find(o => o.Fond_namn === fundName)) continue; // Avoid duplicates
+        if (ownership.find(o => o.fundName === fundName)) continue; // Avoid duplicates
         
         const ownershipPercent = Math.random() * 15; // 0-15% ownership
-        const fondPercent = Math.random() * 8; // 0-8% of fund assets
+        const fundPercent = Math.random() * 8; // 0-8% of fund assets
         
-        ownership.push({
-            Fond_namn: fundName,
-            Ägarandel_procent: ownershipPercent,
-            Andel_av_fondförmögenhet: fondPercent,
-            Marknadsvärde_innehav: Math.floor(Math.random() * 500000000), // Random market value
-            Antal_aktier: Math.floor(Math.random() * 1000000), // Random number of shares
+        // Create data with English field names first
+        const ownershipData = {
+            fundName: fundName,
+            ownershipPercent: ownershipPercent,
+            fundAllocationPercent: fundPercent,
+            marketValue: Math.floor(Math.random() * 500000000), // Random market value
+            shareCount: Math.floor(Math.random() * 1000000), // Random number of shares
+        };
+        
+        // Translate to Swedish field names for UI compatibility
+        const translatedOwnership = FieldTranslator.translateToSwedish(ownershipData, {
+            fundName: { en: 'fundName', sv: 'Fond_namn' },
+            ownershipPercent: { en: 'ownershipPercent', sv: 'Ägarandel_procent' },
+            fundAllocationPercent: { en: 'fundAllocationPercent', sv: 'Andel_av_fondförmögenhet' },
+            marketValue: { en: 'marketValue', sv: 'Marknadsvärde_innehav' },
+            shareCount: { en: 'shareCount', sv: 'Antal_aktier' }
         });
+        
+        ownership.push(translatedOwnership);
     }
     
     return ownership;
 }
 
-export { stocksApi, stocks, stockOwnership, fetchStockData, generateMockOwnership };
+// Export the main functions and configuration objects
+export { 
+    initializeMarketData,
+    getMarketDataManager,
+    updateMarketDataConfig,
+    stocks, 
+    stockOwnership, 
+    fetchStockData, 
+    searchStocks,
+    getHistoricalData,
+    testProviderConnectivity,
+    getProviderUsageStats,
+    generateMockOwnership 
+};
