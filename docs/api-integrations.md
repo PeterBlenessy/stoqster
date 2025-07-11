@@ -1,24 +1,36 @@
 # API Integrations
 
-This document describes the external API integrations used by Stoqster to fetch data about Swedish investment companies, real estate companies, and funds.
+This document describes the external API integrations used by Stoqster to fetch data about Swedish investment companies, real estate companies, funds, and international stock market data.
 
 ## Overview
 
-Stoqster integrates with three main data sources:
+Stoqster integrates with multiple data sources:
 
+### Swedish Market Data
 1. **IBIndex API** (ibindex.se) - Swedish investment companies
 2. **FBIndex API** (fbindex.se) - Swedish real estate investment companies  
 3. **FI API** (fi.se) - Swedish fund data from Finansinspektionen
 
-All APIs use cookie-based authentication and require careful handling of CORS and encoding issues.
+### International Stock Market Data
+4. **Market Data Providers** - Multi-provider stock market data system
+   - Yahoo Finance (free, no API key)
+   - Alpha Vantage (API key required, free tier available)
+   - Finnhub (API key required, free tier available)
+   - Financial Modeling Prep (API key required, free tier available)
+
+All Swedish APIs use cookie-based authentication and require careful handling of CORS and encoding issues. Market data providers use various authentication methods and have different rate limits and capabilities.
 
 ## Individual API Documentation
 
 For detailed information about each API integration, see:
 
+### Swedish Market APIs
 - **[IBIndex API Integration](api-integrations-ibi.md)** - Swedish investment companies data
 - **[FBIndex API Integration](api-integrations-fbi.md)** - Real estate investment companies data  
 - **[FI API Integration](api-integrations-fi.md)** - Swedish fund data from Finansinspektionen
+
+### International Market Data APIs
+- **[Market Data API Architecture](market-data-api-architecture.md)** - Multi-provider stock market data system with detailed provider documentation
 
 ### Purpose
 Provides comprehensive data about Swedish investment companies including holdings, events, and performance metrics.

@@ -46,6 +46,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.7.0 - 2025-07-11
+Added comprehensive stocks page with market data provider integration.
+
+### Added
+- Stocks page with market data from multiple providers (Alpha Vantage, Yahoo Finance, Finnhub, Financial Modeling Prep)
+- Fund ownership tracking showing which funds own each stock
+- Provider configuration UI with connection testing
+- Settings dialog refactored into modular components
+- External documentation links support
+
+### Changed
+- Switched to Tauri HTTP client for all API calls (eliminates CORS issues)
+- Enhanced settings dialog UX with vertical tabs and improved layout
+- Improved error handling with detailed API error reporting
+
+### Fixed
+- Yahoo Finance batch quote fetching (replaced broken endpoint)
+- External documentation links now open correctly in Tauri
+- Provider connection testing and API key validation
+- Configuration persistence and loading
+
 ## v1.6.6 - 2025-06-28
 Fix: Application does not restart as expected after update installation.
 - Added `process:allow-restart` to `src-tauri/capabilities/default.json`.

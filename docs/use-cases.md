@@ -32,6 +32,36 @@ Fund managers report their holdings to Finansinspektionen, Sweden's financial su
 - [ ] Display all instruments in one big list
 - [x] Make fund holdings table filterable.
 
+## Display stock market data from multiple providers
+
+### Stocks Page with Market Data Integration
+Stoqster includes a comprehensive stocks page that fetches real-time market data from multiple providers with fallback capabilities.
+
+- [x] **Multi-provider market data**: Support for Alpha Vantage, Yahoo Finance, Finnhub, and Financial Modeling Prep
+- [x] **Stock listings table**: Searchable table with symbol, name, price, change, volume, market cap, and sector
+- [x] **Color-coded price changes**: Green for positive, red for negative price movements
+- [x] **Fund ownership tracking**: Expandable rows showing which funds own each stock with ownership percentages
+- [x] **Provider configuration**: Settings UI for API key management and provider selection
+- [x] **Connection testing**: Test provider connectivity with status indicators
+- [x] **Column customization**: Selectable visible columns with persistent preferences
+- [x] **Real-time updates**: Refresh capability to fetch updated stock information
+- [x] **CORS-free operation**: Uses Tauri HTTP client for reliable API access
+- [x] **External documentation**: Direct links to provider setup and API documentation
+
+### Market Data Provider Features
+- **Yahoo Finance**: Free tier, no API key required, good for basic stock quotes
+- **Alpha Vantage**: Professional-grade data, free tier with rate limits, comprehensive features
+- **Finnhub**: Real-time data, free tier available, good coverage of global markets
+- **Financial Modeling Prep**: Financial statements and ratios, free tier with limitations
+
+### Provider Management
+- [x] **Dynamic configuration**: Easy switching between providers based on availability
+- [x] **Rate limiting**: Automatic rate limit handling for each provider
+- [x] **Error handling**: Graceful fallback to alternative providers
+- [x] **Batch operations**: Efficient handling of multiple stock requests
+- [x] **API key validation**: Format checking and connectivity testing
+- [x] **Status monitoring**: Real-time status indicators for each provider
+
 ## Update System
 
 The app includes a robust automatic update system built with Tauri's updater plugin.

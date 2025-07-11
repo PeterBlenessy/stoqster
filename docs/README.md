@@ -11,5 +11,6 @@ This directory contains the technical documentation for the Stoqster project.
   - [IBIndex API Integration](api-integrations-ibi.md) - Swedish investment companies data
   - [FBIndex API Integration](api-integrations-fbi.md) - Real estate investment companies data
   - [FI API Integration](api-integrations-fi.md) - Swedish fund data from Finansinspektionen
+  - [Market Data API Architecture](market-data-api-architecture.md) - Multi-provider stock market data system
 - [Roadmap](roadmap.md) - Project roadmap and planned features
 - [Feature Planning](feature-planning.md) - Development planning and task organization

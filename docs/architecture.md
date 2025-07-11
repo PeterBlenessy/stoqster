@@ -65,6 +65,15 @@ The application follows a layered architecture with clear separation of concerns
 - **fbindexAPI.js**: Swedish real estate investment companies (fbindex.se)
 - **ibindexAPI.mjs**: Swedish investment companies (ibindex.se)
 - **fiAPI.js**: Swedish fund data (Finansinspektionen)
+- **stocksAPI.js**: Stock market data integration and management
+- **market-data/**: Market data provider architecture
+  - **BaseMarketDataProvider.js**: Abstract base class for all providers
+  - **YahooFinanceProvider.js**: Yahoo Finance API integration (free)
+  - **AlphaVantageProvider.js**: Alpha Vantage API integration (API key required)
+  - **FinnhubProvider.js**: Finnhub API integration (API key required)
+  - **FinancialModelingPrepProvider.js**: Financial Modeling Prep API (API key required)
+  - **MarketDataManager.js**: Provider orchestration and fallback management
+  - **FieldTranslator.js**: English to Swedish field translation
 - **helpers.js**: Common API utilities
 
 ## Data Flow
@@ -106,6 +115,15 @@ Data Fetch → Composable → LocalForage (cached data)
 - **Data**: Quarterly fund holdings
 - **Format**: ZIP archives containing XML files
 - **Processing**: Unzip → XML parsing → JSON conversion
+
+### Market Data APIs (Multi-provider)
+- **Purpose**: Real-time stock market data from multiple providers
+- **Providers**: Yahoo Finance, Alpha Vantage, Finnhub, Financial Modeling Prep
+- **Architecture**: Modular provider system with fallback capabilities
+- **Features**: Rate limiting, error handling, data standardization
+- **Configuration**: Provider-specific API key management
+- **Format**: Standardized JSON format across all providers
+- **Documentation**: See [Market Data API Architecture](market-data-api-architecture.md)
 
 ## State Management Strategy
 
@@ -187,11 +205,32 @@ import { useStore } from 'src/stores/store'
 ```
 src/
 ├── api/                    # External API integrations
+│   ├── market-data/        # Market data provider architecture
+│   │   ├── BaseMarketDataProvider.js
+│   │   ├── YahooFinanceProvider.js
+│   │   ├── AlphaVantageProvider.js
+│   │   ├── FinnhubProvider.js
+│   │   ├── FinancialModelingPrepProvider.js
+│   │   ├── MarketDataManager.js
+│   │   ├── FieldTranslator.js
+│   │   └── index.js
+│   ├── fbindexAPI.js       # FBIndex API integration
+│   ├── ibindexAPI.mjs      # IBIndex API integration
+│   ├── fiAPI.js           # FI API integration
+│   ├── stocksAPI.js       # Stock market data integration
+│   └── helpers.js         # Common API utilities
 ├── components/             # Reusable UI components
+│   ├── ComponentGeneralSettings.vue    # General app settings
+│   ├── ComponentMarketDataSettings.vue # Market data provider settings
+│   ├── ComponentStocks.vue             # Stock listings table
+│   ├── ComponentStockOwnership.vue     # Fund ownership details
+│   └── ...                            # Other components
 ├── composables/           # Business logic and utilities
 ├── i18n/                  # Internationalization
 ├── layouts/               # Application layouts
 ├── pages/                 # Route-level components
+│   ├── PageStocks.vue     # Stocks page
+│   └── ...               # Other pages
 ├── router/                # Vue Router configuration
 ├── stores/                # Pinia state management
 ├── App.vue                # Root component
