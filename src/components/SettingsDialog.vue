@@ -85,158 +85,192 @@
                     <q-tab-panel name="market-data">
                         <div class="text-subtitle2 q-mb-md">API-leverantör för marknadsdata</div>
                         
-                        <!-- Active Provider Selection -->
-                        <q-item>
-                            <q-item-section>
-                                <q-item-label>Aktiv API-leverantör</q-item-label>
-                                <q-item-label caption>
-                                    Välj vilken API-leverantör som ska användas för marknadsdata
-                                </q-item-label>
-                            </q-item-section>
-                            <q-item-section side style="min-width: 180px">
-                                <q-select v-model="activeProvider" :options="providerOptions" option-value="value"
-                                    option-label="label" emit-value map-options dense outlined options-dense
-                                    @update:model-value="onProviderChange" />
-                            </q-item-section>
-                        </q-item>
-
-                        <q-separator spaced />
-
-                        <!-- Provider Configuration -->
-                        <div v-for="(provider, key) in providers" :key="key" class="q-mb-md">
-                            <q-expansion-item
-                                :model-value="key === activeProvider"
-                                :icon="getProviderIcon(key)"
-                                :label="provider.name"
-                                :caption="provider.description"
-                                header-class="text-weight-medium"
+                        <!-- Provider Selection with Icons and Status -->
+                        <div class="q-mb-md">
+                            <q-select 
+                                v-model="activeProvider" 
+                                :options="enhancedProviderOptions" 
+                                option-value="value"
+                                option-label="label" 
+                                emit-value 
+                                map-options 
+                                outlined 
+                                label="Välj API-leverantör"
+                                @update:model-value="onProviderChange"
+                                class="full-width"
                             >
-                                <q-card class="q-ma-none" flat>
-                                    <q-card-section>
-                                        <!-- Provider Status -->
-                                        <div class="row items-center q-mb-md">
+                                <template v-slot:option="scope">
+                                    <q-item v-bind="scope.itemProps">
+                                        <q-item-section avatar>
+                                            <q-icon :name="scope.opt.icon" />
+                                        </q-item-section>
+                                        <q-item-section>
+                                            <q-item-label>{{ scope.opt.label }}</q-item-label>
+                                            <q-item-label caption class="text-grey-6">{{ scope.opt.description }}</q-item-label>
+                                        </q-item-section>
+                                        <q-item-section side>
                                             <q-icon 
-                                                :name="provider.configured ? 'mdi-check-circle' : 'mdi-alert-circle'"
-                                                :color="provider.configured ? 'positive' : 'warning'"
+                                                :name="getProviderStatusIcon(scope.opt.value)"
+                                                :color="getProviderStatusColor(scope.opt.value)"
                                                 size="sm"
-                                                class="q-mr-sm"
                                             />
-                                            <span :class="provider.configured ? 'text-positive' : 'text-warning'">
-                                                {{ provider.configured ? 'Konfigurerad' : 'Kräver konfiguration' }}
-                                            </span>
-                                            <q-space />
-                                            <q-toggle 
-                                                v-model="provider.enabled" 
+                                        </q-item-section>
+                                    </q-item>
+                                </template>
+                                
+                                <template v-slot:selected-item="scope">
+                                    <div class="row items-center">
+                                        <q-icon :name="scope.opt.icon" class="q-mr-sm" />
+                                        <span>{{ scope.opt.label }}</span>
+                                    </div>
+                                </template>
+                            </q-select>
+                        </div>
+
+                        <!-- Selected Provider Information Card -->
+                        <q-card v-if="selectedProvider" flat bordered class="q-mb-md">
+                            <q-card-section>
+                                <div class="row items-center q-mb-md">
+                                    <q-icon :name="getProviderIcon(activeProvider)" size="md" class="q-mr-md" />
+                                    <div>
+                                        <div class="text-h6">{{ selectedProvider.name }}</div>
+                                        <div class="text-body2 text-grey-6">{{ selectedProvider.description }}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Rate Limit Information -->
+                                <div class="text-body2 q-mb-md">
+                                    <div class="text-weight-medium q-mb-xs">Begränsningar:</div>
+                                    <div class="row q-gutter-md">
+                                        <div v-if="selectedProvider.rateLimitInfo?.requestsPerMinute">
+                                            <q-chip outline color="primary" size="sm">
+                                                {{ selectedProvider.rateLimitInfo.requestsPerMinute }} förfrågningar/min
+                                            </q-chip>
+                                        </div>
+                                        <div v-if="selectedProvider.rateLimitInfo?.requestsPerDay">
+                                            <q-chip outline color="primary" size="sm">
+                                                {{ selectedProvider.rateLimitInfo.requestsPerDay }} förfrågningar/dag
+                                            </q-chip>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Configuration Section -->
+                                <div class="q-mt-md">
+                                    <!-- API Key Configuration -->
+                                    <div v-if="selectedProvider.requiresApiKey">
+                                        <!-- Not Configured State -->
+                                        <div v-if="!selectedProvider.configured && !showConfigureForm">
+                                            <q-btn 
                                                 color="primary" 
-                                                @update:model-value="updateProviderConfig(key)"
-                                                :disable="!provider.configured"
+                                                icon="mdi-cog" 
+                                                label="Konfigurera" 
+                                                @click="startConfiguration"
+                                                unelevated
                                             />
                                         </div>
 
-                                        <!-- API Key Input (if required) -->
-                                        <div v-if="provider.requiresApiKey" class="q-mb-md">
+                                        <!-- Configured State -->
+                                        <div v-else-if="selectedProvider.configured && !showConfigureForm">
+                                            <div class="row q-gutter-sm">
+                                                <q-btn 
+                                                    color="primary" 
+                                                    icon="mdi-pencil" 
+                                                    label="Redigera" 
+                                                    @click="startConfiguration"
+                                                    outline
+                                                />
+                                                <q-btn 
+                                                    color="positive" 
+                                                    :icon="getConnectionTestIcon(activeProvider)"
+                                                    label="Testa anslutning" 
+                                                    @click="testProviderConnection(activeProvider)"
+                                                    :loading="testing[activeProvider]"
+                                                    unelevated
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <!-- Configuration Form -->
+                                        <div v-if="showConfigureForm">
                                             <q-input
-                                                v-model="provider.apiKey"
+                                                v-model="configFormApiKey"
                                                 label="API-nyckel"
-                                                :placeholder="`Ange din ${provider.name} API-nyckel`"
+                                                :placeholder="`Ange din ${selectedProvider.name} API-nyckel`"
                                                 outlined
-                                                dense
-                                                :type="showApiKeys[key] ? 'text' : 'password'"
-                                                @update:model-value="updateProviderConfig(key)"
+                                                :type="showConfigFormApiKey ? 'text' : 'password'"
+                                                class="q-mb-md"
                                             >
                                                 <template v-slot:append>
                                                     <q-btn
                                                         flat
                                                         round
                                                         dense
-                                                        :icon="showApiKeys[key] ? 'mdi-eye-off' : 'mdi-eye'"
-                                                        @click="toggleApiKeyVisibility(key)"
+                                                        :icon="showConfigFormApiKey ? 'mdi-eye-off' : 'mdi-eye'"
+                                                        @click="toggleConfigFormApiKeyVisibility"
                                                     />
                                                 </template>
                                             </q-input>
-                                        </div>
-
-                                        <!-- Provider Information -->
-                                        <div class="text-body2 q-mb-sm">
-                                            <div class="text-weight-medium q-mb-xs">Funktioner:</div>
-                                            <ul class="q-pl-md q-mb-md">
-                                                <li v-for="feature in provider.features" :key="feature">{{ feature }}</li>
-                                            </ul>
-                                        </div>
-
-                                        <!-- Rate Limits -->
-                                        <div class="text-body2 q-mb-sm">
-                                            <div class="text-weight-medium q-mb-xs">Begränsningar:</div>
-                                            <div class="q-pl-md">
-                                                <div>Förfrågningar per minut: {{ provider.rateLimitInfo?.requestsPerMinute || 'Okänt' }}</div>
-                                                <div>Förfrågningar per dag: {{ provider.rateLimitInfo?.requestsPerDay || 'Okänt' }}</div>
-                                                <div v-if="provider.rateLimitInfo?.currentUsage !== undefined">
-                                                    Använt idag: {{ provider.rateLimitInfo.currentUsage }}
-                                                </div>
+                                            
+                                            <div class="row q-gutter-sm">
+                                                <q-btn 
+                                                    color="primary" 
+                                                    icon="mdi-content-save" 
+                                                    label="Spara" 
+                                                    @click="saveConfiguration"
+                                                    unelevated
+                                                />
+                                                <q-btn 
+                                                    color="grey-7" 
+                                                    icon="mdi-close" 
+                                                    label="Avbryt" 
+                                                    @click="cancelConfiguration"
+                                                    flat
+                                                />
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <!-- Documentation Link -->
-                                        <div class="text-body2">
-                                            <q-btn
-                                                flat
-                                                dense
-                                                icon="mdi-book-open-variant"
-                                                :label="`${provider.name} dokumentation`"
-                                                color="primary"
-                                                size="sm"
-                                                @click="openExternalLink(provider.documentation)"
-                                                v-if="provider.documentation"
-                                            />
-                                            <q-btn
-                                                flat
-                                                dense
-                                                icon="mdi-account-plus"
-                                                label="Skaffa API-nyckel"
-                                                color="positive"
-                                                size="sm"
-                                                @click="openExternalLink(provider.signupUrl)"
-                                                v-if="provider.signupUrl && provider.requiresApiKey"
-                                                class="q-ml-sm"
-                                            />
-                                        </div>
-
-                                        <!-- Test Connection Button -->
-                                        <div class="q-mt-md">
-                                            <q-btn
-                                                flat
-                                                dense
-                                                icon="mdi-connection"
-                                                label="Testa anslutning"
-                                                color="primary"
-                                                size="sm"
-                                                @click="testProviderConnection(key)"
-                                                :loading="testing[key]"
-                                                :disable="!provider.configured || !provider.enabled"
-                                            />
-                                        </div>
-                                    </q-card-section>
-                                </q-card>
-                            </q-expansion-item>
-                        </div>
-
-                        <q-separator spaced />
-
-                        <!-- Provider Test Results -->
-                        <div v-if="Object.keys(testResults).length > 0" class="q-mt-md">
-                            <div class="text-subtitle2 q-mb-sm">Anslutningstester</div>
-                            <div v-for="(result, key) in testResults" :key="key" class="q-mb-sm">
-                                <div class="row items-center">
-                                    <q-icon 
-                                        :name="result.success ? 'mdi-check-circle' : 'mdi-alert-circle'"
-                                        :color="result.success ? 'positive' : 'negative'"
-                                        size="sm"
-                                        class="q-mr-sm"
-                                    />
-                                    <span>{{ result.provider }}: {{ result.success ? 'Lyckades' : result.error }}</span>
+                                    <!-- No API Key Required (e.g., Yahoo) -->
+                                    <div v-else>
+                                        <q-btn 
+                                            color="positive" 
+                                            :icon="getConnectionTestIcon(activeProvider)"
+                                            label="Testa anslutning" 
+                                            @click="testProviderConnection(activeProvider)"
+                                            :loading="testing[activeProvider]"
+                                            unelevated
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+
+                                <!-- Documentation and Signup Links -->
+                                <div v-if="selectedProvider.documentation || selectedProvider.signupUrl" class="q-mt-md q-pt-md border-top">
+                                    <div class="row q-gutter-sm">
+                                        <q-btn
+                                            flat
+                                            dense
+                                            icon="mdi-book-open-variant"
+                                            :label="'Dokumentation'"
+                                            color="primary"
+                                            size="sm"
+                                            @click="openExternalLink(selectedProvider.documentation)"
+                                            v-if="selectedProvider.documentation"
+                                        />
+                                        <q-btn
+                                            flat
+                                            dense
+                                            icon="mdi-account-plus"
+                                            label="Skaffa API-nyckel"
+                                            color="positive"
+                                            size="sm"
+                                            @click="openExternalLink(selectedProvider.signupUrl)"
+                                            v-if="selectedProvider.signupUrl && selectedProvider.requiresApiKey"
+                                        />
+                                    </div>
+                                </div>
+                            </q-card-section>
+                        </q-card>
                     </q-tab-panel>
                 </q-tab-panels>
             </q-card-section>
@@ -294,13 +328,46 @@ const testing = ref({})
 const testResults = ref({})
 const showApiKeys = ref({})
 
-// Provider options for selection
-const providerOptions = [
-    { label: 'Yahoo Finance (Gratis)', value: 'yahoo' },
-    { label: 'Alpha Vantage', value: 'alphavantage' },
-    { label: 'Finnhub', value: 'finnhub' },
-    { label: 'Financial Modeling Prep', value: 'fmp' }
+// Configuration form state
+const showConfigureForm = ref(false)
+const configFormApiKey = ref('')
+const showConfigFormApiKey = ref(false)
+
+// Provider options for selection with enhanced structure
+const enhancedProviderOptions = [
+    { 
+        label: 'Yahoo Finance', 
+        value: 'yahoo',
+        icon: 'mdi-yahoo',
+        description: 'Gratis marknadsdata utan API-nyckel'
+    },
+    { 
+        label: 'Alpha Vantage', 
+        value: 'alphavantage',
+        icon: 'mdi-alpha-a-circle',
+        description: 'Premiumdata med API-nyckel'
+    },
+    { 
+        label: 'Finnhub', 
+        value: 'finnhub',
+        icon: 'mdi-fish',
+        description: 'Finansiell data med API-nyckel'
+    },
+    { 
+        label: 'Financial Modeling Prep', 
+        value: 'fmp',
+        icon: 'mdi-chart-bell-curve',
+        description: 'Omfattande finansdata med API-nyckel'
+    }
 ]
+
+// Simple provider options for backward compatibility
+const providerOptions = enhancedProviderOptions.map(p => ({ label: p.label, value: p.value }))
+
+// Computed property for selected provider
+const selectedProvider = computed(() => {
+    return providers.value[activeProvider.value] || null
+})
 
 // Options for intervals
 const intervalOptions = [
@@ -411,11 +478,115 @@ const getProviderIcon = (key) => {
     return icons[key] || 'mdi-api'
 }
 
+// Get provider status icon
+const getProviderStatusIcon = (providerKey) => {
+    const provider = providers.value[providerKey]
+    if (!provider) return 'mdi-circle-outline'
+    
+    if (!provider.configured) return 'mdi-alert-circle'
+    
+    // Check connection status from test results
+    const testResult = testResults.value[providerKey]
+    if (testResult) {
+        return testResult.success ? 'mdi-check-circle' : 'mdi-close-circle'
+    }
+    
+    return 'mdi-check-circle' // Default to configured if no test results
+}
+
+// Get provider status color
+const getProviderStatusColor = (providerKey) => {
+    const provider = providers.value[providerKey]
+    if (!provider) return 'grey'
+    
+    if (!provider.configured) return 'warning'
+    
+    // Check connection status from test results
+    const testResult = testResults.value[providerKey]
+    if (testResult) {
+        return testResult.success ? 'positive' : 'negative'
+    }
+    
+    return 'positive' // Default to positive if no test results
+}
+
+// Get connection test icon
+const getConnectionTestIcon = (providerKey) => {
+    const testResult = testResults.value[providerKey]
+    if (testResult) {
+        return testResult.success ? 'mdi-check-circle' : 'mdi-alert-circle'
+    }
+    return 'mdi-connection'
+}
+
+// Configuration form methods
+const startConfiguration = () => {
+    showConfigureForm.value = true
+    configFormApiKey.value = selectedProvider.value?.apiKey || ''
+    showConfigFormApiKey.value = false
+}
+
+const cancelConfiguration = () => {
+    showConfigureForm.value = false
+    configFormApiKey.value = ''
+    showConfigFormApiKey.value = false
+}
+
+const saveConfiguration = () => {
+    if (selectedProvider.value) {
+        // Update the provider's API key
+        selectedProvider.value.apiKey = configFormApiKey.value
+        selectedProvider.value.configured = selectedProvider.value.requiresApiKey ? !!configFormApiKey.value : true
+        
+        // Update configuration
+        updateProviderConfig(activeProvider.value)
+        
+        // Close form
+        showConfigureForm.value = false
+        configFormApiKey.value = ''
+        showConfigFormApiKey.value = false
+        
+        $q.notify({
+            type: 'positive',
+            message: 'Konfiguration sparad',
+            timeout: 2000
+        })
+    }
+}
+
+const toggleConfigFormApiKeyVisibility = () => {
+    showConfigFormApiKey.value = !showConfigFormApiKey.value
+}
+
 // Handle provider change
 const onProviderChange = (newProvider) => {
     console.log('🔄 Changing active provider to:', newProvider)
     activeProvider.value = newProvider
+    
+    // Close configuration form if open
+    showConfigureForm.value = false
+    configFormApiKey.value = ''
+    
     updateMarketDataConfiguration()
+    
+    // Test all providers in background to update status indicators
+    performBackgroundTests()
+}
+
+// Perform background connectivity tests for all configured providers
+const performBackgroundTests = async () => {
+    console.log('🔍 Performing background connectivity tests...')
+    
+    try {
+        for (const [key, provider] of Object.entries(providers.value)) {
+            if (provider.configured) {
+                // Don't show loading state for background tests
+                setTimeout(() => testProviderConnection(key, true), 100 * Object.keys(providers.value).indexOf(key))
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error performing background tests:', error)
+    }
 }
 
 // Update provider configuration
@@ -478,8 +649,10 @@ const toggleApiKeyVisibility = (providerKey) => {
 }
 
 // Test provider connection
-const testProviderConnection = async (providerKey) => {
-    testing.value[providerKey] = true
+const testProviderConnection = async (providerKey, isBackground = false) => {
+    if (!isBackground) {
+        testing.value[providerKey] = true
+    }
     
     try {
         console.log('🧪 Testing connection for provider:', providerKey)
@@ -488,7 +661,7 @@ const testProviderConnection = async (providerKey) => {
         testResults.value = results
         
         const result = results[providerKey]
-        if (result) {
+        if (result && !isBackground) {
             $q.notify({
                 type: result.success ? 'positive' : 'negative',
                 message: `${result.provider}: ${result.success ? 'Anslutning lyckades' : result.error}`,
@@ -497,13 +670,17 @@ const testProviderConnection = async (providerKey) => {
         }
     } catch (error) {
         console.error('❌ Error testing provider connection:', error)
-        $q.notify({
-            type: 'negative',
-            message: 'Fel vid test av anslutning',
-            timeout: 3000
-        })
+        if (!isBackground) {
+            $q.notify({
+                type: 'negative',
+                message: 'Fel vid test av anslutning',
+                timeout: 3000
+            })
+        }
     } finally {
-        testing.value[providerKey] = false
+        if (!isBackground) {
+            testing.value[providerKey] = false
+        }
     }
 }
 
@@ -519,6 +696,11 @@ watch(showDialog, (newValue) => {
     if (newValue) {
         getCurrentVersion()
         initializeProviders()
+        
+        // Perform background tests after a short delay to allow UI to render
+        setTimeout(() => {
+            performBackgroundTests()
+        }, 500)
     }
 })
 
@@ -529,3 +711,13 @@ onMounted(() => {
     }
 })
 </script>
+
+<style scoped>
+.border-top {
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.full-width {
+    width: 100%;
+}
+</style>
