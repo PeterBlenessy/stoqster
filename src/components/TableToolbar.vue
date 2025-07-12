@@ -1,5 +1,9 @@
 <template>
     <div class="row items-center q-gutter-sm">
+        
+        <!-- Additional actions slot (for quarter selector) - moved to left -->
+        <slot name="actions"></slot>
+        
         <!-- Filter input -->
         <q-input
             dense
@@ -30,9 +34,6 @@
                 {{ refreshTooltip }}
             </q-tooltip>
         </q-btn>
-
-        <!-- Additional actions slot -->
-        <slot name="actions"></slot>
     </div>
 </template>
 
