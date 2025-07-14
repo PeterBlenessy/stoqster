@@ -17,7 +17,6 @@
                     v-model:filter="filter"
                     :loading="loading"
                     :refresh-color="refreshColor"
-                    placeholder="Filter"
                     @refresh="refreshData"
                 />
             </template>

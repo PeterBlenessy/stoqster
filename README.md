@@ -54,6 +54,15 @@ Stoqster aggregates data from official Swedish financial sources:
 
 All data is sourced from publicly available APIs and maintained with proper attribution.
 
+### Data Storage Architecture
+
+Stoqster uses a dual storage strategy for optimal performance:
+
+- **localStorage**: UI state, selections, preferences (immediate, race-condition-free)
+- **IndexedDB**: Large datasets, fund records, holdings (async, efficient for bulk data)
+
+This approach eliminates timing issues while maintaining excellent performance for both small state and large datasets.
+
 ## 🚦 Quick Start
 
 ### Prerequisites

@@ -23,9 +23,71 @@ Stoqster is a Tauri-based desktop application that provides information about Sw
 - **Process Management**: Tauri process plugin
 
 ### Data Storage
-- **Client Storage**: LocalForage (IndexedDB/WebSQL/localStorage)
-- **Settings Storage**: localStorage
+- **Large Data Storage**: LocalForage (IndexedDB/WebSQL/localStorage)
+- **UI State Storage**: localStorage (immediate, synchronous persistence)
 - **Cache Management**: Timestamp-based invalidation
+
+## Storage Architecture Pattern
+
+Stoqster uses a dual storage strategy to optimize performance and eliminate race conditions:
+
+### **localStorage for UI State** (Immediate, Synchronous)
+- **Selected quarters/dates**: `fi-selectedQuarters`, `ibi-selectedDates`
+- **Component state**: Table filters, sorting, column preferences
+- **Quarter/import states**: Import progress, error states, UI indicators
+- **User preferences**: Settings, watchlists, alerts
+- **Session state**: Current selections, form data, temporary state
+
+**Benefits:**
+- Synchronous operations - no race conditions
+- Immediate persistence - state saved instantly
+- Simple debugging - easily inspected in DevTools
+- No async complexity for small data
+- Browser-native storage with excellent performance
+
+### **IndexedDB for Large Data** (Async, Query-able)
+- **Fund records**: Arrays of fund data by quarter/date
+- **Holdings data**: Detailed fund holdings information
+- **Historical datasets**: Time-series data and bulk imports
+- **Cache data**: API responses and processed datasets
+
+**Benefits:**
+- Handles large datasets efficiently
+- Advanced querying capabilities
+- Better performance for bulk operations
+- Structured data with relationships
+
+### **Storage Key Conventions**
+```javascript
+// localStorage keys (UI state)
+'fi-selectedQuarters'        // Current quarter selection
+'fi-quarterStates'          // Import/download states
+'ibi-selectedCompanies'     // Selected companies
+'settings-watchlists'       // User watchlists
+'ui-tablePreferences'       // Table state preferences
+
+// IndexedDB keys (large data)
+'funds-2025Q1'             // Fund data for Q1 2025
+'holdings-2025Q1'          // Holdings for Q1 2025
+'companies-2024-12-31'     // Company data snapshot
+'historical-cache-*'       // Cached API responses
+```
+
+### **Implementation Pattern**
+```javascript
+// ✅ Use localStorage for immediate UI state
+const selectedQuarters = ref(getLocalStorage('fi-selectedQuarters', []))
+
+// Automatic persistence with watchers
+watch(selectedQuarters, () => {
+  setLocalStorage('fi-selectedQuarters', selectedQuarters.value)
+}, { deep: true })
+
+// ✅ Use IndexedDB for large datasets
+const saveFundsData = async (quarter, fundsArray) => {
+  await fundsStore.setItem(`funds-${quarter}`, fundsArray)
+}
+```
 
 ## Architecture Pattern
 
@@ -56,7 +118,8 @@ The application follows a layered architecture with clear separation of concerns
 
 ### Business Logic (Composables)
 - **useApiRequest**: Centralized API request handling with authentication
-- **useLocalStorage**: LocalForage store management
+- **useLocalStorage**: LocalForage store management (large data)
+- **useLocalStorageState**: localStorage utilities (UI state)
 - **useDataLoader**: Data fetching and caching logic
 - **useTableState**: Table state management (sorting, filtering, columns)
 - **useUpdater**: Application update logic
@@ -82,10 +145,25 @@ The application follows a layered architecture with clear separation of concerns
 ```
 Component → Store → Composable → API Service → External API
                               ↓
-                         LocalForage Cache
+                         IndexedDB Cache (large data)
 ```
 
-### 2. Update Flow
+### 2. UI State Flow
+```
+User Action → Component → Store → localStorage (immediate)
+                                ↓
+                           Reactive Update
+```
+
+### 3. Data Persistence Flow
+```
+UI State → localStorage (immediate)
+Large Data → IndexedDB (async)
+Settings → localStorage (preferences)
+Cache → IndexedDB (API responses)
+```
+
+### 4. Update Flow
 ```
 Startup/Timer → useUpdater → Tauri Updater → Notification → User Action
 ```
@@ -123,7 +201,7 @@ Data Fetch → Composable → LocalForage (cached data)
 - **Features**: Rate limiting, error handling, data standardization
 - **Configuration**: Provider-specific API key management
 - **Format**: Standardized JSON format across all providers
-- **Documentation**: See [Market Data API Architecture](market-data-api-architecture.md)
+- **Documentation**: See [Market Data API Architecture](api-integrations/market-data-api-architecture.md)
 
 ## State Management Strategy
 

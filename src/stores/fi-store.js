@@ -3,11 +3,15 @@ import { defineStore } from 'pinia'
 import localforage from 'localforage'
 import { 
   parseZipFileName, 
-  generateImportId, 
-  isValidSourceDate,
   formatQuarterForDisplay,
   compareQuarters 
 } from '../api/fiHistoricalUtils.js'
+import {
+  getLocalStorage,
+  setLocalStorage,
+  removeLocalStorage,
+  FI_STORAGE_KEYS
+} from '../composables/useLocalStorageState.js'
 
 export const useFIStore = defineStore('fi', () => {
   console.log('🔄 Initializing FI store')
@@ -15,17 +19,47 @@ export const useFIStore = defineStore('fi', () => {
   // Guards to prevent recursive operations
   const isInitializing = ref(false)
   const isLoadingData = ref(false)
+  const isUpdatingState = ref(false) // New guard for state updates
 
   // Core data state
   const funds = ref([])
   const holdings = ref([])
   const lastUpdated = ref(null)
   
-  // Historical tracking state
-  const imports = ref([])
-  const selectedQuarters = ref([]) // Changed to support multiple quarters
+  // Sanitize import data to fix undefined strings from JSON serialization
+  const sanitizeImportData = (imports) => {
+    if (!Array.isArray(imports)) return []
+    
+    return imports.map(imp => ({
+      ...imp,
+      // Convert string "undefined" back to actual undefined/null
+      sourceUrl: imp.sourceUrl === 'undefined' ? null : imp.sourceUrl,
+      fileName: imp.fileName === 'undefined' ? null : imp.fileName,
+      sourceDate: imp.sourceDate === 'undefined' ? null : imp.sourceDate,
+      importedAt: imp.importedAt === 'undefined' ? null : imp.importedAt
+    }))
+  }
+
+  // Historical tracking state - Initialize from localStorage with sanitization
+  const imports = ref(sanitizeImportData(getLocalStorage(FI_STORAGE_KEYS.IMPORT_METADATA, [])))
+  
+  // SELECTION state - ONLY for controlling which quarters to display/view
+  // This is COMPLETELY INDEPENDENT of import operation state
+  // A quarter can be selected regardless of whether it's importing, imported, or available
+  const selectedQuarters = ref(getLocalStorage(FI_STORAGE_KEYS.SELECTED_QUARTERS, []))
+  
   const isLoadingHistorical = ref(false)
   const error = ref(null)
+  
+  // IMPORT OPERATION state - ONLY for tracking import progress and operations
+  // This is COMPLETELY INDEPENDENT of which quarters are selected for viewing
+  // A quarter can be importing whether it's selected for viewing or not
+  // Using reactive object instead of Map for better Vue reactivity tracking
+  const quarterStatesData = getLocalStorage(FI_STORAGE_KEYS.QUARTER_STATES, {})
+  const quarterStates = ref(quarterStatesData) // Use object instead of Map for better reactivity
+
+  // Persistence flag to prevent watcher from triggering during initial load
+  const isLoadingFromStorage = ref(false)
 
   // LocalForage instances - organized by quarters
   const fundsStore = localforage.createInstance({
@@ -48,12 +82,98 @@ export const useFIStore = defineStore('fi', () => {
     storeName: 'fi-common'
   })
 
+  // Helper function to persist import metadata to localStorage
+  const persistImportMetadata = () => {
+    if (isLoadingFromStorage.value) {
+      console.log('⚠️ Skipping imports persistence during storage load')
+      return
+    }
+    
+    try {
+      setLocalStorage(FI_STORAGE_KEYS.IMPORT_METADATA, imports.value)
+      console.log(`✅ Import metadata persisted to localStorage (${imports.value.length} records)`)
+    } catch (error) {
+      console.error('❌ Failed to persist import metadata:', error)
+    }
+  }
+
+  // Helper function to persist quarter states to localStorage
+  const persistQuarterStates = () => {
+    if (isLoadingFromStorage.value) {
+      console.log('⚠️ Skipping quarter states persistence during storage load')
+      return
+    }
+    
+    try {
+      // quarterStates is now an object, so we can persist it directly
+      setLocalStorage(FI_STORAGE_KEYS.QUARTER_STATES, quarterStates.value)
+      console.log(`✅ Quarter states persisted to localStorage (${Object.keys(quarterStates.value).length} states)`)
+    } catch (error) {
+      console.error('❌ Failed to persist quarter states:', error)
+    }
+  }
+
+  // Helper function to persist selected quarters to localStorage
+  const persistSelectedQuarters = () => {
+    if (isLoadingFromStorage.value) {
+      console.log('⚠️ Skipping selected quarters persistence during storage load')
+      return
+    }
+    
+    try {
+      setLocalStorage(FI_STORAGE_KEYS.SELECTED_QUARTERS, selectedQuarters.value)
+      console.log(`✅ Selected quarters persisted to localStorage (${selectedQuarters.value.length} quarters)`)
+    } catch (error) {
+      console.error('❌ Failed to persist selected quarters:', error)
+    }
+  }
+
   // Computed properties
   const availableQuarters = computed(() => {
+    console.log('🔍 Computing availableQuarters, imports:', imports.value.length)
+    
+    // Force reactivity tracking of quarterStates object by accessing its keys
+    // This ensures Vue knows to recompute when the object changes
+    const quarterStatesKeys = Object.keys(quarterStates.value)
+    console.log('🔍 QuarterStates keys for reactivity:', quarterStatesKeys.length)
+    
     const result = imports.value
       .map(imp => {
         // Use the stored quarter directly - no calculation needed
         const quarter = imp.quarter
+        
+        // Get import operation state (independent of selection)
+        // Force reactive access to the object property
+        const importState = quarterStates.value[quarter] || {}
+        
+        // Determine data availability state (has data or not)
+        const hasActualData = imp.recordCount > 0 && imp.importedAt !== null
+        let dataState = hasActualData ? 'imported' : 'available'
+        
+        // Import operation state takes precedence for active operations
+        // But doesn't override data state when operation is complete
+        let finalState
+        if (importState.state && ['downloading', 'extracting', 'importing', 'error'].includes(importState.state)) {
+          // Active import operation or error state
+          finalState = importState.state
+        } else {
+          // Use data state (imported/available)
+          finalState = dataState
+          
+          // Safeguard: If data exists but state shows as non-imported, fix the state
+          if (hasActualData && finalState !== 'imported') {
+            console.log(`🔧 Correcting state for ${quarter}: data exists but state is ${finalState}, setting to imported`)
+            finalState = 'imported'
+            // Clear any stale import operation state - update object property
+            quarterStates.value[quarter] = {
+              state: 'imported',
+              progress: null,
+              error: null
+            }
+          }
+        }
+        
+        console.log(`📊 Quarter ${quarter}: recordCount=${imp.recordCount}, importedAt=${imp.importedAt}, importState=${importState.state}, dataState=${dataState}, finalState=${finalState}`)
         
         return {
           quarter: quarter,
@@ -61,13 +181,44 @@ export const useFIStore = defineStore('fi', () => {
           recordCount: imp.recordCount || 0,
           holdingsCount: imp.holdingsCount || 0,
           importedAt: imp.importedAt,
-          publishedDate: imp.sourceDate // Keep the publication date for reference
+          publishedDate: imp.sourceDate, // Keep the publication date for reference
+          sourceDate: imp.sourceDate, // Also as sourceDate for consistency
+          url: imp.sourceUrl, // ZIP file URL for downloading
+          fileName: imp.fileName, // ZIP filename
+          // Final state for UI display (combines data and import operation state)
+          state: finalState,
+          // Import operation details (for progress indicators)
+          progress: importState.progress || null,
+          error: importState.error || null,
+          // Separate flags for complete clarity and independence
+          isSelected: selectedQuarters.value.includes(quarter), // VIEWING state - independent of import
+          hasData: hasActualData, // DATA availability state
+          isImporting: ['downloading', 'extracting', 'importing'].includes(importState.state), // IMPORT operation state
+          importState: importState.state || 'available' // Explicit import operation state
         }
       })
       .filter(item => item.quarter && item.quarter !== 'UNKNOWN' && item.quarter !== 'legacy') // Filter out items without valid quarters
       .sort((a, b) => compareQuarters(a.quarter, b.quarter)) // This already sorts newest first
     
-    console.log('🔍 Available quarters computed:', result.map(r => `${r.quarter} (${r.label}) - ${r.recordCount} fonder`))
+    // Check for duplicates
+    const quarterCounts = {}
+    result.forEach(item => {
+      quarterCounts[item.quarter] = (quarterCounts[item.quarter] || 0) + 1
+    })
+    
+    const duplicates = Object.entries(quarterCounts).filter(([quarter, count]) => count > 1)
+    if (duplicates.length > 0) {
+      console.log('⚠️ Found duplicate quarters:', duplicates)
+      duplicates.forEach(([quarter, count]) => {
+        console.log(`  - ${quarter}: ${count} entries`)
+        const duplicateItems = result.filter(item => item.quarter === quarter)
+        duplicateItems.forEach((item, index) => {
+          console.log(`    ${index + 1}. recordCount=${item.recordCount}, state=${item.state}, importedAt=${item.importedAt}`)
+        })
+      })
+    }
+    
+    console.log('🔍 Available quarters computed:', result.map(r => `${r.quarter} (${r.label}) - ${r.recordCount} fonder [${r.state}]`))
     return result
   })
 
@@ -128,25 +279,31 @@ export const useFIStore = defineStore('fi', () => {
       isInitializing.value = true
       console.log('🔄 Initializing FI store data')
       
-      // Load imports list
+      // Load imports list and selected quarters
       await loadImports()
       
-      // Only auto-select if we have no current selection
-      if (availableQuarters.value.length > 0 && selectedQuarters.value.length === 0) {
-        // Auto-select the latest quarter if nothing is selected
-        const latestImport = availableQuarters.value[0]
-        selectedQuarters.value = [latestImport.quarter]
-        console.log('🎯 Auto-selected latest quarter:', latestImport.quarter)
-      }
-      
-      // Load data for current selection if we have one
-      if (selectedQuarters.value.length > 0) {
-        await loadDataForQuarters()
-      } else if (availableQuarters.value.length === 0) {
+      // Check if we have available quarters to work with
+      if (availableQuarters.value.length === 0) {
         // Fallback to legacy data loading only if no historical data
         console.log('🔄 No historical data found, loading legacy data')
         await loadLegacyData()
+        return
       }
+      
+      // Only auto-select if we have no persisted selection
+      if (selectedQuarters.value.length === 0) {
+        console.log('📋 No persisted quarters found, auto-selecting latest quarter')
+        // Auto-select the latest quarter if nothing is persisted
+        const latestImport = availableQuarters.value[0]
+        selectedQuarters.value = [latestImport.quarter]
+        persistSelectedQuarters() // Persist the auto-selection
+        console.log('🎯 Auto-selected latest quarter:', latestImport.quarter)
+      } else {
+        console.log('✅ Using persisted quarters:', selectedQuarters.value)
+      }
+      
+      // Load data for current selection
+      await loadDataForQuarters()
       
       console.log('✅ FI store initialized')
     } catch (err) {
@@ -158,40 +315,24 @@ export const useFIStore = defineStore('fi', () => {
   }
 
   /**
-   * Load available imports from storage
+   * Load available imports - now just validates localStorage state
    */
   const loadImports = async () => {
     try {
-      const importsList = []
+      console.log('🔄 Validating imports from localStorage')
+      isLoadingFromStorage.value = true // Prevent persistence during initialization
       
-      await importsStore.iterate((value) => {
-        if (value && value.quarter) {
-          console.log('🔍 Found import:', {
-            quarter: value.quarter,
-            sourceDate: value.sourceDate,
-            recordCount: value.recordCount
-          })
-          importsList.push(value)
-        }
-      })
-      
-      imports.value = importsList.sort((a, b) => 
-        compareQuarters(a.quarter, b.quarter)
-      )
-      
-      console.log('✅ Loaded imports:', imports.value.length)
+      // Imports are already loaded from localStorage in state initialization
+      console.log('📋 Imports loaded from localStorage:', imports.value.length)
       console.log('📋 Import quarters:', imports.value.map(imp => imp.quarter))
       
-      // Debug: Show imports without quarters
-      const importsWithoutQuarters = imports.value.filter(imp => !imp.quarter)
-      if (importsWithoutQuarters.length > 0) {
-        console.log('⚠️ Imports missing quarter:', importsWithoutQuarters.length)
-        importsWithoutQuarters.forEach(imp => {
-          console.log(`  - ${imp.sourceDate} (${imp.fileName || 'no filename'})`)
-        })
-      }
+      // Selected quarters are already loaded from localStorage too
+      console.log('📋 Selected quarters loaded from localStorage:', selectedQuarters.value)
+      
+      isLoadingFromStorage.value = false // Re-enable persistence
     } catch (err) {
-      console.error('❌ Failed to load imports:', err)
+      console.error('❌ Failed to validate imports:', err)
+      isLoadingFromStorage.value = false // Re-enable persistence even on error
       throw err
     }
   }
@@ -385,7 +526,7 @@ export const useFIStore = defineStore('fi', () => {
       
       // Create import record with quarter as primary identifier
       const importRecord = {
-        quarter: quarter, // Primary identifier
+        quarter: quarter, // Primary identifier  
         sourceDate: sourceDate, // Publication date (metadata)
         sourceUrl: zipUrl,
         fileName: zipFileName,
@@ -394,15 +535,16 @@ export const useFIStore = defineStore('fi', () => {
         holdingsCount: enrichedHoldings.length
       }
       
-      // Save import record using quarter as key
+      // Save import record using importId as key for consistency
       console.log('💾 Saving data to stores:', {
         fundsKey,
         holdingsKey,
         fundsCount: enrichedFunds.length,
-        holdingsCount: enrichedHoldings.length
+        holdingsCount: enrichedHoldings.length,
+        quarter: quarter
       })
       
-      await importsStore.setItem(quarter, importRecord)
+      // Don't save to importsStore here - watcher will handle persistence
       
       // Verify data was saved
       const savedFunds = await fundsStore.getItem(fundsKey)
@@ -413,13 +555,20 @@ export const useFIStore = defineStore('fi', () => {
         savedHoldingsCount: savedHoldings?.length || 0
       })
       
-      // Update imports list
+      // Update quarter state to imported BEFORE updating imports
+      quarterStates.value[quarter] = {
+        state: 'imported',
+        progress: null,
+        error: null
+      }
+      
+      // Update imports list (watcher will persist to localStorage)
       const updatedImports = imports.value.filter(
         imp => imp.quarter !== quarter
       )
       updatedImports.push(importRecord)
       imports.value = updatedImports.sort((a, b) => 
-        compareQuarters(b.quarter, a.quarter) // Sort by quarter, newest first
+        compareQuarters(a.quarter, b.quarter) // Sort by quarter, newest first (compareQuarters already does this)
       )
       
       // Update current data if no quarters are selected
@@ -433,7 +582,8 @@ export const useFIStore = defineStore('fi', () => {
         quarter: quarter,
         sourceDate: sourceDate,
         funds: enrichedFunds.length,
-        holdings: enrichedHoldings.length
+        holdings: enrichedHoldings.length,
+        stateUpdated: true
       })
       
       return importRecord
@@ -508,49 +658,6 @@ export const useFIStore = defineStore('fi', () => {
   }
 
   /**
-   * Clean up incorrectly stored data (with source dates in keys)
-   */
-  const cleanupIncorrectData = async () => {
-    try {
-      console.log('🧹 Cleaning up incorrectly stored data with source dates in keys')
-      let cleanedCount = 0
-      
-      // Clean up funds with source dates in keys
-      const fundsToDelete = []
-      await fundsStore.iterate((value, key) => {
-        // If key contains a date pattern (YYYY-MM-DD), it's incorrectly stored
-        if (key.includes('-20')) {
-          fundsToDelete.push(key)
-        }
-      })
-      
-      for (const key of fundsToDelete) {
-        await fundsStore.removeItem(key)
-        cleanedCount++
-      }
-      
-      // Clean up holdings with source dates in keys
-      const holdingsToDelete = []
-      await holdingsStore.iterate((value, key) => {
-        // If key contains a date pattern (YYYY-MM-DD), it's incorrectly stored
-        if (key.includes('-20')) {
-          holdingsToDelete.push(key)
-        }
-      })
-      
-      for (const key of holdingsToDelete) {
-        await holdingsStore.removeItem(key)
-        cleanedCount++
-      }
-      
-      console.log('✅ Cleanup complete:', cleanedCount, 'incorrect records removed')
-      
-    } catch (err) {
-      console.error('❌ Failed to cleanup incorrect data:', err)
-    }
-  }
-
-  /**
    * Load data for specific source date (kept for backwards compatibility)
    */
   const loadDataForSourceDate = async (sourceDate) => {
@@ -589,7 +696,8 @@ export const useFIStore = defineStore('fi', () => {
   }
 
   /**
-   * Set selected quarters and load their data
+   * Set selected quarters for data viewing (independent of import operations)
+   * This only controls which quarters are displayed - has no effect on import operations
    */
   const setSelectedQuarters = async (quarters) => {
     // Prevent recursive quarter updates
@@ -598,7 +706,7 @@ export const useFIStore = defineStore('fi', () => {
       return
     }
     
-    console.log('🔄 Setting selected quarters:', quarters)
+    console.log('🔄 Setting selected quarters for VIEWING:', quarters)
     const newQuarters = quarters || []
     
     // Only update if there's actually a change
@@ -612,10 +720,12 @@ export const useFIStore = defineStore('fi', () => {
     
     selectedQuarters.value = newQuarters
     
-    // Reload data for the new selection
+    // Watcher will handle persistence automatically
+    
+    // Reload data for the new selection (only affects data display)
     await loadDataForQuarters(newQuarters)
     
-    console.log('✅ Selected quarters updated:', {
+    console.log('✅ Selected quarters updated and persisted (VIEWING only):', {
       quarters: selectedQuarters.value,
       fundsLoaded: funds.value.length,
       holdingsLoaded: holdings.value.length
@@ -649,6 +759,378 @@ export const useFIStore = defineStore('fi', () => {
     }
   }
 
+  /**
+   * Set quarter import operation state (completely independent of selection state)
+   * This ONLY tracks import progress - has NO effect on quarter selection
+   * A quarter can be selected AND importing simultaneously
+   */
+  const setQuarterState = (quarter, state, progress = null, error = null) => {
+    // Prevent recursive state updates
+    if (isUpdatingState.value) {
+      console.log(`⚠️ Preventing recursive state update for ${quarter}`)
+      return
+    }
+    
+    try {
+      isUpdatingState.value = true
+      
+      console.log(`🔄 [Store] Setting quarter ${quarter} state to: ${state} (was: ${quarterStates.value[quarter]?.state || 'undefined'})`)
+      
+      quarterStates.value[quarter] = {
+        state, // 'available', 'downloading', 'extracting', 'importing', 'imported', 'error'
+        progress,
+        error,
+        updatedAt: new Date().toISOString()
+      }
+      
+      console.log(`✅ [Store] Quarter ${quarter} IMPORT operation state updated: ${state}${progress ? ` (${progress.current}/${progress.total})` : ''} [Selection state unchanged]`)
+      console.log(`🔍 [Store] Current quarterStates object keys:`, Object.keys(quarterStates.value))
+      
+      // The watcher will automatically persist to localStorage
+    } finally {
+      isUpdatingState.value = false
+    }
+  }
+
+  /**
+   * Get quarter import operation state (completely independent of selection state)
+   * Returns the import/operation state only - not related to whether quarter is selected
+   */
+  const getQuarterState = (quarter) => {
+    return quarterStates.value[quarter] || { state: 'available' }
+  }
+
+  /**
+   * Scrape FI website for quarter metadata only (no downloads)
+   */
+  const refreshQuarterMetadata = async () => {
+    console.time('fiRefreshQuarterMetadata')
+    console.log('🔄 Refreshing quarter metadata from FI website')
+    
+    try {
+      // Import fetch here to use in store context
+      const { fetch } = await import('@tauri-apps/plugin-http')
+      const { extractFileNameFromUrl, parseZipFileName } = await import('../api/fiHistoricalUtils.js')
+      
+      // Scrape FI webpage for ZIP files
+      const response = await fetch('https://www.fi.se/sv/vara-register/fondinnehav-per-kvartal/')
+      if (!response.ok) {
+        throw new Error(`Failed to fetch FI page: ${response.status}`)
+      }
+
+      const text = await response.text()
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(text, 'text/html')
+      const table = doc.getElementsByTagName('tbody')[0]
+      const aList = table.querySelectorAll('tr td:first-child a')
+
+      // Process all ZIP file links
+      const foundQuarters = []
+      for (const a of aList) {
+        try {
+          const url = 'https://www.fi.se' + a.pathname + a.search
+          const fileName = extractFileNameFromUrl(url)
+          const zipMetadata = parseZipFileName(fileName)
+          
+          foundQuarters.push({
+            quarter: zipMetadata.quarter,
+            sourceDate: zipMetadata.sourceDate,
+            url: url,
+            fileName: fileName,
+            recordCount: 0, // Will be updated after import
+            holdingsCount: 0,
+            importedAt: null // Not imported yet
+          })
+        } catch (error) {
+          console.warn('⚠️ Could not parse ZIP filename:', a.pathname, error)
+        }
+      }
+
+      console.log(`🌐 Found ${foundQuarters.length} quarters on FI website`)
+
+      // Update imports with new metadata (preserve existing import records)
+      let updatedCount = 0
+      let newCount = 0
+      
+      for (const quarterInfo of foundQuarters) {
+        const existingImport = imports.value.find(imp => imp.quarter === quarterInfo.quarter)
+        
+        if (existingImport) {
+          // Update existing import with latest URL/filename if needed
+          if (existingImport.sourceUrl !== quarterInfo.url || existingImport.fileName !== quarterInfo.fileName) {
+            // Ensure we have a valid importId (for legacy records that might not have one)
+            const importId = existingImport.importId || `import-${quarterInfo.quarter}-${quarterInfo.sourceDate}`
+            
+            const updatedImport = {
+              ...existingImport,
+              importId: importId, // Ensure importId is set
+              sourceUrl: quarterInfo.url,
+              fileName: quarterInfo.fileName,
+              updatedAt: new Date().toISOString()
+            }
+            
+            // Update specific import record efficiently
+            const importIndex = imports.value.findIndex(imp => imp.quarter === quarterInfo.quarter)
+            if (importIndex !== -1) {
+              imports.value[importIndex] = updatedImport
+              // Watcher will persist this change
+            }
+            updatedCount++
+            console.log(`🔄 Updated metadata for ${quarterInfo.quarter}`)
+          }
+        } else {
+          // Add new quarter to imports
+          const quarter = quarterInfo.quarter
+          const newImport = {
+            quarter: quarter,
+            sourceDate: quarterInfo.sourceDate,
+            sourceUrl: quarterInfo.url,
+            fileName: quarterInfo.fileName,
+            recordCount: 0, // Not imported yet
+            holdingsCount: 0,
+            importedAt: null, // Not imported yet
+            createdAt: new Date().toISOString()
+          }
+          
+          // Add to reactive store (watcher will persist)
+          imports.value.push(newImport)
+          imports.value.sort((a, b) => compareQuarters(a.quarter, b.quarter))
+          newCount++
+          console.log(`✅ Added new quarter metadata: ${quarterInfo.quarter}`)
+        }
+      }
+
+      // No need to reload imports - watcher will persist changes to IndexedDB
+
+      console.timeEnd('fiRefreshQuarterMetadata')
+      console.log(`✅ Quarter metadata refresh completed: ${newCount} new, ${updatedCount} updated`)
+      
+      return {
+        newQuarters: newCount,
+        updatedQuarters: updatedCount,
+        totalQuarters: foundQuarters.length
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to refresh quarter metadata:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Delete quarter data (preserve metadata and maintain complete independence from selection)
+   * This only removes the actual data - has NO effect on selection or viewing state
+   * A quarter can remain selected for viewing even after its data is deleted
+   */
+  const deleteQuarterData = async (quarter) => {
+    try {
+      console.log(`🗑️ Deleting data for quarter: ${quarter} (selection state completely independent)`)
+      
+      // Remove from IndexedDB
+      await fundsStore.removeItem(`funds-${quarter}`)
+      await holdingsStore.removeItem(`holdings-${quarter}`)
+      
+      // Update import operation state to available (data no longer exists)
+      quarterStates.value[quarter] = {
+        state: 'available',
+        progress: null,
+        error: null
+      }
+      console.log(`🔄 Quarter ${quarter} import state reset to 'available' (selection state unchanged)`)
+      
+      // Update import record in reactive store (don't reload from IndexedDB)
+      const importIndex = imports.value.findIndex(imp => imp.quarter === quarter)
+      if (importIndex !== -1) {
+        const importRecord = imports.value[importIndex]
+        const updatedRecord = {
+          ...importRecord, // Preserve all existing metadata including sourceUrl and fileName
+          recordCount: 0, // Reset to 0 to indicate no data
+          holdingsCount: 0, // Reset to 0 to indicate no data
+          importedAt: null, // Clear importedAt to indicate not imported
+          deletedAt: new Date().toISOString()
+        }
+        
+        // Update the reactive store immediately (watcher will persist)
+        imports.value[importIndex] = updatedRecord
+        
+        console.log(`📝 Reset import record for ${quarter}:`, {
+          recordCount: updatedRecord.recordCount,
+          importedAt: updatedRecord.importedAt,
+          sourceUrl: updatedRecord.sourceUrl, // Log sourceUrl to verify it's preserved
+          fileName: updatedRecord.fileName
+        })
+      }
+      
+      // IMPORTANT: We DON'T automatically remove from selectedQuarters
+      // The user can keep viewing the quarter (it will just show no data)
+      // This maintains complete independence between viewing and data state
+      console.log(`🎯 Quarter ${quarter} remains in selection if selected (showing empty data)`)
+      
+      // Reload data for current selection (will show empty data for deleted quarter if selected)
+      if (selectedQuarters.value.length > 0) {
+        await loadDataForQuarters()
+        console.log(`📊 Reloaded data for selected quarters (${quarter} will show empty if selected)`)
+      } else {
+        // Clear funds and holdings if no quarters selected
+        funds.value = []
+        holdings.value = []
+      }
+      
+      console.log(`✅ Quarter ${quarter} data deleted (selection state completely preserved and independent)`)
+      
+    } catch (error) {
+      console.error(`❌ Failed to delete quarter ${quarter}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Helper function to check if a quarter is selected for viewing
+   * This is completely independent of import state
+   */
+  const isQuarterSelected = (quarter) => {
+    return selectedQuarters.value.includes(quarter)
+  }
+
+  /**
+   * Helper function to check if a quarter is currently being imported
+   * This is completely independent of selection state
+   */
+  const isQuarterImporting = (quarter) => {
+    const state = quarterStates.value[quarter]
+    return state && ['downloading', 'extracting', 'importing'].includes(state.state)
+  }
+
+  /**
+   * Helper function to check if a quarter has imported data
+   * This is based on actual data availability, not operation state
+   */
+  const hasQuarterData = (quarter) => {
+    const importRecord = imports.value.find(imp => imp.quarter === quarter)
+    return importRecord && importRecord.recordCount > 0 && importRecord.importedAt !== null
+  }
+
+  /**
+   * Helper function to get complete quarter status for debugging
+   * Shows all three independent states clearly
+   */
+  const getQuarterStatus = (quarter) => {
+    return {
+      quarter,
+      // Viewing state (independent)
+      isSelected: isQuarterSelected(quarter),
+      // Data state (independent) 
+      hasData: hasQuarterData(quarter),
+      // Import operation state (independent)
+      isImporting: isQuarterImporting(quarter),
+      importState: getQuarterState(quarter),
+      // Summary for debugging
+      canImport: !hasQuarterData(quarter) && !isQuarterImporting(quarter),
+      canDelete: hasQuarterData(quarter) && !isQuarterImporting(quarter),
+      canSelect: true // Can always select for viewing regardless of other states
+    }
+  }
+
+  /**
+   * Debug function to inspect storage state
+   */
+  const debugStorageState = async () => {
+    try {
+      console.log('🔍 === STORAGE DEBUG STATE ===')
+      
+      // Check selected quarters in storage
+      const storedQuarters = await commonStore.getItem('selectedQuarters')
+      console.log('📋 Stored selected quarters:', storedQuarters)
+      
+      // Check current in-memory state
+      console.log('💭 In-memory selected quarters:', selectedQuarters.value)
+      
+      // Check available imports
+      console.log('📦 Available imports:', imports.value.map(imp => ({
+        quarter: imp.quarter,
+        recordCount: imp.recordCount,
+        state: imp.state,
+        importedAt: imp.importedAt
+      })))
+      
+      // Check quarter states
+      console.log('🎯 Quarter states:')
+      Object.entries(quarterStates.value).forEach(([quarter, state]) => {
+        console.log(`  ${quarter}:`, state)
+      })
+      
+      console.log('🔍 === END STORAGE DEBUG ===')
+      
+      return {
+        storedQuarters,
+        inMemoryQuarters: selectedQuarters.value,
+        imports: imports.value,
+        quarterStatesEntries: Object.entries(quarterStates.value)
+      }
+    } catch (error) {
+      console.error('❌ Debug storage state failed:', error)
+      return { error: error.message }
+    }
+  }
+
+  /**
+   * Debug function to inspect localStorage state (call from browser console)
+   */
+  const debugLocalStorageState = () => {
+    try {
+      console.log('🔍 === LOCALSTORAGE DEBUG STATE ===')
+      
+      // Check all FI-related localStorage keys
+      const keys = Object.values(FI_STORAGE_KEYS)
+      for (const key of keys) {
+        const value = getLocalStorage(key, null)
+        console.log(`📋 ${key}:`, value)
+      }
+      
+      // Check current in-memory state
+      console.log('💭 In-memory state:')
+      console.log('  - imports:', imports.value.length, 'records')
+      console.log('  - selectedQuarters:', selectedQuarters.value)
+      console.log('  - quarterStates:', Object.entries(quarterStates.value))
+      
+      console.log('🔍 === END LOCALSTORAGE DEBUG ===')
+      
+      return {
+        localStorage: keys.reduce((acc, key) => {
+          acc[key] = getLocalStorage(key, null)
+          return acc
+        }, {}),
+        inMemory: {
+          imports: imports.value,
+          selectedQuarters: selectedQuarters.value,
+          quarterStates: Object.entries(quarterStates.value)
+        }
+      }
+    } catch (error) {
+      console.error('❌ Debug localStorage state failed:', error)
+      return { error: error.message }
+    }
+  }
+
+  // Watchers for automatic localStorage persistence
+  watch(imports, () => {
+    if (!isLoadingFromStorage.value && !isUpdatingState.value) {
+      persistImportMetadata()
+    }
+  }, { deep: true })
+
+  watch(selectedQuarters, () => {
+    if (!isLoadingFromStorage.value && !isUpdatingState.value) {
+      persistSelectedQuarters()
+    }
+  }, { deep: true })
+
+  watch(quarterStates, () => {
+    if (!isLoadingFromStorage.value && !isUpdatingState.value) {
+      persistQuarterStates()
+    }
+  }, { deep: true })
+
   return {
     // State
     funds,
@@ -658,6 +1140,7 @@ export const useFIStore = defineStore('fi', () => {
     selectedQuarters,
     isLoadingHistorical,
     error,
+    quarterStates,
     
     // Computed
     availableQuarters,
@@ -670,6 +1153,7 @@ export const useFIStore = defineStore('fi', () => {
     // Actions
     initialize,
     loadImports,
+    persistSelectedQuarters,
     loadDataForQuarters,
     loadDataForSourceDate,
     setSelectedQuarters,
@@ -680,8 +1164,23 @@ export const useFIStore = defineStore('fi', () => {
     getImportBySourceDate,
     
     // Data management
-    cleanupIncorrectData,
     clearAllData,
+    
+    // UX improvements - Phase 1
+    setQuarterState,
+    getQuarterState,
+    refreshQuarterMetadata,
+    deleteQuarterData,
+    
+    // State independence helpers
+    isQuarterSelected,
+    isQuarterImporting,
+    hasQuarterData,
+    getQuarterStatus,
+    
+    // Debug functions
+    debugStorageState,
+    debugLocalStorageState,
     
     // Store instances (for debugging)
     fundsStore,

@@ -6,14 +6,14 @@
         
         <!-- Filter input -->
         <q-input
-            dense
+            dense outlined
             debounce="300"
             v-model="filterModel"
-            :placeholder="placeholder"
+            :label="placeholder"
             style="width: 500px"
         >
-            <template v-slot:append>
-                <q-icon name="mdi-filter-variant" />
+            <template v-slot:prepend>
+                <q-icon name="mdi-magnify" />
             </template>
         </q-input>
 
