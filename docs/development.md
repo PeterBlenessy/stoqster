@@ -587,3 +587,97 @@ export GH_TOKEN=your_github_token
 - Show meaningful error messages in Swedish
 - Implement proper keyboard navigation
 - Follow accessibility guidelines
+
+## Data Storage Guidelines
+
+### **Storage Strategy: localStorage vs IndexedDB**
+
+Stoqster uses a dual storage approach to optimize performance and eliminate race conditions:
+
+#### **Use localStorage for UI State** (Immediate, Synchronous)
+```javascript
+// ✅ Perfect for UI state
+const selectedQuarters = ref(getLocalStorage('fi-selectedQuarters', []))
+const tableFilters = ref(getLocalStorage('table-filters', {}))
+const userPreferences = ref(getLocalStorage('ui-preferences', {}))
+
+// Automatic persistence with watchers
+watch(selectedQuarters, () => {
+  setLocalStorage('fi-selectedQuarters', selectedQuarters.value)
+}, { deep: true })
+```
+
+**Use localStorage for:**
+- Selected items/quarters/dates
+- Component state (table sorting, filters, columns)
+- User preferences and settings
+- Import/download progress states
+- Form data and temporary state
+- Any small state that needs immediate persistence
+
+**Benefits:**
+- No race conditions (synchronous)
+- Immediate persistence
+- Simple debugging in DevTools
+- No async complexity
+
+#### **Use IndexedDB for Large Data** (Async, Query-able)
+```javascript
+// ✅ Perfect for large datasets
+const fundsStore = localforage.createInstance({
+  name: 'stoqster',
+  storeName: 'fi-funds'
+})
+
+// Store large arrays efficiently
+await fundsStore.setItem('funds-2025Q1', largeArrayOfFunds)
+await holdingsStore.setItem('holdings-2025Q1', largeArrayOfHoldings)
+```
+
+**Use IndexedDB for:**
+- Fund records (large arrays)
+- Holdings data
+- Historical datasets
+- API response caches
+- Complex data requiring queries
+
+**Benefits:**
+- Handles large datasets efficiently
+- Advanced querying capabilities
+- Better performance for bulk operations
+
+#### **Storage Utilities**
+```javascript
+// Use the provided utilities
+import {
+  getLocalStorage,
+  setLocalStorage,
+  removeLocalStorage,
+  FI_STORAGE_KEYS
+} from '../composables/useLocalStorageState.js'
+
+// Get with default value
+const selection = getLocalStorage('my-key', [])
+
+// Set immediately (synchronous)
+setLocalStorage('my-key', newValue)
+
+// Use predefined keys for consistency
+setLocalStorage(FI_STORAGE_KEYS.SELECTED_QUARTERS, quarters)
+```
+
+#### **Storage Key Conventions**
+```javascript
+// localStorage keys (UI state) - use kebab-case with module prefix
+'fi-selectedQuarters'        // FI module selections
+'ibi-selectedCompanies'      // IBI module selections  
+'settings-watchlists'        // Settings module
+'ui-tablePreferences'        // UI state
+'market-data-apiKeys'        // API keys
+
+// IndexedDB keys (large data) - use descriptive names with dates/quarters
+'funds-2025Q1'              // Quarter-based data
+'holdings-2025Q1'           // Related data for same period
+'companies-2024-12-31'      // Date-based snapshots
+'cache-api-response-*'      // Cached API responses
+```

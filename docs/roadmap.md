@@ -103,6 +103,31 @@ This document outlines the planned features and improvements for Stoqster, organ
   - Performance optimization guidelines
   - Security best practices documentation
 
+## Immediate Technical Priorities (Next Release)
+
+### Storage Architecture Compliance Review
+- [ ] **Codebase Storage Pattern Audit**
+  - Review all stores, components, and composables for localStorage vs IndexedDB compliance
+  - Migrate settings and UI state to localStorage pattern
+  - Ensure consistent storage key naming conventions
+  - Update watchers to use synchronous persistence for UI state
+  - Verify large datasets properly use IndexedDB
+  - Document any exceptions or special cases
+
+### API Integration Improvements
+- [ ] **Enhanced Error Handling**
+  - Implement retry mechanisms with exponential backoff
+  - Better connection state management
+  - Graceful degradation when APIs are unavailable
+  - User-friendly error messages in Swedish
+
+### Performance Optimization
+- [ ] **Bundle Size Optimization**
+  - Analyze and reduce JavaScript bundle size
+  - Implement code splitting for better loading performance
+  - Optimize image and asset delivery
+  - Consider Web Workers for heavy processing tasks
+
 ## Future Considerations
 
 ### Technical Debt and Modernization

@@ -1,15 +1,19 @@
 <template>
     <div class="row items-center q-gutter-sm">
+        
+        <!-- Additional actions slot (for quarter selector) - moved to left -->
+        <slot name="actions"></slot>
+        
         <!-- Filter input -->
         <q-input
-            dense
+            dense outlined
             debounce="300"
             v-model="filterModel"
-            :placeholder="placeholder"
+            :label="placeholder"
             style="width: 500px"
         >
-            <template v-slot:append>
-                <q-icon name="mdi-filter-variant" />
+            <template v-slot:prepend>
+                <q-icon name="mdi-magnify" />
             </template>
         </q-input>
 
@@ -30,9 +34,6 @@
                 {{ refreshTooltip }}
             </q-tooltip>
         </q-btn>
-
-        <!-- Additional actions slot -->
-        <slot name="actions"></slot>
     </div>
 </template>
 

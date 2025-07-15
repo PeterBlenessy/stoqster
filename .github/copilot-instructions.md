@@ -36,7 +36,8 @@ When working on this project, always start by:
 #### Change Strategy
 - [ ] Make minimal, surgical changes that preserve existing functionality
 - [ ] Follow established patterns and conventions
-- [ ] Test changes incrementally with `yarn tauri dev`
+- [ ] Check if dev server is running before starting: `ps aux | grep -E "(tauri|vite)" | grep -v grep`
+- [ ] Test changes incrementally with `yarn tauri dev` (only if not already running)
 - [ ] Validate that changes don't break existing features
 
 #### After Making Changes
@@ -62,10 +63,13 @@ yarn build
 
 #### Development Server Issues
 ```bash
-# Kill existing processes
+# Check if development server is already running
+ps aux | grep -E "(tauri|vite)" | grep -v grep
+
+# Kill existing processes if needed
 pkill -f "vite|tauri"
 
-# Restart development server
+# Restart development server (only if not already running)
 yarn tauri dev
 ```
 

@@ -30,7 +30,7 @@ For detailed information about each API integration, see:
 - **[FI API Integration](api-integrations-fi.md)** - Swedish fund data from Finansinspektionen
 
 ### International Market Data APIs
-- **[Market Data API Architecture](market-data-api-architecture.md)** - Multi-provider stock market data system with detailed provider documentation
+- **[Market Data API Architecture](api-integrations/market-data-api-architecture.md)** - Multi-provider stock market data system with detailed provider documentation
 
 ### Purpose
 Provides comprehensive data about Swedish investment companies including holdings, events, and performance metrics.
