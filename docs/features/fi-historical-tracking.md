@@ -98,21 +98,11 @@ fi_quarters: {
 
 ### Data Processing
 
-- ✅ **CSV Parsing**: Parse FI's CSV data format
+- ✅ **XML Parsing**: Parse FI's XML data format
 - ✅ **Data Validation**: Validate fund data structure and completeness
 - ✅ **Storage Optimization**: Efficient storage of large datasets in IndexedDB
 
 ## Testing and Validation
-
-### Debug Tools
-
-- ✅ **State Inspection Scripts**: 
-  - `debug-fi-state.js` - Inspect current state
-  - `test-fi-state-independence.js` - Validate state independence
-- ✅ **Test Component**: `QuarterStateTestComponent.vue` for reactivity testing
-- ✅ **Quarter Validation Scripts**:
-  - `test-quarter-mapping.js` - Validate quarter key mapping
-  - `test-quarter-sorting.js` - Test quarter ordering logic
 
 ### Validation Checklist
 
