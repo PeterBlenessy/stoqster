@@ -8,6 +8,10 @@ const routes = [
       { path: 'fbindex', component: () => import('../pages/PageFbindex.vue') },
       { path: 'funds', component: () => import('../pages/PageFunds.vue') },
       { path: 'stocks', component: () => import('../pages/PageStocks.vue') },
+      // Only include testing route in development mode
+      ...(import.meta.env.DEV ? [
+        { path: 'testing', component: () => import('../components/DatabaseTesting.vue') }
+      ] : []),
     ]
   },
 
