@@ -10,9 +10,6 @@ import { IndexedDBManager } from '../core/IndexedDBManager.js'
 import { createQuery } from '../core/QueryBuilder.js'
 import { 
   FI_FUNDS_SCHEMA, 
-  generateFundKey, 
-  generateHoldingKey,
-  parseCompositeKey,
   FI_QUERY_PATTERNS 
 } from './FIFundsSchema.js'
 import { transformFundData, transformHoldingData } from './FITransformations.js'
@@ -355,13 +352,16 @@ export class FIFundsDB extends IndexedDBManager {
     try {
       console.log('📦 Starting bulk fund import:', fundDataArray.length, 'funds')
       
-      const transformedFunds = fundDataArray.map(fundData => {
+      const transformedFunds = fundDataArray.map((fundData, index) => {
         const transformed = transformFundData(fundData)
-        transformed.id = generateFundKey(transformed.fundISIN, transformed.quarter, transformed.year)
         
         const now = new Date().toISOString()
-        transformed.createdAt = transformed.createdAt || now
-        transformed.updatedAt = now
+        transformed.importedAt = transformed.importedAt || now
+        
+        // Debug: Print the first transformed fund
+        if (index === 0) {
+          console.log('🔍 First transformed fund object:', JSON.stringify(transformed, null, 2))
+        }
         
         return transformed
       })
@@ -386,24 +386,41 @@ export class FIFundsDB extends IndexedDBManager {
     try {
       console.log('📦 Starting bulk holdings import:', holdingsDataArray.length, 'holdings')
       
-      const transformedHoldings = holdingsDataArray.map(holdingData => {
-        const transformed = transformHoldingData(
-          holdingData.holding, 
-          holdingData.fundISIN, 
-          holdingData.quarter, 
-          holdingData.year
-        )
+      const transformedHoldings = holdingsDataArray.map((holdingData, index) => {
+        // Check if this is migration format (direct holding data) or API format (nested)
+        let rawHolding, fundISIN, quarter
         
-        transformed.id = generateHoldingKey(
-          transformed.fundISIN,
-          transformed.quarter,
-          transformed.year,
-          transformed.instrumentISIN
-        )
+        if (holdingData.holding) {
+          // API format: { holding, fundISIN, quarter }
+          rawHolding = holdingData.holding
+          fundISIN = holdingData.fundISIN
+          quarter = holdingData.quarter
+        } else {
+          // Migration format: holding data with metadata fields directly included
+          rawHolding = holdingData
+          fundISIN = holdingData.fundISIN
+          quarter = holdingData.quarter
+          
+          // Debug logging
+          console.log('🔍 Migration data extraction:', {
+            fundISIN: fundISIN,
+            quarter: quarter, 
+            hasRawFundISIN: !!holdingData.fundISIN,
+            hasRawQuarter: !!holdingData.quarter,
+            quarterValue: holdingData.quarter,
+            holdingDataKeys: Object.keys(holdingData).slice(0, 10) // First 10 keys
+          })
+        }
+        
+        const transformed = transformHoldingData(rawHolding, fundISIN, quarter)
         
         const now = new Date().toISOString()
-        transformed.createdAt = transformed.createdAt || now
-        transformed.updatedAt = now
+        transformed.importedAt = transformed.importedAt || now
+        
+        // Debug: Print the first transformed holding
+        if (index === 0) {
+          console.log('🔍 First transformed holding object:', JSON.stringify(transformed, null, 2))
+        }
         
         return transformed
       })

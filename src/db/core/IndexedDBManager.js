@@ -1,7 +1,17 @@
 /**
  * Generic IndexedDB Manager
  * 
- * Provides a reusable foundation for IndexedDB operations across different databases.
+ * Provides a reusable fo      request.onupgradeneeded = (event) => {
+        const db = event.target.result
+        
+        if (event.oldVersion === 0) {
+          console.log('🚀 Creating new database with schema...')
+        } else {
+          console.log('🔄 Database upgrade needed, applying schema...')
+        }
+        
+        this.createSchema(db)
+      }IndexedDB operations across different databases.
  * This class handles connection management, transactions, and basic CRUD operations.
  * 
  * Usage:
@@ -61,9 +71,17 @@ export class IndexedDBManager {
       }
 
       request.onupgradeneeded = (event) => {
-        console.log('🔄 Database upgrade needed, applying schema...')
         const db = event.target.result
-        this.applySchema(db, event.oldVersion, event.newVersion)
+        const oldVersion = event.oldVersion
+        const newVersion = event.newVersion
+        
+        if (oldVersion === 0) {
+          console.log('� Creating new database with schema...')
+          this.createSchema(db)
+        } else {
+          console.log('�🔄 Database upgrade needed, applying schema...')
+          this.applySchema(db, oldVersion, newVersion)
+        }
       }
     })
 
@@ -71,7 +89,39 @@ export class IndexedDBManager {
   }
 
   /**
-   * Apply database schema during upgrade
+   * Create database schema for a new database
+   * @param {IDBDatabase} db
+   */
+  createSchema(db) {
+    console.log('📦 Creating fresh database schema')
+    
+    try {
+      for (const [storeName, storeConfig] of Object.entries(this.schema.stores)) {
+        console.log('📦 Creating object store:', storeName)
+        console.log(' Using autoIncrement configuration')
+        
+        const store = db.createObjectStore(storeName, { autoIncrement: true })
+
+        // Create indexes
+        if (storeConfig.indexes) {
+          for (const [indexName, indexConfig] of Object.entries(storeConfig.indexes)) {
+            console.log('🔍 Creating index:', indexName, 'on store:', storeName)
+            store.createIndex(indexName, indexConfig.keyPath, {
+              unique: indexConfig.unique || false,
+              multiEntry: indexConfig.multiEntry || false
+            })
+          }
+        }
+      }
+      console.log('✅ Fresh database schema created successfully')
+    } catch (error) {
+      console.error('❌ Error creating schema:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Create a transaction for the specified stores
    * @param {IDBDatabase} db
    * @param {number} oldVersion
    * @param {number} newVersion
@@ -80,24 +130,28 @@ export class IndexedDBManager {
     console.log(`🔄 Applying schema upgrade from version ${oldVersion} to ${newVersion}`)
     
     try {
-      // Create object stores defined in schema
+      // For major schema changes, delete and recreate stores
       for (const [storeName, storeConfig] of Object.entries(this.schema.stores)) {
-        if (!db.objectStoreNames.contains(storeName)) {
-          console.log('📦 Creating object store:', storeName)
-          const store = db.createObjectStore(storeName, storeConfig.keyPath ? 
-            { keyPath: storeConfig.keyPath } : 
-            { autoIncrement: storeConfig.autoIncrement || false }
-          )
+        // Delete existing store if it exists
+        if (db.objectStoreNames.contains(storeName)) {
+          console.log('🗑️ Deleting existing object store:', storeName)
+          db.deleteObjectStore(storeName)
+        }
+        
+        // Create new object store with autoIncrement
+        console.log('📦 Creating object store:', storeName)
+        console.log('� Using autoIncrement configuration')
+        
+        const store = db.createObjectStore(storeName, { autoIncrement: true })
 
-          // Create indexes
-          if (storeConfig.indexes) {
-            for (const [indexName, indexConfig] of Object.entries(storeConfig.indexes)) {
-              console.log('🔍 Creating index:', indexName, 'on store:', storeName)
-              store.createIndex(indexName, indexConfig.keyPath, {
-                unique: indexConfig.unique || false,
-                multiEntry: indexConfig.multiEntry || false
-              })
-            }
+        // Create indexes
+        if (storeConfig.indexes) {
+          for (const [indexName, indexConfig] of Object.entries(storeConfig.indexes)) {
+            console.log('🔍 Creating index:', indexName, 'on store:', storeName)
+            store.createIndex(indexName, indexConfig.keyPath, {
+              unique: indexConfig.unique || false,
+              multiEntry: indexConfig.multiEntry || false
+            })
           }
         }
       }
@@ -368,6 +422,48 @@ export class IndexedDBManager {
       console.log('🛑 Closing database connection:', this.dbName)
       this.db.close()
       this.db = null
+    }
+  }
+
+  /**
+   * Completely drop the database
+   */
+  async drop() {
+    try {
+      console.log('🗑️ Dropping database completely:', this.dbName)
+      
+      // Close existing connection if open
+      this.close()
+      
+      // Delete the entire database
+      await new Promise((resolve, reject) => {
+        const deleteRequest = indexedDB.deleteDatabase(this.dbName)
+        
+        deleteRequest.onsuccess = () => {
+          console.log('✅ Database deleted successfully:', this.dbName)
+          resolve()
+        }
+        
+        deleteRequest.onerror = () => {
+          console.error('❌ Failed to delete database:', deleteRequest.error)
+          reject(new Error(`Failed to delete database ${this.dbName}: ${deleteRequest.error}`))
+        }
+        
+        deleteRequest.onblocked = () => {
+          console.warn('⚠️ Database deletion blocked - closing all connections...')
+          // The deletion is blocked, likely because there are open connections
+          // This will resolve once all connections are closed
+        }
+      })
+      
+      // Reset internal state
+      this.db = null
+      this.isOpening = false
+      this.openPromise = null
+      
+    } catch (error) {
+      console.error('❌ Error dropping database:', error)
+      throw error
     }
   }
 }
