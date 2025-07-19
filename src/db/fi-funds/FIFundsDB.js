@@ -52,12 +52,7 @@ export class FIFundsDB extends IndexedDBManager {
       // Transform Swedish data to English format
       const transformedData = transformFundData(fundData)
       
-      // Generate composite key
-      transformedData.id = generateFundKey(
-        transformedData.fundISIN, 
-        transformedData.quarter, 
-        transformedData.year
-      )
+      // Use auto-increment keys - no composite key generation needed
       
       // Add timestamps
       const now = new Date().toISOString()
@@ -85,9 +80,14 @@ export class FIFundsDB extends IndexedDBManager {
    */
   async getFund(fundISIN, quarter, year) {
     try {
-      const key = generateFundKey(fundISIN, quarter, year)
-      const fund = await this.get('funds', key)
-      return fund || null
+      // Use compound index to find fund by ISIN and quarter
+      const query = createQuery(this, 'funds')
+        .equals('fundISIN', fundISIN)
+        .equals('quarter', quarter)
+        .equals('year', year)
+      
+      const results = await query.execute()
+      return results.length > 0 ? results[0] : null
     } catch (error) {
       console.error('❌ Error getting fund:', error)
       throw error
@@ -122,16 +122,14 @@ export class FIFundsDB extends IndexedDBManager {
   /**
    * Get all funds for a specific quarter
    * @param {string} quarter
-   * @param {number} year
    * @returns {Promise<Array>}
    */
-  async getQuarterSnapshot(quarter, year) {
+  async getQuarterSnapshot(quarter) {
     try {
-      console.log('🔍 Getting quarter snapshot for:', quarter, year)
+      console.log('🔍 Getting quarter snapshot for:', quarter)
       
       const query = createQuery(this, 'funds')
         .equals('quarter', quarter)
-        .equals('year', year)
         .orderBy('fundName')
       
       const funds = await query.execute()
@@ -211,13 +209,7 @@ export class FIFundsDB extends IndexedDBManager {
       // Transform Swedish data to English format
       const transformedData = transformHoldingData(holdingData, fundISIN, quarter, year)
       
-      // Generate composite key
-      transformedData.id = generateHoldingKey(
-        transformedData.fundISIN,
-        transformedData.quarter,
-        transformedData.year,
-        transformedData.instrumentISIN
-      )
+      // Use auto-increment keys - no composite key generation needed
       
       // Add timestamps
       const now = new Date().toISOString()
@@ -378,7 +370,7 @@ export class FIFundsDB extends IndexedDBManager {
 
   /**
    * Bulk import holdings data with progress tracking
-   * @param {Array} holdingsDataArray - Array of raw holdings data
+   * @param {Array} holdingsDataArray - Array of raw holdings data with fundISIN already included
    * @param {Function} progressCallback - Progress update callback
    * @returns {Promise<number>} Number of holdings imported
    */
@@ -387,40 +379,19 @@ export class FIFundsDB extends IndexedDBManager {
       console.log('📦 Starting bulk holdings import:', holdingsDataArray.length, 'holdings')
       
       const transformedHoldings = holdingsDataArray.map((holdingData, index) => {
-        // Check if this is migration format (direct holding data) or API format (nested)
-        let rawHolding, fundISIN, quarter
+        // Holdings data should already have fundISIN from migration pipeline
+        const rawHolding = holdingData
+        const quarter = holdingData._quarter || holdingData.quarter
+        const fundISIN = holdingData.fundISIN
         
-        if (holdingData.holding) {
-          // API format: { holding, fundISIN, quarter }
-          rawHolding = holdingData.holding
-          fundISIN = holdingData.fundISIN
-          quarter = holdingData.quarter
-        } else {
-          // Migration format: holding data with metadata fields directly included
-          rawHolding = holdingData
-          fundISIN = holdingData.fundISIN
-          quarter = holdingData.quarter
-          
-          // Debug logging
-          console.log('🔍 Migration data extraction:', {
-            fundISIN: fundISIN,
-            quarter: quarter, 
-            hasRawFundISIN: !!holdingData.fundISIN,
-            hasRawQuarter: !!holdingData.quarter,
-            quarterValue: holdingData.quarter,
-            holdingDataKeys: Object.keys(holdingData).slice(0, 10) // First 10 keys
-          })
+        if (!fundISIN || fundISIN === 'NOT_FOUND') {
+          console.warn(`⚠️ Missing or invalid fundISIN in holding ${index + 1}:`, fundISIN)
         }
         
         const transformed = transformHoldingData(rawHolding, fundISIN, quarter)
         
         const now = new Date().toISOString()
         transformed.importedAt = transformed.importedAt || now
-        
-        // Debug: Print the first transformed holding
-        if (index === 0) {
-          console.log('🔍 First transformed holding object:', JSON.stringify(transformed, null, 2))
-        }
         
         return transformed
       })
@@ -431,6 +402,82 @@ export class FIFundsDB extends IndexedDBManager {
       return imported
     } catch (error) {
       console.error('❌ Error in bulk holdings import:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Add multiple funds in a single transaction (already transformed data)
+   * @param {Array} fundsArray - Array of already transformed fund data
+   * @returns {Promise<number>} Number of funds added
+   */
+  async addFunds(fundsArray) {
+    try {
+      console.log('📦 Adding funds in bulk:', fundsArray.length, 'funds')
+      
+      // Add timestamps to all funds
+      const now = new Date().toISOString()
+      const enrichedFunds = fundsArray.map(fund => ({
+        ...fund,
+        createdAt: fund.createdAt || now,
+        updatedAt: now
+      }))
+      
+      // Validate all funds before insertion
+      enrichedFunds.forEach((fund, index) => {
+        try {
+          FI_FUNDS_SCHEMA.validate('funds', fund)
+        } catch (error) {
+          console.error(`❌ Validation failed for fund ${index + 1}:`, error)
+          throw new Error(`Fund validation failed at index ${index + 1}: ${error.message}`)
+        }
+      })
+      
+      // Use bulk insert from base class
+      const addedCount = await this.bulkInsert('funds', enrichedFunds)
+      
+      console.log('✅ Bulk funds added successfully:', addedCount)
+      return addedCount
+    } catch (error) {
+      console.error('❌ Error adding funds in bulk:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Add multiple holdings in a single transaction (already transformed data)
+   * @param {Array} holdingsArray - Array of already transformed holdings data
+   * @returns {Promise<number>} Number of holdings added
+   */
+  async addHoldings(holdingsArray) {
+    try {
+      console.log('📦 Adding holdings in bulk:', holdingsArray.length, 'holdings')
+      
+      // Add timestamps to all holdings
+      const now = new Date().toISOString()
+      const enrichedHoldings = holdingsArray.map(holding => ({
+        ...holding,
+        createdAt: holding.createdAt || now,
+        updatedAt: now
+      }))
+      
+      // Validate all holdings before insertion
+      enrichedHoldings.forEach((holding, index) => {
+        try {
+          FI_FUNDS_SCHEMA.validate('holdings', holding)
+        } catch (error) {
+          console.error(`❌ Validation failed for holding ${index + 1}:`, error)
+          throw new Error(`Holding validation failed at index ${index + 1}: ${error.message}`)
+        }
+      })
+      
+      // Use bulk insert from base class
+      const addedCount = await this.bulkInsert('holdings', enrichedHoldings)
+      
+      console.log('✅ Bulk holdings added successfully:', addedCount)
+      return addedCount
+    } catch (error) {
+      console.error('❌ Error adding holdings in bulk:', error)
       throw error
     }
   }

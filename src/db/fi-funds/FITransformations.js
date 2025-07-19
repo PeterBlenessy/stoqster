@@ -13,9 +13,7 @@
  * @returns {Object} Transformed fund data in English format
  */
 export function transformFundData(rawData) {
-  try {
-    console.log('🔄 Transforming fund data from raw to English format')
-    
+  try {    
     // Transform only the fields that actually exist in the raw data format as documented
     const transformed = {
       // Core identifiers (from raw format)
@@ -48,14 +46,6 @@ export function transformFundData(rawData) {
       dataSource: "FI"
     }
     
-    // Remove undefined values to keep the object clean
-    Object.keys(transformed).forEach(key => {
-      if (transformed[key] === undefined || transformed[key] === null || transformed[key] === '') {
-        delete transformed[key]
-      }
-    })
-    
-    console.log('✅ Fund data transformation completed')
     return transformed
   } catch (error) {
     console.error('❌ Error transforming fund data:', error)
@@ -64,30 +54,20 @@ export function transformFundData(rawData) {
 }
 
 /**
- * Transform holding data from raw format to English format
- * @param {Object} rawData - Raw holding data exactly as described in fi-fund-data-mapping.md
- * @param {string} fundISIN - Fund ISIN to associate with this holding
+ * Transform raw holding data from FI (Swedish) format to normalized format (English keys)
+ * @param {Object} rawData - Raw holding data from FI
+ * @param {string} fundISIN - ISIN code of the fund this holding belongs to
  * @param {string} quarter - Quarter for this holding
  * @returns {Object} Transformed holding data in English format
  */
 export function transformHoldingData(rawData, fundISIN, quarter) {
   try {
-    console.log('🔄 Transforming holding data from raw to English format')
     
     // Ensure rawData exists
     if (!rawData || typeof rawData !== 'object') {
       throw new Error('Invalid rawData provided to transformHoldingData')
     }
-    
-    // Debug logging for key parameters and raw data fields
-    console.log('🔍 Key generation params:', { 
-      fundISIN, 
-      quarter, 
-      rawDataKeys: Object.keys(rawData),
-      instrumentISIN: rawData['ISIN-kod_instrument'],
-      instrumentName: rawData['Instrumentnamn']
-    })
-    
+        
     // Transform only the fields that actually exist in the raw holdings format as documented
     const transformed = {
       // Core identifiers
@@ -124,14 +104,6 @@ export function transformHoldingData(rawData, fundISIN, quarter) {
       dataSource: "FI"
     }
     
-    // Remove undefined values to keep the object clean
-    Object.keys(transformed).forEach(key => {
-      if (transformed[key] === undefined || transformed[key] === null || transformed[key] === '') {
-        delete transformed[key]
-      }
-    })
-    
-    console.log('✅ Holding data transformation completed')
     return transformed
   } catch (error) {
     console.error('❌ Error transforming holding data:', error)

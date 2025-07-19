@@ -234,7 +234,7 @@ export class IndexedDBManager {
   }
 
   /**
-   * Query records using an index
+   * Query records by index value using optimized getAll
    * @param {string} storeName
    * @param {string} indexName
    * @param {*} value
@@ -247,18 +247,12 @@ export class IndexedDBManager {
       const store = transaction.objectStore(storeName)
       const index = store.index(indexName)
       
+      // Use getAll for much better performance than cursor iteration
       return new Promise((resolve, reject) => {
-        const results = []
-        const request = index.openCursor(IDBKeyRange.only(value))
+        const request = index.getAll(IDBKeyRange.only(value), limit)
         
-        request.onsuccess = (event) => {
-          const cursor = event.target.result
-          if (cursor && (!limit || results.length < limit)) {
-            results.push(cursor.value)
-            cursor.continue()
-          } else {
-            resolve(results)
-          }
+        request.onsuccess = () => {
+          resolve(request.result || [])
         }
         
         request.onerror = () => reject(new Error(`Query operation failed: ${request.error}`))

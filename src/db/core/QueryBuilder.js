@@ -151,7 +151,7 @@ export class QueryBuilder {
   }
 
   /**
-   * Execute cursor-based query for complex operators
+   * Execute cursor-based query for complex operators using optimized range queries
    * @param {string} field
    * @param {string} operator
    * @param {*} value
@@ -161,17 +161,62 @@ export class QueryBuilder {
     const transaction = await this.db.transaction(this.storeName, 'readonly')
     const store = transaction.objectStore(this.storeName)
     
-    let cursor
     try {
       const index = store.index(field)
-      cursor = index.openCursor()
+      
+      // Use optimized range queries instead of full cursor iteration
+      let keyRange
+      switch (operator) {
+        case '>':
+          keyRange = IDBKeyRange.lowerBound(value, true)
+          break
+        case '>=':
+          keyRange = IDBKeyRange.lowerBound(value, false)
+          break
+        case '<':
+          keyRange = IDBKeyRange.upperBound(value, true)
+          break
+        case '<=':
+          keyRange = IDBKeyRange.upperBound(value, false)
+          break
+        case 'between':
+          keyRange = IDBKeyRange.bound(value[0], value[1], false, false)
+          break
+        default:
+          // Fall back to cursor for other operators
+          return this.executeCursorFallback(index, field, operator, value)
+      }
+      
+      // Use getAll with range for much better performance
+      return new Promise((resolve, reject) => {
+        const request = index.getAll(keyRange)
+        
+        request.onsuccess = () => {
+          resolve(request.result || [])
+        }
+        
+        request.onerror = () => reject(new Error(`Range query failed: ${request.error}`))
+      })
+      
     } catch (error) {
-      // Field is not indexed, use object store cursor
-      cursor = store.openCursor()
+      // Field is not indexed, fall back to full cursor scan
+      console.warn(`⚠️ Field ${field} not indexed, using slow cursor scan`)
+      return this.executeCursorFallback(store, field, operator, value)
     }
+  }
 
+  /**
+   * Fallback cursor implementation for non-indexed fields or complex operators
+   * @param {IDBObjectStore|IDBIndex} storeOrIndex
+   * @param {string} field
+   * @param {string} operator
+   * @param {*} value
+   * @returns {Promise<Array>}
+   */
+  async executeCursorFallback(storeOrIndex, field, operator, value) {
     return new Promise((resolve, reject) => {
       const results = []
+      const cursor = storeOrIndex.openCursor()
       
       cursor.onsuccess = (event) => {
         const cursorResult = event.target.result
@@ -195,18 +240,105 @@ export class QueryBuilder {
   }
 
   /**
-   * Execute complex query with multiple filters
+   * Execute complex query with multiple filters using IndexedDB indexes efficiently
    * @returns {Promise<Array>}
    */
   async executeComplexQuery() {
-    const allRecords = await this.db.getAll(this.storeName)
+    console.log('🔍 Executing complex query with multiple filters:', this.filters)
     
-    return allRecords.filter(record => {
-      return this.filters.every(filter => {
+    // Strategy: Use the most selective filter as the primary index query,
+    // then filter the results with the remaining conditions
+    
+    // Find the best filter to use as primary (most selective)
+    const primaryFilter = this.findMostSelectiveFilter()
+    const remainingFilters = this.filters.filter(f => f !== primaryFilter)
+    
+    console.log('🎯 Using primary filter on index:', primaryFilter.field, primaryFilter.operator, primaryFilter.value)
+    
+    // Execute primary filter using index
+    let candidateResults
+    if (primaryFilter.operator === '=') {
+      // Use index directly for equality
+      candidateResults = await this.db.query(this.storeName, primaryFilter.field, primaryFilter.value)
+    } else {
+      // Use cursor on index for range queries
+      candidateResults = await this.executeCursorQuery(primaryFilter.field, primaryFilter.operator, primaryFilter.value)
+    }
+    
+    console.log(`📊 Primary index query returned ${candidateResults.length} candidates`)
+    
+    // Apply remaining filters to the candidate set (much smaller than full dataset)
+    if (remainingFilters.length === 0) {
+      return candidateResults
+    }
+    
+    const finalResults = candidateResults.filter(record => {
+      return remainingFilters.every(filter => {
         const fieldValue = this.getFieldValue(record, filter.field)
         return this.matchesFilter(fieldValue, filter.operator, filter.value)
       })
     })
+    
+    console.log(`✅ Complex query completed: ${candidateResults.length} candidates → ${finalResults.length} final results`)
+    return finalResults
+  }
+
+  /**
+   * Find the most selective filter to use as primary index query
+   * @returns {Object} The filter that should be most selective
+   */
+  findMostSelectiveFilter() {
+    // Priority order for selectivity (most to least selective):
+    // 1. fundISIN (very selective - typically ~50-100 results)
+    // 2. Other equality filters on unique/semi-unique fields
+    // 3. quarter (less selective - typically ~100,000 results)
+    // 4. Range queries on indexed fields
+    // 5. Other operators
+    
+    // First, look for equality filters (most selective)
+    const equalityFilters = this.filters.filter(f => f.operator === '=')
+    
+    if (equalityFilters.length > 0) {
+      // Prefer fundISIN over quarter since it's much more selective
+      const fundISINFilter = equalityFilters.find(f => f.field === 'fundISIN')
+      if (fundISINFilter) {
+        return fundISINFilter
+      }
+      
+      // Then prefer other primary keys except quarter
+      const primaryKeyFilter = equalityFilters.find(f => 
+        ['id'].includes(f.field)
+      )
+      if (primaryKeyFilter) {
+        return primaryKeyFilter
+      }
+      
+      // Use quarter as last resort among equality filters
+      const quarterFilter = equalityFilters.find(f => f.field === 'quarter')
+      if (quarterFilter && equalityFilters.length === 1) {
+        return quarterFilter
+      }
+      
+      // Any other equality filter is better than quarter
+      const otherEqualityFilter = equalityFilters.find(f => f.field !== 'quarter')
+      if (otherEqualityFilter) {
+        return otherEqualityFilter
+      }
+      
+      // Fall back to quarter if it's the only equality filter
+      return equalityFilters[0]
+    }
+    
+    // Fall back to range queries
+    const rangeFilters = this.filters.filter(f => 
+      ['>', '<', '>=', '<=', 'between'].includes(f.operator)
+    )
+    if (rangeFilters.length > 0) {
+      return rangeFilters[0]
+    }
+    
+    // Last resort - use any filter
+    return this.filters[0]
   }
 
   /**

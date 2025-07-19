@@ -5,7 +5,7 @@
             wrap-cells
             color="primary"
             class="my-sticky-header-table"
-            row-key="Fond_namn"
+            :row-key="(row) => `${row.fundISIN || row.fundName}_${row.quarter || 'unknown'}`"
             :title="title"
             :rows="rows"
             :columns="columns"
@@ -46,8 +46,8 @@
                         
                         <!-- Quarter selector -->
                         <q-select
-                            v-model="selectedQuarterObjects"
-                            :options="quarterOptions"
+                            v-model="selectedQuarters"
+                            :options="availableQuarters"
                             option-value="quarter"
                             option-label="label"
                             multiple
@@ -56,7 +56,8 @@
                             label="Välj kvartal" 
                             style="min-width: 350px;"
                             popup-content-class="fixed-width-dropdown"
-                            @update:model-value="onQuarterSelectionChange"
+                            emit-value
+                            map-options
                         >
                             <template v-slot:prepend>
                                 <q-icon name="mdi-calendar-range" />
@@ -216,7 +217,7 @@
             </template>
 
             <template v-slot:body="props">
-                <q-tr :props="props" @click="props.expand = !props.expand">
+                <q-tr :props="props" @click="handleRowExpansion(props)" class="row-pointer">
                     <!-- Column values -->
                     <q-td
                         v-for="col in props.cols"
@@ -246,6 +247,7 @@
                                     ? 'mdi-chevron-up'
                                     : 'mdi-chevron-down'
                             "
+                            @click.stop="handleRowExpansion(props)"
                         >
                             <q-tooltip
                                 transition-show="scale"
@@ -257,13 +259,52 @@
                     </q-td>
                 </q-tr>
 
-                <!--  Expanded row. Displays information about the fund's holdings.  -->
+                <!--  Expanded row. Displays information about the fund's holdings and metrics.  -->
                 <q-tr v-if="props.expand" :props="props" no-hover>
-                    <q-td :colspan="props.cols.length + 1">
-                        <ComponentFundHoldings
-                            :fund-name="props.row['Fond_namn']"
-                            :key="props.row['Fond_namn']"
-                        />
+                    <q-td :colspan="props.cols.length + 1" class="q-pa-none">
+                        {{ ensureTabState(props.row.fundISIN) }}
+                        <q-card flat>
+                            <!-- Tab headers -->
+                            <q-tabs
+                                v-model="expandedRowTabs[props.row.fundISIN]"
+                                dense
+                                class="text-grey"
+                                active-color="primary"
+                                indicator-color="primary"
+                                align="justify"
+                                narrow-indicator
+                            >
+                                <q-tab name="holdings" icon="mdi-briefcase-outline" label="Innehav" />
+                                <q-tab name="metrics" icon="mdi-chart-line" label="Mätningar" />
+                            </q-tabs>
+
+                            <q-separator />
+
+                            <!-- Tab panels -->
+                            <q-tab-panels 
+                                v-model="expandedRowTabs[props.row.fundISIN]" 
+                                animated
+                            >
+                                <!-- Holdings tab -->
+                                <q-tab-panel name="holdings" class="q-pa-none">
+                                    <ComponentFundHoldings
+                                        :fund-name="props.row.fundName"
+                                        :fund-i-s-i-n="props.row.fundISIN"
+                                        :holdings="getFundHoldings(props.row.fundISIN, selectedQuarters[0])"
+                                        :key="props.row.fundISIN"
+                                    />
+                                </q-tab-panel>
+
+                                <!-- Metrics tab -->
+                                <q-tab-panel name="metrics" class="q-pa-md">
+                                    <FundMetricsChart
+                                        :fund-isin="props.row.fundISIN"
+                                        :available-quarters="getAvailableQuarters()"
+                                        :key="props.row.fundISIN"
+                                    />
+                                </q-tab-panel>
+                            </q-tab-panels>
+                        </q-card>
                     </q-td>
                 </q-tr>
             </template>
@@ -272,16 +313,16 @@
 </template>
 
 <script>
-import { fiFunds, fiDownload, funds, fundHoldings } from "../api/fiAPI.js";
+import { fiFunds, fiDownload, funds } from "../api/fiAPI.js";
 import { ref, onMounted, watch, computed, nextTick } from "vue";
 import { useQuasar } from "quasar";
 import JSZip from "jszip";
 import X2JS from "x2js"; //'../libs/xml2json.js'
-import localforage from "localforage";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "../stores/settings-store.js";
 import { useFIStore } from "../stores/fi-store.js";
 import ComponentFundHoldings from "./ComponentFundHoldings.vue";
+import FundMetricsChart from "./FundMetricsChart.vue";
 import TableToolbar from "./TableToolbar.vue";
 import { fetch } from "@tauri-apps/plugin-http";
 import { extractFileNameFromUrl, parseZipFileName } from "../api/fiHistoricalUtils.js";
@@ -290,28 +331,23 @@ export default {
     name: "ComponentFunds",
     components: {
         ComponentFundHoldings,
+        FundMetricsChart,
         TableToolbar,
     },
     setup() {
         // FI Store for historical tracking
         const fiStore = useFIStore()
-        const { funds: storeFunds, holdings: storeHoldings, selectedQuarters, availableQuarters, isMultiQuarterView, currentViewLabel } = storeToRefs(fiStore)
+        const { funds: storeFunds, selectedQuarters, availableQuarters, isMultiQuarterView, currentViewLabel } = storeToRefs(fiStore)
         
         // Settings store for UI preferences
         const settingsStore = useSettingsStore();
         const { fiVisibleColumns } = storeToRefs(settingsStore);
 
-        // Legacy stores for backwards compatibility during transition
-        const fundsStore = localforage.createInstance({
-            name: "stoqster",
-            storeName: funds.localForageConfig.storeName,
-        });
-
         const $q = useQuasar();
 
         // Computed title that reflects current view
         const title = computed(() => {
-            const baseTitle = funds.title;
+            const baseTitle = "FI: Information om fonder och innehav";
             if (isMultiQuarterView.value) {
                 return `${baseTitle} - ${currentViewLabel.value}`;
             } else if (selectedQuarters.value.length === 1) {
@@ -320,168 +356,47 @@ export default {
             return baseTitle;
         });
         
-        // Quarter selection logic
-        const quarterOptions = computed(() => {
-            console.log('🔍 [Component] Computing quarterOptions, availableQuarters.value.length:', availableQuarters.value.length)
-            
-            const options = availableQuarters.value.map(item => {
-                console.log(`🔍 [Component] Mapping quarter ${item.quarter}: importState=${item.importState}, isImporting=${item.isImporting}, state=${item.state}`)
-                
-                return {
-                    quarter: item.quarter,
-                    label: item.label,
-                    recordCount: item.recordCount,
-                    sourceDate: item.sourceDate,
-                    // VIEWING state - for quarter selection dropdown
-                    isSelected: item.isSelected,
-                    // DATA state - whether quarter has imported data
-                    hasData: item.hasData,
-                    // IMPORT OPERATION state - completely independent tracking
-                    importState: item.importState, // 'available', 'downloading', 'extracting', 'importing', 'imported', 'error'
-                    isImporting: item.isImporting, // convenience flag for active import operations
-                    // UI display state (combines data + import for display purposes only)
-                    state: item.state, // This is for display - doesn't affect selection or import logic
-                    progress: item.progress,
-                    error: item.error,
-                    sourceUrl: item.url, // Map from store's url (which comes from sourceUrl)
-                    url: item.url, // Keep for backward compatibility
-                    fileName: item.fileName
-                }
-            })
-            
-            console.log('🔍 [Component] quarterOptions computed result:', options.map(o => `${o.quarter}: importState=${o.importState}, isImporting=${o.isImporting}`))
-            return options
-        })
-
-        // Convert store's selectedQuarters (strings) to objects for the select component
-        const selectedQuarterObjects = computed({
-            get() {
-                try {
-                    // Convert quarter strings to objects for display
-                    const result = selectedQuarters.value
-                        .map(quarterString => {
-                            const quarterOption = quarterOptions.value.find(opt => opt.quarter === quarterString)
-                            if (!quarterOption) {
-                                console.warn(`⚠️ Selected quarter ${quarterString} not found in quarterOptions`)
-                                console.log('Available quarters:', quarterOptions.value.map(q => q.quarter))
-                            }
-                            return quarterOption
-                        })
-                        .filter(Boolean) // Remove any undefined values
-                    
-                    console.log('🔍 selectedQuarterObjects computed:', {
-                        selectedQuarters: selectedQuarters.value,
-                        resultCount: result.length,
-                        resultQuarters: result.map(r => r.quarter)
-                    })
-                    
-                    return result
-                } catch (error) {
-                    console.error('❌ Error in selectedQuarterObjects getter:', error)
-                    return []
-                }
-            },
-            set(newSelection) {
-                // Convert objects to quarter strings and update
-                if (!isUpdatingQuarters.value) {                    
-                    // Use nextTick to avoid recursive updates
-                    nextTick(() => {
-                        onQuarterSelectionChange(newSelection)
-                    })
-                }
-            }
-        })
-
-        // Guard to prevent recursive quarter selection updates
-        const isUpdatingQuarters = ref(false)
-        
-        const onQuarterSelectionChange = async (newSelection) => {
-            // Prevent recursive calls
-            if (isUpdatingQuarters.value) {
-                console.log('⚠️ Already updating quarters, skipping to prevent recursion')
-                return
-            }
-            
-            // IMPORTANT: Selection changes are COMPLETELY independent of import operations
-            // A quarter can be selected for viewing regardless of its import state
-            // A quarter can be importing while selected or not selected
-            console.log('🔄 Quarter SELECTION changed (completely independent of import operations):', newSelection)
-            
-            try {
-                isUpdatingQuarters.value = true
-                
-                // Extract quarter strings from the selection objects
-                let quarterStrings = []
-                if (newSelection && newSelection.length > 0) {
-                    quarterStrings = newSelection.map(item => 
-                        typeof item === 'object' ? item.quarter : item
-                    ).filter(Boolean)
-                }
-                
-                // Only auto-select if we have no selection AND no current store selection
-                if (quarterStrings.length === 0 && selectedQuarters.value.length === 0) {
-                    const availableQuarters = quarterOptions.value
-                    if (availableQuarters.length > 0) {
-                        // Auto-select the latest quarter if user clears selection
-                        quarterStrings = [availableQuarters[0].quarter]
-                        console.log('🎯 Auto-selecting latest quarter for VIEWING:', quarterStrings[0])
-                    }
-                }
-                
-                // Only update if there's actually a change in SELECTION
-                const currentSelection = selectedQuarters.value.sort().join(',')
-                const newSelectionString = quarterStrings.sort().join(',')
-                
-                if (currentSelection !== newSelectionString) {
-                    console.log('🔄 Setting quarter strings for VIEWING (no effect on import states):', quarterStrings)
-                    await fiStore.setSelectedQuarters(quarterStrings)
-                    console.log('✅ Quarter SELECTION completed - import operations continue independently')
-                } else {
-                    console.log('⚠️ No change in quarter selection for viewing, skipping update')
-                }
-            } catch (error) {
-                console.error('❌ Failed to change quarter selection for viewing:', error)
-                $q.notify({
-                    type: "negative",
-                    message: "Kunde inte växla kvartal för visning",
-                });
-            } finally {
-                // Use nextTick to ensure reactive updates complete before resetting flag
-                await nextTick()
-                isUpdatingQuarters.value = false
-            }
-        }
-
+        // Use table configuration from API
         const baseColumns = funds.qTableConfig.columns
         const baseVisibleColumns = funds.qTableConfig.visibleColumns
         
         // Enhanced columns that include quarter info for multi-quarter view
         const columns = computed(() => {
-            const cols = [...baseColumns]
-            
-            // Add quarter column when viewing multiple quarters
-            if (isMultiQuarterView.value) {
-                cols.unshift({
-                    name: 'quarter',
-                    label: 'Kvartal',
-                    field: '_displayQuarter',
-                    sortable: true,
-                    align: 'left'
-                })
+            try {
+                const cols = [...baseColumns]
+                
+                // Add quarter column when viewing multiple quarters
+                if (isMultiQuarterView.value) {
+                    cols.unshift({
+                        name: 'quarter',
+                        label: 'Kvartal',
+                        field: 'quarterDisplay',
+                        sortable: true,
+                        align: 'left'
+                    })
+                }
+                
+                return cols
+            } catch (error) {
+                console.error('❌ Error in columns computed:', error)
+                return [...baseColumns]
             }
-            
-            return cols
         })
         
         const visibleColumns = computed(() => {
-            const visCols = [...(fiVisibleColumns.value.length > 0 ? fiVisibleColumns.value : baseVisibleColumns)]
-            
-            // Add quarter column to visible columns when in multi-quarter view
-            if (isMultiQuarterView.value && !visCols.includes('quarter')) {
-                visCols.unshift('quarter')
+            try {
+                const visCols = [...(fiVisibleColumns.value.length > 0 ? fiVisibleColumns.value : baseVisibleColumns)]
+                
+                // Add quarter column to visible columns when in multi-quarter view
+                if (isMultiQuarterView.value && !visCols.includes('quarter')) {
+                    visCols.unshift('quarter')
+                }
+                
+                return visCols
+            } catch (error) {
+                console.error('❌ Error in visibleColumns computed:', error)
+                return [...baseVisibleColumns]
             }
-            
-            return visCols
         })
         
         // Make rows reactive to store changes
@@ -491,6 +406,55 @@ export default {
 
         const loading = ref(false);
         const refreshColor = ref("primary");
+        
+        // Expanded row tab state for multiple funds
+        const expandedRowTabs = ref({});
+        // Restore expansion tracking and cache for high-performance loading
+        const expandedFunds = ref(new Set());
+        const fundHoldingsCache = ref(new Map());
+
+        // Explicit handler for row expansion
+        const handleRowExpansion = async (props) => {
+            const wasExpanded = props.expand;
+            props.expand = !props.expand;
+            if (props.expand && !wasExpanded) {
+                const fundISIN = props.row.fundISIN;
+                const quarter = selectedQuarters.value[0];
+                if (fundISIN && quarter && !fundHoldingsCache.value.has(`${fundISIN}-${quarter}`)) {
+                    try {
+                        console.log(`🔍 Loading holdings for fund ${fundISIN} on row expansion`);
+                        const holdings = await fiStore.loadHoldingsForFund(fundISIN, quarter);
+                        fundHoldingsCache.value.set(`${fundISIN}-${quarter}`, holdings);
+                        expandedFunds.value.add(fundISIN);
+                        console.log(`✅ Loaded ${holdings.length} holdings for fund ${fundISIN}`);
+                    } catch (error) {
+                        console.error('❌ Failed to load holdings for fund:', error);
+                        $q.notify({
+                            type: "negative",
+                            message: "Kunde inte ladda innehav för fonden",
+                            timeout: 3000
+                        });
+                    }
+                }
+            }
+        };
+        // Get holdings from cache
+        const getFundHoldings = (fundISIN, quarter) => {
+            if (!fundISIN || !quarter) return [];
+            return fundHoldingsCache.value.get(`${fundISIN}-${quarter}`) || [];
+        }
+
+        // Function to get available quarters for charts
+        function getAvailableQuarters() {
+            return availableQuarters.value || [];
+        }
+
+        // Initialize default tab for new expanded rows
+        function ensureTabState(fundISIN) {
+            if (!expandedRowTabs.value[fundISIN]) {
+                expandedRowTabs.value[fundISIN] = 'holdings';
+            }
+        }
 
         const loadedFromWeb = ref(false);
 
@@ -513,7 +477,8 @@ export default {
 
                                 // Handle to the fund's top level information
                                 let fundInformation = json["VärdepappersfondInnehav"].Fondinformation[0];
-                                let fundName = fundInformation.Fond_namn;
+                                let fundName = fundInformation['Fond_namn'];
+                                let fundISIN = fundInformation['Fond_ISIN-kod'];
 
                                 if (fundInformation.Fond_status != "Ej aktiv fond") {
                                     // Handle to the fund's holdings information
@@ -533,7 +498,8 @@ export default {
                                         const holdingsArray = Array.isArray(fundHoldings) ? fundHoldings : [fundHoldings];
                                         const enrichedHoldings = holdingsArray.map(holding => ({
                                             ...holding,
-                                            fundName: fundName
+                                            fundName: fundName,
+                                            fundISIN: fundISIN
                                         }));
                                         
                                         holdingsData.push(...enrichedHoldings);
@@ -584,7 +550,7 @@ export default {
 
             // The first item in the list of links is the latest.
             // This could be easily confirmed by checking the 2nd and 3rd columns, year and quarter respectively,
-            //      or by spliting the filename with ' ' and comparing the dates in the 3rd position in the arrays, [2].
+            //      or by spliting the filename with ' ' and comparing the dates in the 3rd position in the 2nd and 3rd arrays, [2].
             let a = aList[0];
             let url = fiDownload.url + a.pathname + a.search;
             console.timeEnd("fiScrapeZipUrl()");
@@ -882,31 +848,45 @@ export default {
             }
         }
 
-        // Load funds from legacy IndexedDB (backwards compatibility)
-        async function loadDataFromDB() {
-            console.time("fiLoadDataFromDB()");
-            loading.value = true;
-            let data = [];
-            try {
-                await fundsStore.iterate((value, key, iterationNumber) => {
-                    data.push(value);
-                });
-                // Note: This legacy data needs to be moved to the store for proper reactivity
-                console.log('⚠️ Legacy data loaded from IndexedDB (should migrate to store):', data.length)
-            } catch (error) {
-                console.error('❌ Failed to load legacy data:', error)
-                throw error;
-            } finally {
-                loading.value = false;
-                console.timeEnd("fiLoadDataFromDB()");
-            }
-        }
-
         // Load funds from existing store only (no automatic web loading)
         async function loadData() {
             loading.value = true;
             
             try {                
+                // Perform database upgrade if legacy data exists
+                const wasUpgradePerformed = await fiStore.performDatabaseUpgrade()
+                if (wasUpgradePerformed) {
+                    console.log('🔄 Database upgrade performed - legacy data cleared')
+                    
+                    // Show notification to user about database upgrade
+                    $q.notify({
+                        type: "warning",
+                        message: "Databas uppgraderad",
+                        caption: "Gamla fonddata har rensats under uppgraderingen. Du behöver ladda ner data igen från Finansinspektionen.",
+                        timeout: 0, // Persistent until dismissed
+                        actions: [
+                            {
+                                label: 'Ladda ner data',
+                                color: 'white',
+                                handler: () => {
+                                    loadDataFromWeb()
+                                }
+                            },
+                            {
+                                icon: 'mdi-close',
+                                color: 'white',
+                                round: true,
+                                handler: () => {
+                                    // Just dismiss
+                                }
+                            }
+                        ]
+                    });
+                    
+                    // No need to continue loading since we cleared everything during upgrade
+                    return
+                }
+                
                 // Always try to load from store first
                 // This also initializes the FI store
                 console.log('💾 Loading data from store')
@@ -915,7 +895,7 @@ export default {
                 // Check if we have any data after loading from store
                 if (fiStore.funds.length === 0) {
                     // No data available, show helpful notification with refresh option
-                    console.log('� No fund data available in store')
+                    console.log('ℹ️ No fund data available in store')
                     showNoDataNotification()
                 } else {
                     console.log('✅ Fund data loaded successfully from store')
@@ -969,91 +949,51 @@ export default {
             restoreVisibleColumns();
         });
 
-        // Watch for changes in computed visible columns to save preferences
+        // Simple watch for column preferences without guards
         watch(
             () => visibleColumns.value,
             (newVal) => {
-                // Only save base columns (without quarter column)
-                const baseColumns = newVal.filter(col => col !== 'quarter')
-                fiVisibleColumns.value = [...baseColumns]
+                try {
+                    // Only save base columns (without quarter column)
+                    const baseColumns = newVal.filter(col => col !== 'quarter')
+                    fiVisibleColumns.value = [...baseColumns]
+                } catch (error) {
+                    console.error('❌ Error saving column preferences:', error)
+                }
             },
         );
 
         watch(loadedFromWeb, (newVal) => {
-            if (newVal && !isUpdatingQuarters.value) {
+            if (newVal) {
                 loadDataFromStore().then(() => console.log("✅ Data refreshed from store"));
             }
         });
-
-        // Watch for changes in selected quarters to ensure table updates
-        watch(selectedQuarters, (newVal, oldVal) => {
-            // Only log if there's an actual change to avoid spam
-            if (JSON.stringify(newVal) !== JSON.stringify(oldVal) && !isUpdatingQuarters.value) {
-                console.log('🔄 Watched quarter selection change:', {
-                    from: oldVal,
-                    to: newVal,
-                    fundsCount: storeFunds.value.length
-                })
-            }
-        }, { deep: true })
-
-        // Watch for changes in store funds data (throttled to prevent spam)
-        let lastFundsCount = 0
-        let lastWatchTime = 0
-        watch(storeFunds, (newVal) => {
-            const now = Date.now()
-            // Throttle to prevent excessive logging during bulk imports
-            if (newVal.length !== lastFundsCount && (now - lastWatchTime) > 1000) {
-                console.log('🔄 Store funds data changed:', {
-                    count: newVal.length,
-                    isMultiQuarter: isMultiQuarterView.value
-                })
-                lastFundsCount = newVal.length
-                lastWatchTime = now
-            }
-        })
 
         // Debug function to inspect data state
         const debugData = async () => {
             console.log('🐛 DEBUG: Current data state')
             console.log('Selected quarters:', selectedQuarters.value)
-            console.log('Quarter options:', quarterOptions.value)
+            console.log('Available quarters:', availableQuarters.value)
             console.log('Store funds count:', storeFunds.value.length)
             console.log('Computed rows count:', rows.value.length)
-            console.log('Available quarters:', availableQuarters.value)
             console.log('Current view label:', currentViewLabel.value)
             console.log('Is multi quarter view:', isMultiQuarterView.value)
             
-            // Check IndexedDB stores using the existing store instances
+            // Check IndexedDB stores - note: legacy LocalForage stores have been removed in database upgrade
             try {
-                const allImports = []
-                await fiStore.importsStore.iterate((value, key) => {
-                    allImports.push({ key, value })
-                })
-                console.log('All imports in IndexedDB:', allImports)
+                console.log('📊 FI Store state after database upgrade:')
+                console.log('  - Imports:', fiStore.imports?.length || 0)
+                console.log('  - Selected quarters:', fiStore.selectedQuarters?.length || 0)
+                console.log('  - Quarter states:', Object.keys(fiStore.quarterStates || {}).length)
                 
-                // Check the legacy fund stores 
-                let foundFundData = false
-                await fiStore.fundsStore.iterate((value, key) => {
-                    console.log(`Found legacy fund data for key ${key}:`, Array.isArray(value) ? value.length : 'not array')
-                    foundFundData = true
-                })
-                
-                // Check historical data count
-                let foundHistoricalData = false
-                await fiStore.fundsStore.iterate((value, key) => {
-                    if (key.includes('Q')) { // Quarter-based keys
-                        console.log(`Found historical fund data for key ${key}:`, Array.isArray(value) ? value.length : 'not array')
-                        foundHistoricalData = true
-                    }
-                })
-                
-                if (!foundFundData && !foundHistoricalData) {
-                    console.log('❌ No fund data found in any IndexedDB stores')
+                if (fiStore.imports?.length === 0) {
+                    console.log('ℹ️ No imports found - database upgrade has cleared legacy data')
+                } else {
+                    console.log('✅ New IndexedDB system is active with', fiStore.imports.length, 'import records')
                 }
                 
             } catch (error) {
-                console.error('❌ Error inspecting IndexedDB:', error)
+                console.error('❌ Error inspecting FI store state:', error)
             }
             
             $q.notify({
@@ -1073,7 +1013,7 @@ export default {
                 console.log(`🔄 Quarter ${quarter} import operation state: downloading (selection state unchanged)`)
                 
                 // Get quarter information
-                const quarterInfo = quarterOptions.value.find(q => q.quarter === quarter)
+                const quarterInfo = availableQuarters.value.find(q => q.quarter === quarter)
                 if (!quarterInfo) {
                     throw new Error(`Quarter ${quarter} not found`)
                 }
@@ -1145,7 +1085,7 @@ export default {
                 const confirmed = await new Promise((resolve) => {
                     $q.dialog({
                         title: 'Bekräfta borttagning',
-                        message: `Är du säker på att du vill ta bort all data för ${quarter}? Kvartalet kommer fortfarande att vara tillgängligt för omimport.`,
+                        message: `Är du säker på att du vill ta bort all data för ${quarter}? Kvartalet kommer fortfarande att vara tillgängligt för omport.`,
                         cancel: true,
                         persistent: true
                     }).onOk(() => resolve(true))
@@ -1195,15 +1135,23 @@ export default {
             }),
             // Quarter selection
             selectedQuarters,
-            selectedQuarterObjects,
-            quarterOptions,
-            onQuarterSelectionChange,
+            availableQuarters,
             // Historical tracking state
             isMultiQuarterView,
             currentViewLabel,
+            // Available quarters for chart component
+            availableQuarters,
             // Individual quarter management (Phase 1)
             importQuarter,
             deleteQuarter,
+            // Expanded row state
+            expandedRowTabs,
+            expandedFunds,
+            fundHoldingsCache,
+            handleRowExpansion,
+            getFundHoldings,
+            ensureTabState,
+            getAvailableQuarters,
             // Debug (only in dev)
             debugData
         };
@@ -1235,10 +1183,9 @@ export default {
     min-width: 400px !important;
 }
 
-.fixed-width-dropdown .q-item {
-    width: 400px !important;
-    max-width: 400px !important;
-    min-width: 400px !important;
+/* Add pointer cursor for clickable rows */
+.row-pointer {
+    cursor: pointer;
 }
 </style>
 

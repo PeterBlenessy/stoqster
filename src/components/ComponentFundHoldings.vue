@@ -40,16 +40,15 @@
 </template>
 
 <script>
-import { ref, toRef, onMounted, computed } from "vue";
+import { ref, toRef, computed } from "vue";
 import { fundHoldings } from "../api/fiAPI.js";
-import { storeToRefs } from "pinia";
-import { useFIStore } from "../stores/fi-store.js";
 
 export default {
     name: "ComponentFundHoldings",
     props: {
         fundName: { type: String, required: true },
         fundISIN: { type: String, required: false }, // Preferred for exact matching
+        holdings: { type: Array, default: () => [] }, // Holdings data passed from parent
     },
     setup(props) {
         const title = fundHoldings.title;
@@ -58,59 +57,20 @@ export default {
 
         const fundName = toRef(props, "fundName");
         const fundISIN = toRef(props, "fundISIN");
+        const holdingsData = toRef(props, "holdings");
         const loading = ref(false);
-
-        // Use FI store to get holdings data
-        const fiStore = useFIStore();
-        const { holdings, selectedQuarters } = storeToRefs(fiStore);
 
         // Filter holdings for this specific fund
         const rows = computed(() => {
-            if (!holdings.value || holdings.value.length === 0) {
+            if (!holdingsData.value || holdingsData.value.length === 0) {
                 return [];
             }
 
-            // Filter holdings by fund name or ISIN (prefer ISIN for accuracy)
-            const fundHoldings = holdings.value.filter(holding => {
-                if (fundISIN.value && holding.fundISIN) {
-                    return holding.fundISIN === fundISIN.value;
-                }
-                // Fallback to name matching if ISIN not available
-                return holding.fundName === fundName.value || holding.Fond_namn === fundName.value;
-            });
-
             // Add unique index for table row key
-            return fundHoldings.map((holding, index) => ({
+            return holdingsData.value.map((holding, index) => ({
                 ...holding,
                 index: index
             }));
-        });
-
-        async function loadData() {
-            console.time(`loadHoldingsFromStore(): ${fundName.value}`);
-            loading.value = true;
-            
-            try {
-                // Check if we have selected quarters with data
-                if (selectedQuarters.value.length === 0) {
-                    console.warn(`⚠️ No quarters selected for holdings display`);
-                    return;
-                }
-
-                // Holdings are already loaded in the store for selected quarters
-                // The computed property will automatically filter them
-                console.log(`✅ Holdings available for ${fundName.value}: ${rows.value.length} items`);
-                
-            } catch (error) {
-                console.error(`❌ Failed to load holdings for ${fundName.value}:`, error);
-            } finally {
-                loading.value = false;
-                console.timeEnd(`loadHoldingsFromStore(): ${fundName.value}`);
-            }
-        }
-
-        onMounted(() => {
-            loadData();
         });
 
         return {

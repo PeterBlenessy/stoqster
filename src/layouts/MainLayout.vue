@@ -208,7 +208,7 @@ const links = [
 if (import.meta.env.DEV) {
     links.push({
         title: "Database Testing",
-        caption: "Test IndexedDB",
+        caption: "Test IndexedDB & Migration Dialog",
         icon: "mdi-database-cog",
         iconUrl: "",
         path: "/testing",

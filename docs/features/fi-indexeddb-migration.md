@@ -4,6 +4,17 @@
 
 This document outlines the migration strategy from the current LocalForage-based storage to a dedicated IndexedDB database for FI fund data. The new system will provide optimized performance for time-series analysis and complex fund analytics.
 
+## **UPDATED APPROACH (Current)**
+
+**Decision**: Instead of migrating existing LocalForage data, users will download quarters again and import them using the new import implementation. This approach:
+
+1. **Simplifies Migration**: No complex data transformation from LocalForage
+2. **Ensures Data Quality**: Fresh data from source with proper English field mapping  
+3. **Avoids Legacy Issues**: No need to handle multiple data format versions
+4. **Provides Clean Start**: New IndexedDB implementation without legacy constraints
+
+The raw data format with Swedish key names gets transformed to generic English key names (via `FITransformation.js`) and imported to the new IndexedDB database, enabling more efficient database queries than the simple LocalForage key-value store.
+
 ## Database Code Architecture
 
 We will implement a **Generic IndexedDB Wrapper with Specialized Implementations** to provide a reusable foundation for current and future data sources.
@@ -143,25 +154,62 @@ class FIFundsDB extends IndexedDBManager {
    - ✅ **ADDED: Database drop/recreate functionality**
    - ✅ **IMPROVED: Simplified schema management**
 
-### Phase 2.5: Production Migration Implementation 🚧 **IN PROGRESS**
-1. **Create reusable migration dialog component**
-   - Generic MigrationDialog.vue for future use
-   - Progress tracking and error handling UI
-   - Consistent migration UX across the app
-2. **Implement full data migration**
-   - Remove testing limits (migrate all data)
-   - Add migration detection on Funds page entry
-   - Show migration dialog with progress feedback
-   - Set migration completion flag in localStorage
-3. **Migration completion handling**
-   - Switch to IndexedDB data access immediately after migration
-   - Add migration status checks in FI composables
-   - Maintain LocalForage data as backup (read-only)
+### Phase 2.5: Code Simplification and Bug Fixes 🚧 **IN PROGRESS**
+
+**Overview**: The implementation has become overly complex with reactive conflicts, mixed data models, and circular dependencies. This phase focuses on simplifying the codebase to make it maintainable and fix the "stuck" behavior when quarter selection changes.
+
+#### **2.5.1: Fix Field Names and Row Keys**
+- ✅ Change table row-key from `"Fond_namn"` to `"fundName"` in ComponentFunds.vue
+- ✅ Ensure unique row keys in multi-quarter view using compound keys like `${fundISIN}_${quarter}`
+- ✅ Update all field references to use English names from `fi-fund-data-mapping.md` as transformed by `FITransformation.js`
+- ✅ Remove fallback patterns like `props.row['Fond_navn'] || props.row['Fond_namn'] || props.row.fundName`
+- ✅ Update ComponentFundHoldings.vue to use consistent English field names
+- ✅ Verify fiAPI.js column definitions match the transformed English field names
+
+#### **2.5.2: Simplify Quarter Selection Logic** ✅ COMPLETED
+- ✅ **Eliminated complex `selectedQuarterObjects` computed getter/setter pattern** - replaced with simple computed property
+- ✅ **Removed unnecessary guard flags** - eliminated `isUpdatingQuarters` and `isUpdatingColumns` defensive programming
+- ✅ **Simplified `onQuarterSelectionChange`** - removed recursive update prevention and complex state checking
+- ✅ **Removed forced reactivity tracking patterns** - eliminated nextTick and complex timing logic
+- ✅ **Simplified watchers** - removed defensive guards from column preferences and data loading watchers
+- ✅ **Removed `setSelectedQuarters` function** - now uses direct Vue reactivity with store watchers
+- ✅ **Simplified q-select configuration** - added `emit-value` and `map-options` for proper quarter string handling
+- ✅ **Fixed empty chip display issue** - quarter selection now shows proper labels with underlying string values
+
+#### **⚠️ KNOWN ISSUE: Recursive Updates Error**
+- **Issue**: `Maximum recursive updates exceeded in component <ComponentFunds>` occurs during quarter selection changes
+- **Likely Cause**: Store watcher triggering data loading may create Vue reactivity loop
+- **Status**: Reverted failed fix attempts, needs investigation after completing remaining cleanups
+- **Impact**: Functionality works but console shows Vue warnings about recursive updates
+
+#### **2.5.3: Clean Up Row Expansion State** ✅ COMPLETED
+- ✅ **Removed duplicate expansion tracking** - eliminated custom `expandedFunds` Set and `fundHoldingsCache` Map for complex tracking
+- ✅ **Simplified row expansion to use Quasar's built-in system** - removed custom `handleRowExpansion` logic, now using standard `props.expand` 
+- ✅ **Updated `expandedRowTabs` to use unique fund identifier** - changed from `fundName` to `fundISIN` for uniqueness in multi-quarter view
+- ✅ **Simplified holdings loading** - now uses reactive on-demand loading triggered by component access rather than expansion events
+- ✅ **Removed manual expansion click handler** - expansion button now directly toggles `props.expand` using Quasar's standard pattern
+
+#### **2.5.4: Remove Circular Dependencies and Over-Engineering**
+- Eliminate watchers and computed properties that create circular dependencies
+- Remove defensive programming patterns that add unnecessary complexity
+- Remove computed properties that depend on other computed properties
+- Eliminate watchers that trigger other watchers
+- Use basic object properties instead of complex Map/Set structures for quarter states
+- Remove defensive null checking where data structure is guaranteed
+- **Remove redundant data enrichment** - data already has `quarter`/`quarterDisplay` from transformation, no need to add `_quarter`/`_displayQuarter`
+
+#### **2.5.5: Performance Optimization** ✅ COMPLETED
+- ✅ **Fixed IndexedDB query performance** - loadHoldingsForFund() improved from 2,394ms to 127ms (19x faster)
+- ✅ **Optimized query selectivity logic** - fundISIN index now used as primary filter instead of quarter
+- ✅ **Replaced cursor iteration with getAll()** - eliminated slow record-by-record processing
+- ✅ **Implemented proper IndexedDB range queries** - using IDBKeyRange for optimized filtering
+- ✅ **Fixed embarrassing LocalForage-style implementation** - now uses proper database indexes
+- ✅ **Reduced candidate set size** - from 107,242 candidates to 237 candidates for same query
 
 ### Phase 3: Direct Component Migration (SIMPLIFIED)
 1. **Update data access layer**
    - Modify FI composables to use IndexedDB directly
-   - Remove dual-storage complexity
+   - Remove dual-storage complexity  
    - Add fallback error handling for data access
 2. **Migrate UI components**
    - Update fund timeline and performance charts
@@ -172,7 +220,22 @@ class FIFundsDB extends IndexedDBManager {
    - Performance validation with IndexedDB
    - Edge case and error condition testing
 
-### Phase 4: Cleanup and Optimization (SIMPLIFIED)
+### Phase 4: Production Deployment (NEW)
+1. **Create reusable migration dialog component**
+   - Generic MigrationDialog.vue for future use
+   - Progress tracking and error handling UI
+   - Consistent migration UX across the app
+2. **Implement full data migration workflow**
+   - Remove testing limits (migrate all data)
+   - Add migration detection on Funds page entry
+   - Show migration dialog with progress feedback
+   - Set migration completion flag in localStorage
+3. **Migration completion handling**
+   - Switch to IndexedDB data access immediately after migration
+   - Add migration status checks in FI composables
+   - Maintain LocalForage data as backup (read-only)
+
+### Phase 5: Cleanup and Optimization (SIMPLIFIED)
 1. **Remove old system dependencies**
    - Remove LocalForage FI data write operations
    - Keep LocalForage data as read-only backup initially
@@ -186,9 +249,45 @@ class FIFundsDB extends IndexedDBManager {
    - Create troubleshooting guides
    - Document new query patterns and capabilities
 
+## Key Issues Identified and Solutions
+
+During implementation, the codebase evolved into an overly complex system with multiple reactive conflicts and circular dependencies. The following critical issues have been identified:
+
+### **1. Row Key Conflicts in Table Expansion**
+- **Issue**: Table uses Swedish field names (`Fond_namn`) instead of English (`fundName`)
+- **Impact**: In multi-quarter view, duplicate fund names create key conflicts breaking row expansion
+- **Solution**: Update to English field names and use compound keys for uniqueness
+
+### **2. Overly Complex Reactive State Management**  
+- **Issue**: Multiple layers of computed properties, watchers, and guards create circular dependencies
+- **Impact**: Quarter selection changes cause infinite loops and "stuck" behavior
+- **Solution**: Simplify to basic reactive refs without complex computed getter/setters
+
+### **3. Mixed Data Models and Inconsistent Field Names**
+- **Issue**: Code handles both Swedish and English field names with complex fallback patterns
+- **Impact**: Makes debugging difficult and creates unnecessary complexity
+- **Solution**: Use only English field names throughout with proper data transformation
+
+### **4. Row Expansion State Management Issues**
+- **Issue**: Multiple competing systems for tracking row expansion state
+- **Impact**: All rows expand when one expands, state gets out of sync
+- **Solution**: Use only Quasar's built-in expansion system with unique row keys
+
+### **5. Quarter Selection Logic Complexity**
+- **Issue**: Overly defensive programming with too many guards and state checks
+- **Impact**: Simple operations become complex and brittle
+- **Solution**: Simplify to straightforward selection without defensive patterns
+
+### **6. Performance Issues from Excessive Reactivity**
+- **Issue**: Computed properties recalculate too frequently, excessive use of `.map()` operations
+- **Impact**: UI becomes unresponsive during quarter changes
+- **Solution**: Reduce reactive computation overhead and use direct data access
+
 ## Key Architectural Improvements Made During Implementation
 
-During development, we identified and implemented several improvements to the original plan:
+During development, we identified and implemented several improvements to the original plan, but also discovered significant complexity issues that need to be addressed:
+
+### **Positive Improvements Made**
 
 ### 1. **Simplified Primary Key Strategy**
 - **Original Plan**: Complex composite primary keys (fundISIN#quarter#year)
@@ -219,7 +318,24 @@ During development, we identified and implemented several improvements to the or
 - **Benefits**: Accurate data transformation, no made-up fields
 - **Impact**: Higher data quality, better consistency with source documentation
 
-These improvements resulted in a more robust, maintainable, and debuggable solution than originally planned.
+### **Critical Issues Discovered**
+
+### 6. **Reactive System Complexity**
+- **Issue**: Implementation became overly defensive with circular computed properties
+- **Impact**: Quarter selection changes cause UI to freeze or become unresponsive
+- **Required Fix**: Simplify reactive state management and remove circular dependencies
+
+### 7. **Mixed Data Model Support**
+- **Issue**: Supporting both Swedish and English field names created complex fallback logic
+- **Impact**: Debugging is difficult, code is hard to maintain
+- **Required Fix**: Use only English field names with proper data transformation
+
+### 8. **Row Expansion Conflicts**
+- **Issue**: Multiple expansion tracking systems compete and create state conflicts
+- **Impact**: Table row expansion doesn't work correctly in multi-quarter view
+- **Required Fix**: Consolidate to single expansion system with unique row keys
+
+These improvements resulted in a more robust database layer, but the component layer needs significant simplification to be maintainable and performant.
 
 ## Technical Specifications
 
@@ -269,3 +385,22 @@ These improvements resulted in a more robust, maintainable, and debuggable solut
 - Plan for rollback at each migration phase
 
 This migration strategy provides a solid foundation for moving to IndexedDB while maintaining data integrity and system performance throughout the transition.
+
+## **Current Status Summary**
+
+- ✅ **Database Layer**: IndexedDB infrastructure and data transformation pipeline completed
+- ✅ **Import System**: New quarter import functionality working with English field mapping
+- ✅ **Quarter Selection**: Simplified to use proper Vue + Pinia reactivity patterns (with known recursive updates warning)
+- 🚧 **Component Layer**: Partially simplified, still requires Phase 2.5.3 and 2.5.4 cleanup
+- ⚠️ **UI Stability**: Quarter selection works functionally but produces Vue recursive update warnings
+
+## **Immediate Next Steps**
+
+**Priority 1**: Complete remaining Phase 2.5 cleanups
+1. **Phase 2.5.3**: Clean up row expansion state management
+2. **Phase 2.5.4**: Remove circular dependencies and over-engineering patterns
+3. **Address recursive updates warning**: Investigate Vue reactivity loop after cleanups complete
+
+**Priority 2**: Proceed to Phase 3 migration components once UI layer is fully simplified
+
+The focus is now on simplifying the overly complex reactive implementation that evolved during development, rather than adding new features. Once the component layer is simplified and stable, the remaining migration phases can proceed smoothly.

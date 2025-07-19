@@ -4,14 +4,6 @@
     </q-page>
 </template>
 
-<script>
-
+<script setup>
 import ComponentFunds from '../components/ComponentFunds.vue'
-
-export default {
-    name: 'PageFunds',
-    components: {
-        ComponentFunds,
-    },
-}
 </script>

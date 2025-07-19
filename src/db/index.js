@@ -29,9 +29,6 @@ export {
 } from './fi-funds/FIFundsDB.js'
 export { 
   FI_FUNDS_SCHEMA,
-  generateFundKey,
-  generateHoldingKey,
-  parseCompositeKey,
   FI_QUERY_PATTERNS
 } from './fi-funds/FIFundsSchema.js'
 export {
