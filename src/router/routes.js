@@ -1,26 +1,26 @@
 const routes = [
-  {
-    path: '/',
-    component: () => import('../layouts/MainLayout.vue'),
-    children: [
-      { path: '', component: () => import('../pages/PageDashboard.vue') },
-      { path: 'ibindex', component: () => import('../pages/PageIbindex.vue') },
-      { path: 'fbindex', component: () => import('../pages/PageFbindex.vue') },
-      { path: 'funds', component: () => import('../pages/PageFunds.vue') },
-      { path: 'stocks', component: () => import('../pages/PageStocks.vue') },
-      // Only include testing route in development mode
-      ...(import.meta.env.DEV ? [
-        { path: 'testing', component: () => import('../components/DatabaseTesting.vue') }
-      ] : []),
-    ]
-  },
+    {
+        path: '/',
+        component: () => import('../layouts/MainLayout.vue'),
+        children: [
+            { path: '', component: () => import('../pages/PageDashboard.vue') },
+            { path: 'ibindex', component: () => import('../pages/PageIbindex.vue') },
+            { path: 'fbindex', component: () => import('../pages/PageFbindex.vue') },
+            { path: 'funds', component: () => import('../pages/PageFunds.vue') },
+            { path: 'stocks', component: () => import('../pages/PageStocks.vue') },
+            // Only include testing route in development mode
+            ...(import.meta.env.DEV ? [
+                { path: 'testing', component: () => import('../components/DatabaseTesting.vue') }
+            ] : []),
+        ]
+    },
 
-  // Always leave this as last one,
-  // but you can also remove it
-  {
-    path: '/:catchAll(.*)*',
-    component: () => import('../pages/PageDashboard.vue')
-  }
+    // Always leave this as last one,
+    // but you can also remove it
+    {
+        path: '/:catchAll(.*)*',
+        component: () => import('../pages/PageDashboard.vue')
+    }
 ]
 
 export default routes
