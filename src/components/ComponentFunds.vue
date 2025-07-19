@@ -267,7 +267,7 @@
                             <!-- Tab headers -->
                             <q-tabs
                                 v-model="expandedRowTabs[props.row.fundISIN]"
-                                dense
+                                dense inline-label
                                 class="text-grey"
                                 active-color="primary"
                                 indicator-color="primary"
@@ -275,7 +275,7 @@
                                 narrow-indicator
                             >
                                 <q-tab name="holdings" icon="mdi-briefcase-outline" label="Innehav" />
-                                <q-tab name="metrics" icon="mdi-chart-line" label="Mätningar" />
+                                <q-tab name="metrics" icon="mdi-chart-line" label="Diagram" />
                             </q-tabs>
 
                             <q-separator />
@@ -314,7 +314,7 @@
 
 <script>
 import { fiFunds, fiDownload, funds } from "../api/fiAPI.js";
-import { ref, onMounted, watch, computed, nextTick } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useQuasar } from "quasar";
 import JSZip from "jszip";
 import X2JS from "x2js"; //'../libs/xml2json.js'
