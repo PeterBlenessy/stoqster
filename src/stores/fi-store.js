@@ -148,17 +148,6 @@ export const useFIStore = defineStore('fi', () => {
         } else {
           // Use data state (imported/available)
           finalState = dataState
-          
-          // Safeguard: If data exists but state shows as non-imported, fix the state
-          if (hasActualData && finalState !== 'imported') {
-            finalState = 'imported'
-            // Clear any stale import operation state - update object property
-            quarterStates.value[quarter] = {
-              state: 'imported',
-              progress: null,
-              error: null
-            }
-          }
         }
         
         return {
@@ -169,7 +158,7 @@ export const useFIStore = defineStore('fi', () => {
           importedAt: imp.importedAt,
           publishedDate: imp.sourceDate, // Keep the publication date for reference
           sourceDate: imp.sourceDate, // Also as sourceDate for consistency
-          url: imp.sourceUrl, // ZIP file URL for downloading
+          sourceUrl: imp.sourceUrl, // ZIP file URL for downloading
           fileName: imp.fileName, // ZIP filename
           // Final state for UI display (combines data and import operation state)
           state: finalState,
@@ -219,14 +208,6 @@ export const useFIStore = defineStore('fi', () => {
     }).filter(Boolean)
   })
 
-  const currentQuarters = computed(() => {
-    if (selectedQuarters.value.length === 0) {
-      // Default to latest quarter if available
-      const quarters = availableQuarters.value
-      return quarters.length > 0 ? [quarters[0].quarter] : []
-    }
-    return selectedQuarters.value
-  })
 
   const isMultiQuarterView = computed(() => {
     return currentSourceDates.value.length > 1
@@ -279,7 +260,7 @@ export const useFIStore = defineStore('fi', () => {
       }
       
       // Load data for current selection
-      await loadDataForQuarters()
+      await loadDataForQuarters(selectedQuarters.value)
       
       console.log('✅ FI store initialized')
     } catch (err) {
@@ -316,7 +297,7 @@ export const useFIStore = defineStore('fi', () => {
   /**
    * Load data for selected quarters (supports multiple quarters)
    */
-  const loadDataForQuarters = async (quarters = null) => {
+  const loadDataForQuarters = async (quarters) => {
     // Prevent recursive data loading
     if (isLoadingData.value) {
       console.log('⚠️ Already loading data, skipping to prevent recursion')
@@ -326,11 +307,11 @@ export const useFIStore = defineStore('fi', () => {
     try {
       isLoadingData.value = true
       isLoadingHistorical.value = true
-      const quartersToLoad = quarters || currentQuarters.value
+      const quartersToLoad = quarters
       
       console.log('🔄 Loading data for quarters:', quartersToLoad)
       
-      if (quartersToLoad.length === 0) {
+      if (!quartersToLoad || quartersToLoad.length === 0) {
         // No quarters to load, clear data
         funds.value = []
         holdings.value = []
@@ -787,7 +768,7 @@ export const useFIStore = defineStore('fi', () => {
       
       // Reload data for current selection (will show empty data for deleted quarter if selected)
       if (selectedQuarters.value.length > 0) {
-        await loadDataForQuarters()
+        await loadDataForQuarters(selectedQuarters.value)
         console.log(`📊 Reloaded data for selected quarters (${quarter} will show empty if selected)`)
       } else {
         // Clear funds and holdings if no quarters selected
@@ -934,16 +915,12 @@ export const useFIStore = defineStore('fi', () => {
   }, { deep: true })
 
   watch(selectedQuarters, async (newQuarters, oldQuarters) => {
-    if (!isLoadingFromStorage.value && !isUpdatingState.value) {
-      // Persist to localStorage
-      persistSelectedQuarters()
-      
-      // Reload data for the new selection automatically
-      if (JSON.stringify(newQuarters) !== JSON.stringify(oldQuarters)) {
-        console.log('🔄 Selected quarters changed, auto-loading data:', newQuarters)
-        await loadDataForQuarters(newQuarters)
-        console.log('✅ Data automatically loaded for new quarter selection')
-      }
+    // Only persist and load if the selection actually changed
+    persistSelectedQuarters()
+    if (JSON.stringify(newQuarters) !== JSON.stringify(oldQuarters)) {
+      console.log('🔄 Selected quarters changed, auto-loading data:', newQuarters)
+      await loadDataForQuarters(newQuarters)
+      console.log('✅ Data automatically loaded for new quarter selection')
     }
   }, { deep: true })
 
@@ -1068,7 +1045,6 @@ export const useFIStore = defineStore('fi', () => {
     availableQuarters,
     latestQuarter,
     currentSourceDates,
-    currentQuarters,
     isMultiQuarterView,
     currentViewLabel,
     
