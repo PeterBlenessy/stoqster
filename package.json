@@ -9,6 +9,10 @@
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview",
+        "test": "vitest",
+        "test:run": "vitest run",
+        "test:ui": "vitest --ui",
+        "test:coverage": "vitest run --coverage",
         "tauri": "tauri",
         "release:draft": "CHANGELOG=$(sed -n \"/^## v$npm_package_version/,/^## /p\" CHANGELOG.md | sed '1d;$d') && gh release create v$npm_package_version --draft --title v$npm_package_version --notes \"$CHANGELOG\"",
         "release:publish": "gh release edit v$npm_package_version --draft=false --latest",
@@ -43,10 +47,14 @@
         "@quasar/vite-plugin": "^1.9.0",
         "@tauri-apps/cli": "^2.0.0",
         "@vitejs/plugin-vue": "^6.0.0",
+        "@vitest/ui": "^3.2.4",
         "eslint": "^9.29.0",
+        "fake-indexeddb": "^6.0.1",
+        "jsdom": "^26.1.0",
         "sass": "^1.89.2",
         "typescript": "^5.8.3",
-        "vite": "^7.0.0"
+        "vite": "^7.0.0",
+        "vitest": "^3.2.4"
     },
     "browserslist": [
         "last 10 Chrome versions",

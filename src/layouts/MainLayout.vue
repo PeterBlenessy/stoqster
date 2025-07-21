@@ -204,6 +204,17 @@ const links = [
     },
 ];
 
+// Add development-only menu items
+if (import.meta.env.DEV) {
+    links.push({
+        title: "Database Testing",
+        caption: "Test IndexedDB & Migration Dialog",
+        icon: "mdi-database-cog",
+        iconUrl: "",
+        path: "/testing",
+    });
+}
+
 import { onMounted, onUnmounted, watch, ref, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "../stores/settings-store.js";

@@ -28,7 +28,7 @@ When working on this project, always start by:
 ### Making Changes Safely
 
 #### Before Making Changes
-- [ ] Run `yarn build` to ensure the project builds successfully
+- [ ] Run `yarn tauri build` to ensure the project builds successfully
 - [ ] Check `git status` to understand current repository state
 - [ ] Read relevant documentation in docs/ directory
 - [ ] Identify similar existing patterns in the codebase
@@ -36,8 +36,7 @@ When working on this project, always start by:
 #### Change Strategy
 - [ ] Make minimal, surgical changes that preserve existing functionality
 - [ ] Follow established patterns and conventions
-- [ ] Check if dev server is running before starting: `ps aux | grep -E "(tauri|vite)" | grep -v grep`
-- [ ] Test changes incrementally with `yarn tauri dev` (only if not already running)
+- [ ] Test changes incrementally with `yarn tauri dev`
 - [ ] Validate that changes don't break existing features
 
 #### After Making Changes
@@ -50,26 +49,29 @@ When working on this project, always start by:
 
 #### Build Failures
 ```bash
-# Clear dependencies and reinstall
+# For Tauri projects, ALWAYS use yarn tauri build (not yarn build)
+yarn tauri build
+
+# If build fails, clear dependencies and reinstall
 rm -rf node_modules yarn.lock
 yarn install
 
 # Clear Tauri cache
 rm -rf src-tauri/target
 
-# Check for TypeScript/ESLint errors
+# Check for TypeScript/ESLint errors first with frontend build
 yarn build
+
+# Then test full Tauri build
+yarn tauri build
 ```
 
 #### Development Server Issues
 ```bash
-# Check if development server is already running
-ps aux | grep -E "(tauri|vite)" | grep -v grep
-
-# Kill existing processes if needed
+# Kill existing processes
 pkill -f "vite|tauri"
 
-# Restart development server (only if not already running)
+# Restart development server
 yarn tauri dev
 ```
 
