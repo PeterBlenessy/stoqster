@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.9.0 - 2025-07-15
+- Migrated from LocalForage to IndexedDB for FI funds
+
 ## v1.8.0 - 2025-07-15
 Added support for importing and listing all published quarters for funds and their holdings on FI.
 
