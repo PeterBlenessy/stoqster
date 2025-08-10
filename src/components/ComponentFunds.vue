@@ -69,10 +69,7 @@
                                             <div class="text-weight-medium" style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ opt.label }}</div>
                                             <div class="row items-center q-gutter-xs" style="flex-shrink: 0; width: auto;">
                                                 <!-- Show status based on import operation state -->
-                                                <div v-if="opt.importState === 'imported' || opt.hasData" class="text-caption text-grey-6">
-                                                    {{ opt.recordCount }} fonder
-                                                </div>
-                                                <div v-else-if="opt.importState === 'downloading'" class="text-caption text-grey-6">
+                                                <div v-if="opt.importState === 'downloading'" class="text-caption text-grey-6">
                                                     Laddar ner...
                                                 </div>
                                                 <div v-else-if="opt.importState === 'extracting'" class="text-caption text-grey-6">
@@ -81,8 +78,14 @@
                                                 <div v-else-if="opt.importState === 'importing'" class="text-caption text-grey-6">
                                                     Importerar...
                                                 </div>
+                                                <div v-else-if="opt.importState === 'deleting'" class="text-caption text-grey-6">
+                                                    Tar bort...
+                                                </div>
                                                 <div v-else-if="opt.importState === 'error'" class="text-caption text-red-6">
                                                     Fel uppstod
+                                                </div>
+                                                <div v-else-if="opt.importState === 'imported' || opt.hasData" class="text-caption text-grey-6">
+                                                    {{ opt.recordCount }} fonder
                                                 </div>
                                                 
                                                 <!-- Action icons based on import operation state (not selection state) -->
@@ -109,7 +112,13 @@
                                                     color="orange"
                                                     :loading="true"
                                                 >
-                                                    <q-tooltip>Importerar {{ opt.label }}...</q-tooltip>
+                                                    <q-tooltip>
+                                                        <span v-if="opt.importState === 'downloading'">Laddar ner {{ opt.label }}...</span>
+                                                        <span v-else-if="opt.importState === 'extracting'">Extraherar {{ opt.label }}...</span>
+                                                        <span v-else-if="opt.importState === 'importing'">Importerar {{ opt.label }}...</span>
+                                                        <span v-else-if="opt.importState === 'deleting'">Tar bort {{ opt.label }}...</span>
+                                                        <span v-else>Bearbetar {{ opt.label }}...</span>
+                                                    </q-tooltip>
                                                 </q-btn>
                                                 
                                                 <q-btn
@@ -275,7 +284,7 @@
                                 narrow-indicator
                             >
                                 <q-tab name="holdings" icon="mdi-briefcase-outline" label="Innehav" />
-                                <q-tab name="metrics" icon="mdi-chart-line" label="Diagram" />
+                                <q-tab name="metrics" icon="mdi-chart-line" label="Trend" />
                             </q-tabs>
 
                             <q-separator />
@@ -939,14 +948,71 @@ export default {
             });
         }
 
+        // Check for and handle interrupted operations on component mount
+        const handleInterruptedOperations = async () => {
+            try {
+                console.log('🔄 Checking for interrupted operations...')
+                
+                const activeStates = ['downloading', 'extracting', 'importing', 'deleting']
+                const interruptedQuarters = []
+                
+                // Check all available quarters for interrupted operations
+                for (const quarterInfo of availableQuarters.value) {
+                    if (activeStates.includes(quarterInfo.importState)) {
+                        interruptedQuarters.push({
+                            quarter: quarterInfo.quarter,
+                            state: quarterInfo.importState,
+                            label: quarterInfo.label
+                        })
+                    }
+                }
+                
+                if (interruptedQuarters.length > 0) {
+                    console.log(`⚠️ Found ${interruptedQuarters.length} interrupted operations:`, interruptedQuarters)
+                    
+                    for (const interrupted of interruptedQuarters) {
+                        console.log(`🔄 Resetting interrupted operation for ${interrupted.quarter} (was: ${interrupted.state})`)
+                        
+                        // Reset to appropriate state based on what was being done
+                        if (interrupted.state === 'deleting') {
+                            // If deletion was interrupted, reset to imported state if data exists
+                            const hasData = await fiStore.hasQuarter(interrupted.quarter)
+                            const newState = hasData ? 'imported' : 'available'
+                            fiStore.setQuarterState(interrupted.quarter, newState, null, null)
+                            console.log(`✅ Reset interrupted deletion for ${interrupted.quarter} to: ${newState}`)
+                        } else {
+                            // If import was interrupted, reset to available state
+                            fiStore.setQuarterState(interrupted.quarter, 'available', null, null)
+                            console.log(`✅ Reset interrupted import for ${interrupted.quarter} to: available`)
+                        }
+                    }
+                    
+                    // Show notification about reset operations
+                    $q.notify({
+                        message: `Återställde ${interruptedQuarters.length} avbrutna operationer`,
+                        caption: 'Operationerna kan nu startas om',
+                        color: 'orange',
+                        icon: 'mdi-restart',
+                        timeout: 5000,
+                        position: 'top'
+                    })
+                } else {
+                    console.log('✅ No interrupted operations found')
+                }
+            } catch (error) {
+                console.error('❌ Failed to handle interrupted operations:', error)
+            }
+        }
+
         // Restore visible columns from Pinia store (simplified since we use computed)
         const restoreVisibleColumns = () => {
             console.log('✅ Visible columns restored via computed properties')
         }
 
-        onMounted(() => {
+        onMounted(async () => {
             loadData();
             restoreVisibleColumns();
+            await handleInterruptedOperations();
         });
 
         // Simple watch for column preferences without guards
@@ -1006,6 +1072,18 @@ export default {
         // Individual quarter import function (completely independent of selection state)
         const importQuarter = async (quarter) => {
             try {
+                // Check if quarter is already being processed
+                const quarterStatus = fiStore.getQuarterStatus(quarter)
+                if (quarterStatus.isImporting) {
+                    $q.notify({
+                        type: "warning",
+                        message: `${quarter} bearbetas redan`,
+                        caption: 'Vänta tills operationen är klar',
+                        timeout: 3000
+                    })
+                    return
+                }
+                
                 console.log(`🔄 Starting individual IMPORT operation for quarter: ${quarter} (completely independent of selection state)`)
                 
                 // Set import operation state (has NO effect on selection state)
@@ -1081,6 +1159,18 @@ export default {
         // Delete quarter data function (completely independent of selection state)
         const deleteQuarter = async (quarter) => {
             try {
+                // Check if quarter is already being processed
+                const quarterStatus = fiStore.getQuarterStatus(quarter)
+                if (quarterStatus.isImporting) {
+                    $q.notify({
+                        type: "warning",
+                        message: `${quarter} bearbetas redan`,
+                        caption: 'Vänta tills operationen är klar',
+                        timeout: 3000
+                    })
+                    return
+                }
+                
                 // Show confirmation dialog
                 const confirmed = await new Promise((resolve) => {
                     $q.dialog({

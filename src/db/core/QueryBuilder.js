@@ -113,8 +113,8 @@ export class QueryBuilder {
             console.log('🔍 Executing query on store:', this.storeName, 'with filters:', this.filters)
 
             if (this.filters.length === 0) {
-                // No filters, get all records
-                const allRecords = await this.db.getAll(this.storeName)
+                // No filters, get all records with their keys
+                const allRecords = await this.db.getAllWithKeys(this.storeName)
                 return this.postProcessResults(allRecords)
             }
 
@@ -143,7 +143,8 @@ export class QueryBuilder {
         const { field, operator, value } = filter
 
         if (operator === '=') {
-            return this.db.query(this.storeName, field, value)
+            // Use queryWithKeys to get records with their primary keys
+            return this.db.queryWithKeys(this.storeName, field, value)
         }
 
         // For other operators, use cursor-based approach
@@ -187,12 +188,21 @@ export class QueryBuilder {
                     return this.executeCursorFallback(index, field, operator, value)
             }
 
-            // Use getAll with range for much better performance
+            // Use cursor with range for records with primary keys
             return new Promise((resolve, reject) => {
-                const request = index.getAll(keyRange)
+                const results = []
+                const request = index.openCursor(keyRange)
 
-                request.onsuccess = () => {
-                    resolve(request.result || [])
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result
+                    if (cursor) {
+                        // Add the primary key as 'id' to the record
+                        const record = { ...cursor.value, id: cursor.primaryKey }
+                        results.push(record)
+                        cursor.continue()
+                    } else {
+                        resolve(results)
+                    }
                 }
 
                 request.onerror = () => reject(new Error(`Range query failed: ${request.error}`))
@@ -226,7 +236,9 @@ export class QueryBuilder {
                     const fieldValue = this.getFieldValue(record, field)
 
                     if (this.matchesFilter(fieldValue, operator, value)) {
-                        results.push(record)
+                        // Add the primary key as 'id' to the record
+                        const recordWithKey = { ...record, id: cursorResult.primaryKey || cursorResult.key }
+                        results.push(recordWithKey)
                     }
 
                     cursorResult.continue()
@@ -258,8 +270,8 @@ export class QueryBuilder {
         // Execute primary filter using index
         let candidateResults
         if (primaryFilter.operator === '=') {
-            // Use index directly for equality
-            candidateResults = await this.db.query(this.storeName, primaryFilter.field, primaryFilter.value)
+            // Use index directly for equality with primary keys
+            candidateResults = await this.db.queryWithKeys(this.storeName, primaryFilter.field, primaryFilter.value)
         } else {
             // Use cursor on index for range queries
             candidateResults = await this.executeCursorQuery(primaryFilter.field, primaryFilter.operator, primaryFilter.value)

@@ -8,6 +8,7 @@
 
 import { IndexedDBManager } from '../core/IndexedDBManager.js'
 import { createQuery } from '../core/QueryBuilder.js'
+import { compareQuarters } from '../../api/fiHistoricalUtils.js'
 import {
     FI_FUNDS_SCHEMA,
     FI_QUERY_PATTERNS
@@ -75,16 +76,14 @@ export class FIFundsDB extends IndexedDBManager {
      * Get fund data by ISIN and quarter
      * @param {string} fundISIN
      * @param {string} quarter
-     * @param {number} year
      * @returns {Promise<Object|null>}
      */
-    async getFund(fundISIN, quarter, year) {
+    async getFund(fundISIN, quarter) {
         try {
             // Use compound index to find fund by ISIN and quarter
             const query = createQuery(this, 'funds')
                 .equals('fundISIN', fundISIN)
                 .equals('quarter', quarter)
-                .equals('year', year)
 
             const results = await query.execute()
             return results.length > 0 ? results[0] : null
@@ -105,11 +104,8 @@ export class FIFundsDB extends IndexedDBManager {
 
             const timeline = await this.query('funds', 'fundISIN', fundISIN)
 
-            // Sort by year and quarter
-            timeline.sort((a, b) => {
-                if (a.year !== b.year) return a.year - b.year
-                return a.quarter.localeCompare(b.quarter)
-            })
+            // Sort by quarter using proper quarter comparison
+            timeline.sort((a, b) => compareQuarters(a.quarter, b.quarter))
 
             console.log('✅ Retrieved timeline with', timeline.length, 'quarters')
             return timeline
@@ -146,17 +142,15 @@ export class FIFundsDB extends IndexedDBManager {
      * Get funds by management company
      * @param {string} managementCompany
      * @param {string} quarter - Optional quarter filter
-     * @param {number} year - Optional year filter
      * @returns {Promise<Array>}
      */
-    async getFundsByCompany(managementCompany, quarter = null, year = null) {
+    async getFundsByCompany(managementCompany, quarter = null) {
         try {
             let query = createQuery(this, 'funds')
                 .equals('managementCompany', managementCompany)
                 .orderBy('fundName')
 
             if (quarter) query = query.equals('quarter', quarter)
-            if (year) query = query.equals('year', year)
 
             return await query.execute()
         } catch (error) {
@@ -169,15 +163,13 @@ export class FIFundsDB extends IndexedDBManager {
      * Search funds by name pattern
      * @param {string} namePattern
      * @param {string} quarter - Optional quarter filter
-     * @param {number} year - Optional year filter
      * @returns {Promise<Array>}
      */
-    async searchFunds(namePattern, quarter = null, year = null) {
+    async searchFunds(namePattern, quarter = null) {
         try {
             let query = createQuery(this, 'funds')
 
             if (quarter) query = query.equals('quarter', quarter)
-            if (year) query = query.equals('year', year)
 
             const funds = await query.execute()
 
@@ -195,19 +187,18 @@ export class FIFundsDB extends IndexedDBManager {
     // ==================== HOLDINGS OPERATIONS ====================
 
     /**
-     * Add or update holding data
-     * @param {Object} holdingData - Raw holding data (Swedish format)
-     * @param {string} fundISIN - Fund ISIN to associate with
+     * Add holding data
+     * @param {Object} holdingData - Raw holding data from FI
+     * @param {string} fundISIN - Fund ISIN
      * @param {string} quarter - Quarter for the holding
-     * @param {number} year - Year for the holding
      * @returns {Promise<string>} The holding key
      */
-    async addHolding(holdingData, fundISIN, quarter, year) {
+    async addHolding(holdingData, fundISIN, quarter) {
         try {
             console.log('📦 Adding holding data for fund:', fundISIN)
 
             // Transform Swedish data to English format
-            const transformedData = transformHoldingData(holdingData, fundISIN, quarter, year)
+            const transformedData = transformHoldingData(holdingData, fundISIN, quarter)
 
             // Use auto-increment keys - no composite key generation needed
 
@@ -231,17 +222,15 @@ export class FIFundsDB extends IndexedDBManager {
      * Get all holdings for a fund in a specific quarter
      * @param {string} fundISIN
      * @param {string} quarter
-     * @param {number} year
      * @returns {Promise<Array>}
      */
-    async getFundHoldings(fundISIN, quarter, year) {
+    async getFundHoldings(fundISIN, quarter) {
         try {
-            console.log('🔍 Getting holdings for fund:', fundISIN, quarter, year)
+            console.log('🔍 Getting holdings for fund:', fundISIN, quarter)
 
             const query = createQuery(this, 'holdings')
                 .equals('fundISIN', fundISIN)
                 .equals('quarter', quarter)
-                .equals('year', year)
                 .orderBy('percentageOfFund', 'desc')
 
             let holdings = await query.execute()
@@ -287,16 +276,14 @@ export class FIFundsDB extends IndexedDBManager {
     /**
      * Get sector allocation for a specific quarter
      * @param {string} quarter
-     * @param {number} year
      * @returns {Promise<Object>} Sector allocation summary
      */
-    async getSectorAllocation(quarter, year) {
+    async getSectorAllocation(quarter) {
         try {
-            console.log('🔍 Getting sector allocation for:', quarter, year)
+            console.log('🔍 Getting sector allocation for:', quarter)
 
             const query = createQuery(this, 'holdings')
                 .equals('quarter', quarter)
-                .equals('year', year)
 
             const holdings = await query.execute()
 

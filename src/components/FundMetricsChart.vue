@@ -1,14 +1,14 @@
 <template>
   <div class="fund-metrics-chart">
     <div class="text-h6 q-mb-md">
-      Diagram för {{ fundIsin }}
+      Trend för {{ fundIsin }}
     </div>
     
     <q-card flat class="q-pa-md bg-grey-1">
       <div class="text-center text-grey-6">
         <q-icon name="mdi-chart-line" size="3rem" class="q-mb-md" />
         <div class="text-body1">
-          Diagram kommer snart
+          Trenddiagram kommer snart
         </div>
         <div class="text-caption q-mt-sm">
           Historisk prestanda och nyckeltal för fonden kommer att visas här

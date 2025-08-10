@@ -75,13 +75,11 @@ export const useFIStore = defineStore('fi', () => {
     // Helper function to persist import metadata to localStorage
     const persistImportMetadata = () => {
         if (isLoadingFromStorage.value) {
-            console.log('⚠️ Skipping imports persistence during storage load')
             return
         }
 
         try {
             setLocalStorage(FI_STORAGE_KEYS.IMPORT_METADATA, imports.value)
-            console.log(`✅ Import metadata persisted to localStorage (${imports.value.length} records)`)
         } catch (error) {
             console.error('❌ Failed to persist import metadata:', error)
         }
@@ -90,14 +88,12 @@ export const useFIStore = defineStore('fi', () => {
     // Helper function to persist quarter states to localStorage
     const persistQuarterStates = () => {
         if (isLoadingFromStorage.value) {
-            console.log('⚠️ Skipping quarter states persistence during storage load')
             return
         }
 
         try {
             // quarterStates is now an object, so we can persist it directly
             setLocalStorage(FI_STORAGE_KEYS.QUARTER_STATES, quarterStates.value)
-            console.log(`✅ Quarter states persisted to localStorage (${Object.keys(quarterStates.value).length} states)`)
         } catch (error) {
             console.error('❌ Failed to persist quarter states:', error)
         }
@@ -106,13 +102,11 @@ export const useFIStore = defineStore('fi', () => {
     // Helper function to persist selected quarters to localStorage
     const persistSelectedQuarters = () => {
         if (isLoadingFromStorage.value) {
-            console.log('⚠️ Skipping selected quarters persistence during storage load')
             return
         }
 
         try {
             setLocalStorage(FI_STORAGE_KEYS.SELECTED_QUARTERS, selectedQuarters.value)
-            console.log(`✅ Selected quarters persisted to localStorage (${selectedQuarters.value.length} quarters)`)
         } catch (error) {
             console.error('❌ Failed to persist selected quarters:', error)
         }
@@ -120,12 +114,9 @@ export const useFIStore = defineStore('fi', () => {
 
     // Computed properties
     const availableQuarters = computed(() => {
-        console.log('🔍 Computing availableQuarters, imports:', imports.value.length)
-
         // Force reactivity tracking of quarterStates object by accessing its keys
         // This ensures Vue knows to recompute when the object changes
         const quarterStatesKeys = Object.keys(quarterStates.value)
-        console.log('🔍 QuarterStates keys for reactivity:', quarterStatesKeys.length)
 
         const result = imports.value
             .map(imp => {
@@ -142,7 +133,7 @@ export const useFIStore = defineStore('fi', () => {
                 // Import operation state takes precedence for active operations
                 // But doesn't override data state when operation is complete
                 let finalState
-                if (importState.state && ['downloading', 'extracting', 'importing', 'error'].includes(importState.state)) {
+                if (importState.state && ['downloading', 'extracting', 'importing', 'deleting', 'error'].includes(importState.state)) {
                     // Active import operation or error state
                     finalState = importState.state
                 } else {
@@ -168,7 +159,7 @@ export const useFIStore = defineStore('fi', () => {
                     // Separate flags for complete clarity and independence
                     isSelected: selectedQuarters.value.includes(quarter), // VIEWING state - independent of import
                     hasData: hasActualData, // DATA availability state
-                    isImporting: ['downloading', 'extracting', 'importing'].includes(importState.state), // IMPORT operation state
+                    isImporting: ['downloading', 'extracting', 'importing', 'deleting'].includes(importState.state), // IMPORT operation state
                     importState: importState.state || 'available' // Explicit import operation state
                 }
             })
@@ -249,20 +240,20 @@ export const useFIStore = defineStore('fi', () => {
 
             // Only auto-select if we have no persisted selection
             if (selectedQuarters.value.length === 0) {
-                console.log('📋 No persisted quarters found, auto-selecting latest quarter')
+                // No persisted quarters found, auto-selecting latest quarter
                 // Auto-select the latest quarter if nothing is persisted
                 const latestImport = availableQuarters.value[0]
                 selectedQuarters.value = [latestImport.quarter]
                 persistSelectedQuarters() // Persist the auto-selection
-                console.log('🎯 Auto-selected latest quarter:', latestImport.quarter)
+                // Auto-selected latest quarter: ${latestImport.quarter}
             } else {
-                console.log('✅ Using persisted quarters:', selectedQuarters.value)
+                // Using persisted quarters from localStorage
             }
 
             // Load data for current selection
             await loadDataForQuarters(selectedQuarters.value)
 
-            console.log('✅ FI store initialized')
+            // Store initialized successfully
         } catch (err) {
             console.error('❌ Failed to initialize FI store:', err)
             error.value = err.message
@@ -276,15 +267,10 @@ export const useFIStore = defineStore('fi', () => {
      */
     const loadImports = async () => {
         try {
-            console.log('🔄 Validating imports from localStorage')
             isLoadingFromStorage.value = true // Prevent persistence during initialization
 
             // Imports are already loaded from localStorage in state initialization
-            console.log('📋 Imports loaded from localStorage:', imports.value.length)
-            console.log('📋 Import quarters:', imports.value.map(imp => imp.quarter))
-
             // Selected quarters are already loaded from localStorage too
-            console.log('📋 Selected quarters loaded from localStorage:', selectedQuarters.value)
 
             isLoadingFromStorage.value = false // Re-enable persistence
         } catch (err) {
@@ -324,18 +310,12 @@ export const useFIStore = defineStore('fi', () => {
             for (const quarter of quartersToLoad) {
                 const importData = availableQuarters.value.find(imp => imp.quarter === quarter)
                 if (importData) {
-                    console.log(`📦 Loading funds for quarter ${quarter} from IndexedDB`)
-
                     // Load only fund data (no holdings) for efficient table display
                     const sourceFunds = await fiFundsDB.getQuarterSnapshot(quarter) || []
-
-                    console.log(`📊 Loaded ${sourceFunds.length} funds for ${quarter}`)
 
                     // Data already contains quarter and quarterDisplay fields from IndexedDB
                     // No need for object transformation - use data directly
                     allFunds.push(...sourceFunds)
-
-                    console.log(`✅ Added ${sourceFunds.length} funds for ${quarter} (no transformation needed)`)
                 } else {
                     console.warn(`⚠️ No import data found for quarter: ${quarter}`)
                 }
@@ -344,10 +324,7 @@ export const useFIStore = defineStore('fi', () => {
             funds.value = allFunds
             holdings.value = [] // Clear holdings - they will be loaded on-demand when rows are expanded
 
-            console.log('✅ Total loaded funds:', {
-                quarters: quartersToLoad,
-                totalFunds: allFunds.length
-            })
+            // Data loaded successfully for quarters: ${quartersToLoad.join(', ')}
 
         } catch (err) {
             console.error('❌ Failed to load data for quarters:', err)
@@ -363,7 +340,7 @@ export const useFIStore = defineStore('fi', () => {
      */
     const saveHistoricalImport = async (zipUrl, zipFileName, fundsData, holdingsData) => {
         try {
-            console.log('💾 Saving historical import')
+            // Saving historical import data
 
             // Parse ZIP filename for metadata
             const zipMetadata = parseZipFileName(zipFileName)
@@ -410,10 +387,10 @@ export const useFIStore = defineStore('fi', () => {
             })
 
             // Store data in the NEW IndexedDB database using bulk operations
-            console.log('💾 Saving funds to new IndexedDB (bulk):', transformedFunds.length)
+            // Saving funds to IndexedDB
             await fiFundsDB.addFunds(transformedFunds)
 
-            console.log('💾 Saving holdings to new IndexedDB (bulk):', transformedHoldings.length)
+            // Saving holdings to IndexedDB
             await fiFundsDB.addHoldings(transformedHoldings)
 
             // Create import record with quarter as primary identifier
@@ -427,11 +404,7 @@ export const useFIStore = defineStore('fi', () => {
                 holdingsCount: transformedHoldings.length
             }
 
-            console.log('✅ Data saved to new IndexedDB successfully:', {
-                quarter: quarter,
-                fundsCount: transformedFunds.length,
-                holdingsCount: transformedHoldings.length
-            })
+            // Data saved to IndexedDB successfully
 
             // Update quarter state to imported BEFORE updating imports
             quarterStates.value[quarter] = {
@@ -456,13 +429,7 @@ export const useFIStore = defineStore('fi', () => {
                 holdings.value = transformedHoldings
             }
 
-            console.log('✅ Historical import saved successfully:', {
-                quarter: quarter,
-                sourceDate: sourceDate,
-                funds: transformedFunds.length,
-                holdings: transformedHoldings.length,
-                stateUpdated: true
-            })
+            // Historical import saved successfully
 
             return importRecord
 
@@ -485,19 +452,12 @@ export const useFIStore = defineStore('fi', () => {
 
         // Check if actual data exists in NEW IndexedDB storage
         try {
-            const quarterMatch = quarter.match(/^(\d{4})Q(\d)$/)
-            const year = quarterMatch ? parseInt(quarterMatch[1]) : new Date().getFullYear()
-
             // Check if funds exist for this quarter in the new IndexedDB
-            const fundsData = await fiFundsDB.getQuarterSnapshot(quarter, year)
+            const fundsData = await fiFundsDB.getQuarterSnapshot(quarter)
 
             const hasData = fundsData && Array.isArray(fundsData) && fundsData.length > 0
 
-            console.log(`🔍 Checking quarter ${quarter} in IndexedDB:`, {
-                importExists,
-                fundsCount: fundsData?.length || 0,
-                hasData
-            })
+            // Checking quarter data in IndexedDB
 
             return hasData
         } catch (error) {
@@ -549,17 +509,12 @@ export const useFIStore = defineStore('fi', () => {
         try {
             isUpdatingState.value = true
 
-            console.log(`🔄 [Store] Setting quarter ${quarter} state to: ${state} (was: ${quarterStates.value[quarter]?.state || 'undefined'})`)
-
             quarterStates.value[quarter] = {
-                state, // 'available', 'downloading', 'extracting', 'importing', 'imported', 'error'
+                state, // 'available', 'downloading', 'extracting', 'importing', 'deleting', 'imported', 'error'
                 progress,
                 error,
                 updatedAt: new Date().toISOString()
             }
-
-            console.log(`✅ [Store] Quarter ${quarter} IMPORT operation state updated: ${state}${progress ? ` (${progress.current}/${progress.total})` : ''} [Selection state unchanged]`)
-            console.log(`🔍 [Store] Current quarterStates object keys:`, Object.keys(quarterStates.value))
 
             // The watcher will automatically persist to localStorage
         } finally {
@@ -621,7 +576,7 @@ export const useFIStore = defineStore('fi', () => {
                 }
             }
 
-            console.log(`🌐 Found ${foundQuarters.length} quarters on FI website`)
+            // Refreshing quarter metadata from FI website
 
             // Update imports with new metadata (preserve existing import records)
             let updatedCount = 0
@@ -671,14 +626,14 @@ export const useFIStore = defineStore('fi', () => {
                     imports.value.push(newImport)
                     imports.value.sort((a, b) => compareQuarters(a.quarter, b.quarter))
                     newCount++
-                    console.log(`✅ Added new quarter metadata: ${quarterInfo.quarter}`)
+                    // Added new quarter metadata: ${quarterInfo.quarter}
                 }
             }
 
             // No need to reload imports - watcher will persist changes to IndexedDB
 
             console.timeEnd('fiRefreshQuarterMetadata')
-            console.log(`✅ Quarter metadata refresh completed: ${newCount} new, ${updatedCount} updated`)
+            // Quarter metadata refresh completed: ${newCount} new, ${updatedCount} updated
 
             return {
                 newQuarters: newCount,
@@ -699,36 +654,97 @@ export const useFIStore = defineStore('fi', () => {
      */
     const deleteQuarterData = async (quarter) => {
         try {
-            console.log(`🗑️ Deleting data for quarter: ${quarter} (selection state completely independent)`)
+            // Deleting data for quarter: ${quarter}
 
-            // Parse quarter to get year for IndexedDB queries
-            const quarterMatch = quarter.match(/^(\d{4})Q(\d)$/)
-            const year = quarterMatch ? parseInt(quarterMatch[1]) : new Date().getFullYear()
+            // FIRST: Remove quarter from selectedQuarters to prevent UI issues during deletion
+            const wasSelected = selectedQuarters.value.includes(quarter)
+            if (wasSelected) {
+                // Removing ${quarter} from selected quarters before deletion
+                selectedQuarters.value = selectedQuarters.value.filter(q => q !== quarter)
+                persistSelectedQuarters()
+            }
+
+            // Set deleting state with initial progress
+            setQuarterState(quarter, 'deleting', { current: 0, total: 0, phase: 'Förbereder borttagning...' })
 
             // Actually delete data from the NEW IndexedDB database
-            console.log(`🗑️ Deleting funds and holdings from IndexedDB for ${quarter}`)
+            // Deleting funds and holdings from IndexedDB for ${quarter}
 
-            // Delete all funds for this quarter
+            // Get counts for progress tracking
             const fundsQuery = createQuery(fiFundsDB, 'funds')
                 .equals('quarter', quarter)
-                .equals('year', year)
             const fundsToDelete = await fundsQuery.execute()
 
-            for (const fund of fundsToDelete) {
-                await fiFundsDB.delete('funds', fund.id)
-            }
-            console.log(`🗑️ Deleted ${fundsToDelete.length} funds from IndexedDB`)
-
-            // Delete all holdings for this quarter
             const holdingsQuery = createQuery(fiFundsDB, 'holdings')
                 .equals('quarter', quarter)
-                .equals('year', year)
             const holdingsToDelete = await holdingsQuery.execute()
 
-            for (const holding of holdingsToDelete) {
-                await fiFundsDB.delete('holdings', holding.id)
+            const totalItems = fundsToDelete.length + holdingsToDelete.length
+            let deletedItems = 0
+
+            // Found items to delete: funds and holdings
+
+            // Update progress with total count
+            setQuarterState(quarter, 'deleting', { 
+                current: 0, 
+                total: totalItems, 
+                phase: 'Tar bort fonder...' 
+            })
+
+            // Delete funds with progress updates
+            for (const fund of fundsToDelete) {
+                if (fund.id === undefined || fund.id === null) {
+                    console.error(`❌ Fund missing id:`, fund)
+                    continue
+                }
+                await fiFundsDB.delete('funds', fund.id)
+                deletedItems++
+                
+                // Update progress every 10 items or on last item
+                if (deletedItems % 10 === 0 || deletedItems === fundsToDelete.length) {
+                    setQuarterState(quarter, 'deleting', { 
+                        current: deletedItems, 
+                        total: totalItems, 
+                        phase: `Tar bort fonder... (${deletedItems}/${fundsToDelete.length})` 
+                    })
+                }
             }
-            console.log(`🗑️ Deleted ${holdingsToDelete.length} holdings from IndexedDB`)
+            console.log(`�️ Deleted ${fundsToDelete.length} funds from IndexedDB`)
+
+            // Update progress for holdings phase
+            setQuarterState(quarter, 'deleting', { 
+                current: deletedItems, 
+                total: totalItems, 
+                phase: 'Tar bort innehav...' 
+            })
+
+            // Delete holdings with progress updates
+            for (const holding of holdingsToDelete) {
+                if (holding.id === undefined || holding.id === null) {
+                    console.error(`❌ Holding missing id:`, holding)
+                    continue
+                }
+                await fiFundsDB.delete('holdings', holding.id)
+                deletedItems++
+                
+                // Update progress every 50 items or on last item (holdings are more numerous)
+                if (deletedItems % 50 === 0 || deletedItems === totalItems) {
+                    const holdingsDeleted = deletedItems - fundsToDelete.length
+                    setQuarterState(quarter, 'deleting', { 
+                        current: deletedItems, 
+                        total: totalItems, 
+                        phase: `Tar bort innehav... (${holdingsDeleted}/${holdingsToDelete.length})` 
+                    })
+                }
+            }
+            // Deleted holdings from IndexedDB
+
+            // Final progress update
+            setQuarterState(quarter, 'deleting', { 
+                current: totalItems, 
+                total: totalItems, 
+                phase: 'Slutför borttagning...' 
+            })
 
             // Update import operation state to available (data no longer exists)
             quarterStates.value[quarter] = {
@@ -761,25 +777,22 @@ export const useFIStore = defineStore('fi', () => {
                 })
             }
 
-            // IMPORTANT: We DON'T automatically remove from selectedQuarters
-            // The user can keep viewing the quarter (it will just show no data)
-            // This maintains complete independence between viewing and data state
-            console.log(`🎯 Quarter ${quarter} remains in selection if selected (showing empty data)`)
-
-            // Reload data for current selection (will show empty data for deleted quarter if selected)
+            // Reload data for current selection (will show data for remaining selected quarters)
             if (selectedQuarters.value.length > 0) {
                 await loadDataForQuarters(selectedQuarters.value)
-                console.log(`📊 Reloaded data for selected quarters (${quarter} will show empty if selected)`)
+                console.log(`📊 Reloaded data for remaining selected quarters: ${selectedQuarters.value.join(', ')}`)
             } else {
                 // Clear funds and holdings if no quarters selected
                 funds.value = []
                 holdings.value = []
+                console.log(`📊 Cleared data since no quarters remain selected`)
             }
-
-            console.log(`✅ Quarter ${quarter} data deleted from IndexedDB (selection state completely preserved and independent)`)
+            // Quarter data deleted from IndexedDB successfully
 
         } catch (error) {
             console.error(`❌ Failed to delete quarter ${quarter}:`, error)
+            // Set error state
+            setQuarterState(quarter, 'error', null, error.message)
             throw error
         }
     }
@@ -798,7 +811,7 @@ export const useFIStore = defineStore('fi', () => {
      */
     const isQuarterImporting = (quarter) => {
         const state = quarterStates.value[quarter]
-        return state && ['downloading', 'extracting', 'importing'].includes(state.state)
+        return state && ['downloading', 'extracting', 'importing', 'deleting'].includes(state.state)
     }
 
     /**
@@ -836,26 +849,18 @@ export const useFIStore = defineStore('fi', () => {
      */
     const debugStorageState = async () => {
         try {
-            console.log('🔍 === STORAGE DEBUG STATE ===')
+            // === STORAGE DEBUG STATE ===
 
             // Check current in-memory state
-            console.log('💭 In-memory selected quarters:', selectedQuarters.value)
+            // In-memory selected quarters: ${selectedQuarters.value}
 
             // Check available imports
-            console.log('📦 Available imports:', imports.value.map(imp => ({
-                quarter: imp.quarter,
-                recordCount: imp.recordCount,
-                state: imp.state,
-                importedAt: imp.importedAt
-            })))
+            // Available imports: ${imports.value.length} items
 
             // Check quarter states
-            console.log('🎯 Quarter states:')
-            Object.entries(quarterStates.value).forEach(([quarter, state]) => {
-                console.log(`  ${quarter}:`, state)
-            })
+            // Quarter states: ${Object.keys(quarterStates.value).length} items
 
-            console.log('🔍 === END STORAGE DEBUG ===')
+            // === END STORAGE DEBUG ===
 
             return {
                 inMemoryQuarters: selectedQuarters.value,
@@ -873,22 +878,16 @@ export const useFIStore = defineStore('fi', () => {
      */
     const debugLocalStorageState = () => {
         try {
-            console.log('🔍 === LOCALSTORAGE DEBUG STATE ===')
+            // === LOCALSTORAGE DEBUG STATE ===
 
             // Check all FI-related localStorage keys
             const keys = Object.values(FI_STORAGE_KEYS)
-            for (const key of keys) {
-                const value = getLocalStorage(key, null)
-                console.log(`📋 ${key}:`, value)
-            }
+            // Checking localStorage keys: ${keys.length} items
 
             // Check current in-memory state
-            console.log('💭 In-memory state:')
-            console.log('  - imports:', imports.value.length, 'records')
-            console.log('  - selectedQuarters:', selectedQuarters.value)
-            console.log('  - quarterStates:', Object.entries(quarterStates.value))
+            // In-memory state: imports=${imports.value.length}, quarters=${selectedQuarters.value.length}
 
-            console.log('🔍 === END LOCALSTORAGE DEBUG ===')
+            // === END LOCALSTORAGE DEBUG ===
 
             return {
                 localStorage: keys.reduce((acc, key) => {
@@ -918,9 +917,7 @@ export const useFIStore = defineStore('fi', () => {
         // Only persist and load if the selection actually changed
         persistSelectedQuarters()
         if (JSON.stringify(newQuarters) !== JSON.stringify(oldQuarters)) {
-            console.log('🔄 Selected quarters changed, auto-loading data:', newQuarters)
             await loadDataForQuarters(newQuarters)
-            console.log('✅ Data automatically loaded for new quarter selection')
         }
     }, { deep: true })
 
@@ -941,10 +938,10 @@ export const useFIStore = defineStore('fi', () => {
                 return false // Already using new system
             }
 
-            console.log('🔄 Performing database upgrade...')
+            // Performing database upgrade...
 
             // Drop all existing LocalForage stores from the stoqster database
-            console.log('🗑️ Dropping legacy LocalForage stores from stoqster database...')
+            // Dropping legacy LocalForage stores from stoqster database...
 
             // List of actual store names found in DevTools
             const storesToDrop = [
@@ -964,7 +961,7 @@ export const useFIStore = defineStore('fi', () => {
                         storeName: storeName
                     })
                     await store.clear()
-                    console.log(`✅ Cleared LocalForage store: ${storeName}`)
+                    // Cleared LocalForage store: ${storeName}
                 } catch (error) {
                     console.warn(`⚠️ Could not clear store ${storeName}:`, error)
                     // Continue with other stores even if one fails
@@ -972,7 +969,7 @@ export const useFIStore = defineStore('fi', () => {
             }
 
             // Clear reactive state
-            console.log('🗑️ Clearing reactive state...')
+            // Clearing reactive state...
             funds.value = []
             holdings.value = []
             imports.value = []
@@ -981,7 +978,7 @@ export const useFIStore = defineStore('fi', () => {
             lastUpdated.value = null
 
             // Clear localStorage settings
-            console.log('🗑️ Clearing localStorage settings...')
+            // Clearing localStorage settings...
             Object.values(FI_STORAGE_KEYS).forEach(key => {
                 removeLocalStorage(key)
             })
@@ -993,7 +990,7 @@ export const useFIStore = defineStore('fi', () => {
                 // Ignore errors if key doesn't exist
             }
 
-            console.log('✅ Database upgrade completed - all legacy data cleared')
+            // Database upgrade completed - all legacy data cleared
             return true // Database upgrade was performed
 
         } catch (error) {
@@ -1006,12 +1003,7 @@ export const useFIStore = defineStore('fi', () => {
      * Load holdings for a specific fund and quarter (on-demand when row is expanded)
      */
     const loadHoldingsForFund = async (fundISIN, quarter) => {
-        const timerLabel = `loadHoldingsForFund-${fundISIN}-${quarter}`
-        console.time(timerLabel)
-
         try {
-            console.log(`🔍 Loading holdings for fund ${fundISIN} in quarter ${quarter}`)
-
             // Query holdings for this specific fund and quarter
             const holdingsQuery = createQuery(fiFundsDB, 'holdings')
                 .equals('quarter', quarter)
@@ -1019,12 +1011,8 @@ export const useFIStore = defineStore('fi', () => {
 
             const fundHoldings = await holdingsQuery.execute() || []
 
-            console.timeEnd(timerLabel)
-            console.log(`✅ Loaded ${fundHoldings.length} holdings for fund ${fundISIN}`)
-
             return fundHoldings
         } catch (err) {
-            console.timeEnd(timerLabel)
             console.error(`❌ Failed to load holdings for fund ${fundISIN}:`, err)
             throw err
         }

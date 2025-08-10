@@ -285,6 +285,80 @@ export class IndexedDBManager {
     }
 
     /**
+     * Get all records from a store with their primary keys
+     * @param {string} storeName
+     * @returns {Promise<Array>} All records with id property set to the primary key
+     */
+    async getAllWithKeys(storeName) {
+        try {
+            const transaction = await this.transaction(storeName, 'readonly')
+            const store = transaction.objectStore(storeName)
+
+            return new Promise((resolve, reject) => {
+                const results = []
+                const request = store.openCursor()
+
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result
+                    if (cursor) {
+                        // Add the primary key as 'id' to the record
+                        const record = { ...cursor.value, id: cursor.key }
+                        results.push(record)
+                        cursor.continue()
+                    } else {
+                        resolve(results)
+                    }
+                }
+
+                request.onerror = () => reject(new Error(`GetAllWithKeys operation failed: ${request.error}`))
+            })
+        } catch (error) {
+            console.error('❌ Error in getAllWithKeys operation:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Query records by index with their primary keys
+     * @param {string} storeName
+     * @param {string} indexName
+     * @param {*} value
+     * @param {number} limit - Optional limit
+     * @returns {Promise<Array>} Records with id property set to the primary key
+     */
+    async queryWithKeys(storeName, indexName, value, limit = null) {
+        try {
+            const transaction = await this.transaction(storeName, 'readonly')
+            const store = transaction.objectStore(storeName)
+            const index = store.index(indexName)
+
+            return new Promise((resolve, reject) => {
+                const results = []
+                let count = 0
+                const request = index.openCursor(IDBKeyRange.only(value))
+
+                request.onsuccess = (event) => {
+                    const cursor = event.target.result
+                    if (cursor && (limit === null || count < limit)) {
+                        // Add the primary key as 'id' to the record
+                        const record = { ...cursor.value, id: cursor.primaryKey }
+                        results.push(record)
+                        count++
+                        cursor.continue()
+                    } else {
+                        resolve(results)
+                    }
+                }
+
+                request.onerror = () => reject(new Error(`QueryWithKeys operation failed: ${request.error}`))
+            })
+        } catch (error) {
+            console.error('❌ Error in queryWithKeys operation:', error)
+            throw error
+        }
+    }
+
+    /**
      * Perform bulk insert operation with progress tracking
      * @param {string} storeName
      * @param {Array} records

@@ -46,6 +46,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.9.2 - 2025-08-10
+
+### Fixed
+- IndexedDB query operations to use primary keys instead of invalid "year" index
+- Error handling for interrupted database operations
+
+### Enhanced
+- Quarter deletion UI with loading states and progress indicators
+- Status text prioritization during delete operations
+- Console output by cleaning up excessive debug logging in FI store
+
 ## v1.9.1 - 2025-08-10
 Complete FI IndexedDB migration with performance optimizations and code cleanup.
 
