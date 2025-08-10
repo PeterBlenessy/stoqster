@@ -46,6 +46,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+## v1.9.1 - 2025-08-10
+Complete FI IndexedDB migration with performance optimizations and code cleanup.
+
+### Added
+- IndexedDB infrastructure with generic wrapper and FI-specific implementation
+- Performance optimization: 19x faster holdings queries (2,394ms → 127ms)
+- English field name standardization throughout FI components
+- Compound row keys for unique identification in multi-quarter view
+- Comprehensive data transformation pipeline from Swedish to English field names
+- Enhanced debugging with emoji-prefixed logging across FI components
+
+### Changed
+- ComponentFunds.vue: Migrated from Swedish (`"Fond_namn"`) to English compound row keys
+- Simplified quarter selection logic by removing complex reactive patterns
+- Cleaned up row expansion state management using Quasar's built-in system
+- Removed circular dependencies and over-engineering patterns in reactive architecture
+- Optimized IndexedDB query selectivity using fundISIN index as primary filter
+
+### Fixed
+- Row expansion conflicts in multi-quarter view by implementing unique keys
+- Query performance regression by implementing proper IndexedDB indexes
+- Recursive Vue reactivity loops by simplifying computed property patterns
+- Field name inconsistencies by standardizing on English throughout
+
+### Technical Improvements
+- Complete LocalForage to IndexedDB migration for FI fund data
+- Generic IndexedDB wrapper architecture for future data source integrations
+- Proper IndexedDB range queries replacing slow cursor iteration
+- Reduced query candidate sets from 107,242 to 237 records for same operations
+- Eliminated complex defensive programming patterns in favor of simple reactivity
+
+### Removed
+- Legacy LocalForage dependencies for FI fund storage
+- Complex reactive getter/setter patterns causing circular dependencies
+- Duplicate expansion tracking systems competing for state management
+- Swedish field name fallback patterns throughout components
+
 ## v1.9.0 - 2025-07-15
 - Migrated from LocalForage to IndexedDB for FI funds
 
