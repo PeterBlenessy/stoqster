@@ -469,7 +469,55 @@ export class FIFundsDB extends IndexedDBManager {
         }
     }
 
-    // ==================== ANALYTICS OPERATIONS ====================
+    // ==================== ULTRA-FAST IMPORT OPERATIONS ====================
+
+    /**
+     * Ultra-fast bulk import using single transaction pre-validated insertion
+     * Uses the optimized ultraBulkInsert method for maximum performance
+     * WARNING: No validation or transformation - data must be pre-processed
+     * @param {Array} preValidatedFunds - Pre-transformed and validated fund data
+     * @param {Function} progressCallback - Optional progress tracking
+     * @returns {Promise<number>} Number of funds imported
+     */
+    async ultraBulkImportFunds(preValidatedFunds, progressCallback = null) {
+        try {
+            console.log(`🚀 Starting ultra-fast fund import: ${preValidatedFunds.length} funds`)
+            
+            const startTime = performance.now()
+            const imported = await this.ultraBulkInsert('funds', preValidatedFunds, progressCallback)
+            const duration = performance.now() - startTime
+            
+            console.log(`⚡ Ultra-fast fund import completed in ${duration.toFixed(2)}ms: ${imported} funds imported`)
+            return imported
+        } catch (error) {
+            console.error('❌ Error in ultra-fast fund import:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Ultra-fast bulk holdings import using single transaction pre-validated insertion
+     * Uses the optimized ultraBulkInsert method for maximum performance
+     * WARNING: No validation or transformation - data must be pre-processed
+     * @param {Array} preValidatedHoldings - Pre-transformed and validated holdings data
+     * @param {Function} progressCallback - Optional progress tracking
+     * @returns {Promise<number>} Number of holdings imported
+     */
+    async ultraBulkImportHoldings(preValidatedHoldings, progressCallback = null) {
+        try {
+            console.log(`🚀 Starting ultra-fast holdings import: ${preValidatedHoldings.length} holdings`)
+            
+            const startTime = performance.now()
+            const imported = await this.ultraBulkInsert('holdings', preValidatedHoldings, progressCallback)
+            const duration = performance.now() - startTime
+            
+            console.log(`⚡ Ultra-fast holdings import completed in ${duration.toFixed(2)}ms: ${imported} holdings imported`)
+            return imported
+        } catch (error) {
+            console.error('❌ Error in ultra-fast holdings import:', error)
+            throw error
+        }
+    }
 
     /**
      * Get performance statistics for a fund

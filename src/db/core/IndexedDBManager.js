@@ -416,6 +416,64 @@ export class IndexedDBManager {
     }
 
     /**
+     * Ultra-fast bulk import - single transaction for entire dataset
+     * @param {string} storeName
+     * @param {Array} records - All records to insert
+     * @param {Function} progressCallback - Optional progress updates
+     * @returns {Promise<number>} Number of records inserted
+     */
+    async ultraBulkInsert(storeName, records, progressCallback = null) {
+        if (!Array.isArray(records) || records.length === 0) {
+            return 0
+        }
+
+        console.log(`📦 Starting ultra-fast bulk insert: ${records.length} records to ${storeName}`)
+        const startTime = performance.now()
+        
+        try {
+            // Single transaction for entire dataset
+            const transaction = await this.transaction(storeName, 'readwrite')
+            const store = transaction.objectStore(storeName)
+            
+            return new Promise((resolve, reject) => {
+                let completed = 0
+                let hasError = false
+                
+                // Queue all insertions simultaneously
+                records.forEach((record, index) => {
+                    const request = store.put(record)
+                    
+                    request.onsuccess = () => {
+                        completed++
+                        
+                        // Optional progress callbacks (minimal overhead)
+                        if (progressCallback && completed % 1000 === 0) {
+                            progressCallback(completed, records.length)
+                        }
+                        
+                        if (completed === records.length && !hasError) {
+                            const duration = performance.now() - startTime
+                            console.log(`✅ Ultra-fast bulk insert completed: ${completed} records in ${duration.toFixed(2)}ms`)
+                            resolve(completed)
+                        }
+                    }
+                    
+                    request.onerror = () => {
+                        if (!hasError) {
+                            hasError = true
+                            console.error(`❌ Bulk insert failed at record ${index}:`, request.error)
+                            reject(new Error(`Bulk insert failed: ${request.error}`))
+                        }
+                    }
+                })
+            })
+        } catch (error) {
+            console.error('❌ Error in ultra-fast bulk insert:', error)
+            throw error
+        }
+    }
+
+    /**
      * Delete a record by key
      * @param {string} storeName
      * @param {*} key
@@ -433,6 +491,58 @@ export class IndexedDBManager {
             })
         } catch (error) {
             console.error('❌ Error in delete operation:', error)
+            throw error
+        }
+    }
+
+    /**
+     * Delete all records matching an index value using optimized bulk deletion
+     * @param {string} storeName 
+     * @param {string} indexName
+     * @param {*} value - Value to match for deletion
+     * @returns {Promise<number>} Number of records deleted
+     */
+    async deleteByIndex(storeName, indexName, value) {
+        try {
+            console.log(`🗑️ Starting optimized bulk deletion: ${storeName}.${indexName} = ${value}`)
+            const startTime = performance.now()
+            
+            // Single transaction for entire operation
+            const transaction = await this.transaction(storeName, 'readwrite')
+            const store = transaction.objectStore(storeName)
+            const index = store.index(indexName)
+            
+            return new Promise((resolve, reject) => {
+                let deletedCount = 0
+                const keyRange = IDBKeyRange.only(value)
+                
+                // Use a faster approach: open cursor and delete immediately
+                const cursorRequest = index.openCursor(keyRange)
+                
+                cursorRequest.onsuccess = (event) => {
+                    const cursor = event.target.result
+                    if (cursor) {
+                        // Delete the current record immediately
+                        cursor.delete()
+                        deletedCount++
+                        
+                        // Continue to next record without waiting for delete completion
+                        cursor.continue()
+                    } else {
+                        // All records processed
+                        const duration = performance.now() - startTime
+                        console.log(`✅ Bulk deletion completed: ${deletedCount} records from ${storeName} in ${duration.toFixed(2)}ms`)
+                        resolve(deletedCount)
+                    }
+                }
+                
+                cursorRequest.onerror = () => {
+                    console.error(`❌ Cursor operation failed: ${cursorRequest.error}`)
+                    reject(cursorRequest.error)
+                }
+            })
+        } catch (error) {
+            console.error('❌ Error in deleteByIndex operation:', error)
             throw error
         }
     }

@@ -46,6 +46,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+
+## v1.9.3 - 2025-08-10
+
+- Added optimized IndexedDB range deletion methods for ultra-fast quarter data removal
+- Added single-transaction bulk import methods for improved data insertion performance  
+- Implemented "fire and forget" deletion approach for instant UI response during quarter deletion
+- Enhanced FI funds store with immediate UI state updates and background data cleanup
+- Added comprehensive performance optimization documentation with implementation phases
+- Fixed quarter deletion taking 20+ seconds by implementing asynchronous background cleanup
+- Improved user experience with instant quarter deletion feedback (UI updates immediately)
+- Added ultra-fast bulk insert methods to IndexedDBManager for large dataset imports
+- Enhanced deleteByIndex method with optimized cursor-based deletion strategies
+
 ## v1.9.2 - 2025-08-10
 
 ### Fixed

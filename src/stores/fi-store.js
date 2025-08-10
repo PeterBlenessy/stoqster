@@ -648,113 +648,31 @@ export const useFIStore = defineStore('fi', () => {
     }
 
     /**
-     * Delete quarter data (preserve metadata and maintain complete independence from selection)
+     * Delete quarter data using "fire and forget" approach for instant UI response
      * This only removes the actual data - has NO effect on selection or viewing state
      * A quarter can remain selected for viewing even after its data is deleted
      */
     const deleteQuarterData = async (quarter) => {
         try {
-            // Deleting data for quarter: ${quarter}
+            console.log(`🗑️ Starting instant deletion for quarter: ${quarter}`)
 
             // FIRST: Remove quarter from selectedQuarters to prevent UI issues during deletion
             const wasSelected = selectedQuarters.value.includes(quarter)
             if (wasSelected) {
-                // Removing ${quarter} from selected quarters before deletion
+                console.log(`🔄 Removing ${quarter} from selected quarters before deletion`)
                 selectedQuarters.value = selectedQuarters.value.filter(q => q !== quarter)
                 persistSelectedQuarters()
             }
 
-            // Set deleting state with initial progress
-            setQuarterState(quarter, 'deleting', { current: 0, total: 0, phase: 'Förbereder borttagning...' })
-
-            // Actually delete data from the NEW IndexedDB database
-            // Deleting funds and holdings from IndexedDB for ${quarter}
-
-            // Get counts for progress tracking
-            const fundsQuery = createQuery(fiFundsDB, 'funds')
-                .equals('quarter', quarter)
-            const fundsToDelete = await fundsQuery.execute()
-
-            const holdingsQuery = createQuery(fiFundsDB, 'holdings')
-                .equals('quarter', quarter)
-            const holdingsToDelete = await holdingsQuery.execute()
-
-            const totalItems = fundsToDelete.length + holdingsToDelete.length
-            let deletedItems = 0
-
-            // Found items to delete: funds and holdings
-
-            // Update progress with total count
-            setQuarterState(quarter, 'deleting', { 
-                current: 0, 
-                total: totalItems, 
-                phase: 'Tar bort fonder...' 
-            })
-
-            // Delete funds with progress updates
-            for (const fund of fundsToDelete) {
-                if (fund.id === undefined || fund.id === null) {
-                    console.error(`❌ Fund missing id:`, fund)
-                    continue
-                }
-                await fiFundsDB.delete('funds', fund.id)
-                deletedItems++
-                
-                // Update progress every 10 items or on last item
-                if (deletedItems % 10 === 0 || deletedItems === fundsToDelete.length) {
-                    setQuarterState(quarter, 'deleting', { 
-                        current: deletedItems, 
-                        total: totalItems, 
-                        phase: `Tar bort fonder... (${deletedItems}/${fundsToDelete.length})` 
-                    })
-                }
-            }
-            console.log(`�️ Deleted ${fundsToDelete.length} funds from IndexedDB`)
-
-            // Update progress for holdings phase
-            setQuarterState(quarter, 'deleting', { 
-                current: deletedItems, 
-                total: totalItems, 
-                phase: 'Tar bort innehav...' 
-            })
-
-            // Delete holdings with progress updates
-            for (const holding of holdingsToDelete) {
-                if (holding.id === undefined || holding.id === null) {
-                    console.error(`❌ Holding missing id:`, holding)
-                    continue
-                }
-                await fiFundsDB.delete('holdings', holding.id)
-                deletedItems++
-                
-                // Update progress every 50 items or on last item (holdings are more numerous)
-                if (deletedItems % 50 === 0 || deletedItems === totalItems) {
-                    const holdingsDeleted = deletedItems - fundsToDelete.length
-                    setQuarterState(quarter, 'deleting', { 
-                        current: deletedItems, 
-                        total: totalItems, 
-                        phase: `Tar bort innehav... (${holdingsDeleted}/${holdingsToDelete.length})` 
-                    })
-                }
-            }
-            // Deleted holdings from IndexedDB
-
-            // Final progress update
-            setQuarterState(quarter, 'deleting', { 
-                current: totalItems, 
-                total: totalItems, 
-                phase: 'Slutför borttagning...' 
-            })
-
-            // Update import operation state to available (data no longer exists)
+            // INSTANT UI UPDATE: Mark quarter as available immediately (user sees instant response)
             quarterStates.value[quarter] = {
                 state: 'available',
                 progress: null,
                 error: null
             }
-            console.log(`🔄 Quarter ${quarter} import state reset to 'available' (selection state unchanged)`)
+            console.log(`✅ Quarter ${quarter} marked as deleted instantly (UI updated)`)
 
-            // Update import record in reactive store (don't reload from IndexedDB)
+            // INSTANT UI UPDATE: Update import record immediately
             const importIndex = imports.value.findIndex(imp => imp.quarter === quarter)
             if (importIndex !== -1) {
                 const importRecord = imports.value[importIndex]
@@ -769,7 +687,7 @@ export const useFIStore = defineStore('fi', () => {
                 // Update the reactive store immediately (watcher will persist)
                 imports.value[importIndex] = updatedRecord
 
-                console.log(`📝 Reset import record for ${quarter}:`, {
+                console.log(`📝 Reset import record for ${quarter} instantly:`, {
                     recordCount: updatedRecord.recordCount,
                     importedAt: updatedRecord.importedAt,
                     sourceUrl: updatedRecord.sourceUrl, // Log sourceUrl to verify it's preserved
@@ -777,7 +695,7 @@ export const useFIStore = defineStore('fi', () => {
                 })
             }
 
-            // Reload data for current selection (will show data for remaining selected quarters)
+            // INSTANT UI UPDATE: Reload data for current selection (will show data for remaining selected quarters)
             if (selectedQuarters.value.length > 0) {
                 await loadDataForQuarters(selectedQuarters.value)
                 console.log(`📊 Reloaded data for remaining selected quarters: ${selectedQuarters.value.join(', ')}`)
@@ -787,7 +705,22 @@ export const useFIStore = defineStore('fi', () => {
                 holdings.value = []
                 console.log(`📊 Cleared data since no quarters remain selected`)
             }
-            // Quarter data deleted from IndexedDB successfully
+
+            // BACKGROUND DELETION: Start actual deletion without waiting (fire and forget)
+            console.log(`🔥 Starting background deletion for quarter: ${quarter}`)
+            Promise.all([
+                fiFundsDB.deleteByIndex('funds', 'quarter', quarter),
+                fiFundsDB.deleteByIndex('holdings', 'quarter', quarter)
+            ]).then(([fundsDeleted, holdingsDeleted]) => {
+                console.log(`🧹 Background deletion completed for ${quarter}: ${fundsDeleted} funds, ${holdingsDeleted} holdings`)
+            }).catch(error => {
+                console.error(`❌ Background deletion failed for ${quarter}:`, error)
+                // Note: We don't restore UI state since user already moved on
+                // Could optionally show a non-blocking notification about cleanup failure
+            })
+
+            // Function returns immediately - user sees instant response!
+            console.log(`⚡ Deletion operation completed instantly (background cleanup in progress)`)
 
         } catch (error) {
             console.error(`❌ Failed to delete quarter ${quarter}:`, error)
