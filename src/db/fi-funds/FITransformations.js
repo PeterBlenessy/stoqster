@@ -139,60 +139,6 @@ function parseNumber(value) {
 }
 
 /**
- * Parse boolean from various string representations
- * @param {*} value - Value to parse
- * @returns {boolean|undefined}
- */
-function parseBoolean(value) {
-    if (value === undefined || value === null || value === '') {
-        return undefined
-    }
-
-    if (typeof value === 'boolean') {
-        return value
-    }
-
-    if (typeof value === 'string') {
-        const lower = value.toLowerCase().trim()
-        if (lower === 'ja' || lower === 'yes' || lower === 'true' || lower === '1') {
-            return true
-        }
-        if (lower === 'nej' || lower === 'no' || lower === 'false' || lower === '0') {
-            return false
-        }
-    }
-
-    return undefined
-}
-
-/**
- * Parse fund size classification
- * @param {*} value - Fund size value
- * @returns {string|undefined}
- */
-function parseFundSize(value) {
-    if (!value || typeof value !== 'string') {
-        return undefined
-    }
-
-    const size = value.toLowerCase().trim()
-
-    // Map Swedish size classifications to English
-    const sizeMap = {
-        'liten': 'small',
-        'medelstor': 'medium',
-        'stor': 'large',
-        'mycket stor': 'very large',
-        'small': 'small',
-        'medium': 'medium',
-        'large': 'large',
-        'very large': 'very large'
-    }
-
-    return sizeMap[size] || value
-}
-
-/**
  * Validate transformed fund data
  * @param {Object} fundData - Transformed fund data
  * @returns {boolean}

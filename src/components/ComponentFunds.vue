@@ -465,8 +465,6 @@ export default {
             }
         }
 
-        const loadedFromWeb = ref(false);
-
         async function unzipAndImportToDB(zipFile, zipUrl, zipFileName) {
             console.time("fiUnzipAndImportToDB()");
             console.log('🔄 Processing ZIP file for historical import:', zipFileName)
@@ -1004,36 +1002,23 @@ export default {
             }
         }
 
-        // Restore visible columns from Pinia store (simplified since we use computed)
-        const restoreVisibleColumns = () => {
-            console.log('✅ Visible columns restored via computed properties')
-        }
-
         onMounted(async () => {
             loadData();
-            restoreVisibleColumns();
             await handleInterruptedOperations();
         });
 
-        // Simple watch for column preferences without guards
+        // Save column preferences when visible columns change
         watch(
             () => visibleColumns.value,
             (newVal) => {
                 try {
-                    // Only save base columns (without quarter column)
                     const baseColumns = newVal.filter(col => col !== 'quarter')
                     fiVisibleColumns.value = [...baseColumns]
                 } catch (error) {
-                    console.error('❌ Error saving column preferences:', error)
+                    console.error('Error saving column preferences:', error)
                 }
             },
         );
-
-        watch(loadedFromWeb, (newVal) => {
-            if (newVal) {
-                loadDataFromStore().then(() => console.log("✅ Data refreshed from store"));
-            }
-        });
 
         // Debug function to inspect data state
         const debugData = async () => {
@@ -1229,8 +1214,6 @@ export default {
             // Historical tracking state
             isMultiQuarterView,
             currentViewLabel,
-            // Available quarters for chart component
-            availableQuarters,
             // Individual quarter management (Phase 1)
             importQuarter,
             deleteQuarter,

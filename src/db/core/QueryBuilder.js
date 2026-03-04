@@ -110,8 +110,6 @@ export class QueryBuilder {
      */
     async execute() {
         try {
-            console.log('🔍 Executing query on store:', this.storeName, 'with filters:', this.filters)
-
             if (this.filters.length === 0) {
                 // No filters, get all records with their keys
                 const allRecords = await this.db.getAllWithKeys(this.storeName)
@@ -129,7 +127,7 @@ export class QueryBuilder {
             // Multiple filters require cursor-based approach
             return this.executeComplexQuery()
         } catch (error) {
-            console.error('❌ Query execution failed:', error)
+            console.error('Query execution failed:', error)
             throw error
         }
     }
@@ -210,7 +208,7 @@ export class QueryBuilder {
 
         } catch (error) {
             // Field is not indexed, fall back to full cursor scan
-            console.warn(`⚠️ Field ${field} not indexed, using slow cursor scan`)
+            console.warn(`Field ${field} not indexed, using cursor scan`)
             return this.executeCursorFallback(store, field, operator, value)
         }
     }
@@ -256,18 +254,9 @@ export class QueryBuilder {
      * @returns {Promise<Array>}
      */
     async executeComplexQuery() {
-        console.log('🔍 Executing complex query with multiple filters:', this.filters)
-
-        // Strategy: Use the most selective filter as the primary index query,
-        // then filter the results with the remaining conditions
-
-        // Find the best filter to use as primary (most selective)
         const primaryFilter = this.findMostSelectiveFilter()
         const remainingFilters = this.filters.filter(f => f !== primaryFilter)
 
-        console.log('🎯 Using primary filter on index:', primaryFilter.field, primaryFilter.operator, primaryFilter.value)
-
-        // Execute primary filter using index
         let candidateResults
         if (primaryFilter.operator === '=') {
             // Use index directly for equality with primary keys
@@ -277,22 +266,16 @@ export class QueryBuilder {
             candidateResults = await this.executeCursorQuery(primaryFilter.field, primaryFilter.operator, primaryFilter.value)
         }
 
-        console.log(`📊 Primary index query returned ${candidateResults.length} candidates`)
-
-        // Apply remaining filters to the candidate set (much smaller than full dataset)
         if (remainingFilters.length === 0) {
             return candidateResults
         }
 
-        const finalResults = candidateResults.filter(record => {
+        return candidateResults.filter(record => {
             return remainingFilters.every(filter => {
                 const fieldValue = this.getFieldValue(record, filter.field)
                 return this.matchesFilter(fieldValue, filter.operator, filter.value)
             })
         })
-
-        console.log(`✅ Complex query completed: ${candidateResults.length} candidates → ${finalResults.length} final results`)
-        return finalResults
     }
 
     /**
