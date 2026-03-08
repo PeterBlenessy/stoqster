@@ -29,6 +29,7 @@ export const FI_FUNDS_SCHEMA = createSchema({
 
                 // Fund metadata indexes
                 institutionNumber: defineIndex('institutionNumber'),
+                managementCompany: defineIndex('managementCompany'),
 
                 // Performance indexes
                 assetsUnderManagement: defineIndex('assetsUnderManagement'),
@@ -114,10 +115,10 @@ function validateFundData(fundData) {
         throw new Error('Fund ISIN must be in valid ISIN format')
     }
 
-    // Validate quarter format (2024Q1, etc.)
-    const quarterPattern = /^\d{4}Q[1-4]$/
+    // Validate quarter format (Q1 or 2024Q1)
+    const quarterPattern = /^(\d{4})?Q[1-4]$/
     if (!quarterPattern.test(fundData.quarter)) {
-        throw new Error('Quarter must be in format like 2024Q1, 2024Q2, etc.')
+        throw new Error('Quarter must be in format like Q1, 2024Q1, 2024Q2, etc.')
     }
 
     // Validate numeric fields if present
@@ -159,10 +160,10 @@ function validateHoldingData(holdingData) {
         throw new Error('Instrument ISIN must be in valid ISIN format')
     }
 
-    // Validate quarter format
-    const quarterPattern = /^\d{4}Q[1-4]$/
+    // Validate quarter format (Q1 or 2024Q1)
+    const quarterPattern = /^(\d{4})?Q[1-4]$/
     if (!quarterPattern.test(holdingData.quarter)) {
-        throw new Error('Quarter must be in format like 2024Q1, 2024Q2, etc.')
+        throw new Error('Quarter must be in format like Q1, 2024Q1, 2024Q2, etc.')
     }
 
     // Validate numeric fields if present

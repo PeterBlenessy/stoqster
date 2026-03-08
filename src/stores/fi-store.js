@@ -1,6 +1,5 @@
 import { ref, computed, watch } from 'vue'
 import { defineStore } from 'pinia'
-import localforage from 'localforage'
 import { FIFundsDB } from '../db/fi-funds/FIFundsDB.js'
 import { createQuery } from '../db/core/QueryBuilder.js'
 import { transformFundData, transformHoldingData } from '../db/fi-funds/FITransformations.js'
@@ -433,6 +432,7 @@ export const useFIStore = defineStore('fi', () => {
             'fi-funds', 'fi-holdings', 'fi-common'
         ]
 
+        const localforage = (await import('localforage')).default
         for (const storeName of storesToDrop) {
             try {
                 const store = localforage.createInstance({ name: 'stoqster', storeName })
