@@ -270,12 +270,14 @@ export class QueryBuilder {
             return candidateResults
         }
 
-        return candidateResults.filter(record => {
+        const filtered = candidateResults.filter(record => {
             return remainingFilters.every(filter => {
                 const fieldValue = this.getFieldValue(record, filter.field)
                 return this.matchesFilter(fieldValue, filter.operator, filter.value)
             })
         })
+
+        return this.postProcessResults(filtered)
     }
 
     /**
@@ -412,10 +414,34 @@ export class QueryBuilder {
     }
 
     /**
-     * Get count of records matching the query
+     * Get count of records matching the query.
+     * Uses native IndexedDB count for simple equality queries (no post-processing needed).
+     * Falls back to execute() for complex queries.
      * @returns {Promise<number>}
      */
     async count() {
+        // Optimization: use native IndexedDB count for single equality filter with no sort/limit/offset
+        if (this.filters.length === 1 && this.filters[0].operator === '=' && !this.sortBy && !this.limitCount && this.offsetCount === 0) {
+            const { field, value } = this.filters[0]
+            try {
+                const transaction = await this.db.transaction(this.storeName, 'readonly')
+                const store = transaction.objectStore(this.storeName)
+                const index = store.index(field)
+                return new Promise((resolve, reject) => {
+                    const request = index.count(IDBKeyRange.only(value))
+                    request.onsuccess = () => resolve(request.result)
+                    request.onerror = () => reject(new Error(`Count failed: ${request.error}`))
+                })
+            } catch {
+                // Field not indexed, fall back
+            }
+        }
+
+        // For no filters, use native store count
+        if (this.filters.length === 0 && !this.sortBy && !this.limitCount && this.offsetCount === 0) {
+            return this.db.count(this.storeName)
+        }
+
         const results = await this.execute()
         return results.length
     }
@@ -425,8 +451,17 @@ export class QueryBuilder {
      * @returns {Promise<boolean>}
      */
     async exists() {
-        const count = await this.limit(1).count()
-        return count > 0
+        // Optimization: for simple queries, count is efficient and doesn't need limit hack
+        if (this.filters.length <= 1 && !this.sortBy && !this.limitCount && this.offsetCount === 0) {
+            const count = await this.count()
+            return count > 0
+        }
+        // For complex queries, limit to 1 to avoid loading all records
+        const savedLimit = this.limitCount
+        this.limitCount = 1
+        const results = await this.execute()
+        this.limitCount = savedLimit
+        return results.length > 0
     }
 }
 
