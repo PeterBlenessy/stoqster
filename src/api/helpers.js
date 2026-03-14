@@ -17,13 +17,10 @@ const formatter = new Intl.NumberFormat("sv-SE", {
 });
 
 const isValidNumber = (val) => {
-    return (
-        val != 0 &&
-        val != "" &&
-        val != " " &&
-        typeof Number.parseFloat(val) === "number" &&
-        isFinite(val)
-    );
+    if (val === null || val === undefined || val === "" || val === " ") {
+        return false;
+    }
+    return typeof Number.parseFloat(val) === "number" && isFinite(val);
 };
 
 export { setStyle, formatter, isValidNumber };

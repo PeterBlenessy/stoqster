@@ -15,7 +15,7 @@ export function getLocalStorage(key, defaultValue = null) {
     const item = localStorage.getItem(key)
     return item ? JSON.parse(item) : defaultValue
   } catch (error) {
-    console.error(`❌ Error reading localStorage key "${key}":`, error)
+    console.error(`Error reading localStorage key "${key}":`, error)
     return defaultValue
   }
 }
@@ -28,9 +28,8 @@ export function getLocalStorage(key, defaultValue = null) {
 export function setLocalStorage(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value))
-    console.log(`💾 Saved to localStorage: ${key}`)
   } catch (error) {
-    console.error(`❌ Error saving to localStorage key "${key}":`, error)
+    console.error(`Error saving to localStorage key "${key}":`, error)
   }
 }
 
@@ -41,9 +40,8 @@ export function setLocalStorage(key, value) {
 export function removeLocalStorage(key) {
   try {
     localStorage.removeItem(key)
-    console.log(`🧹 Removed from localStorage: ${key}`)
   } catch (error) {
-    console.error(`❌ Error removing localStorage key "${key}":`, error)
+    console.error(`Error removing localStorage key "${key}":`, error)
   }
 }
 
@@ -71,9 +69,8 @@ export function clearLocalStorageByPrefix(prefix) {
     }
     
     keysToRemove.forEach(key => localStorage.removeItem(key))
-    console.log(`🧹 Cleared ${keysToRemove.length} localStorage keys with prefix "${prefix}"`)
   } catch (error) {
-    console.error(`❌ Error clearing localStorage with prefix "${prefix}":`, error)
+    console.error(`Error clearing localStorage with prefix "${prefix}":`, error)
   }
 }
 

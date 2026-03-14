@@ -1,19 +1,9 @@
 /**
  * Generic IndexedDB Manager
- * 
- * Provides a reusable fo      request.onupgradeneeded = (event) => {
-        const db = event.target.result
-        
-        if (event.oldVersion === 0) {
-          console.log('🚀 Creating new database with schema...')
-        } else {
-          console.log('🔄 Database upgrade needed, applying schema...')
-        }
-        
-        this.createSchema(db)
-      }IndexedDB operations across different databases.
+ *
+ * Provides a reusable foundation for IndexedDB operations across different databases.
  * This class handles connection management, transactions, and basic CRUD operations.
- * 
+ *
  * Usage:
  * ```javascript
  * const db = new IndexedDBManager('my-database', 1, schema)
@@ -46,24 +36,21 @@ export class IndexedDBManager {
 
         this.isOpening = true
         this.openPromise = new Promise((resolve, reject) => {
-            console.log('🔄 Opening IndexedDB database:', this.dbName, 'version:', this.version)
-
             const request = indexedDB.open(this.dbName, this.version)
 
             request.onerror = () => {
-                console.error('❌ Failed to open database:', request.error)
+                console.error('Failed to open database:', this.dbName, request.error)
                 this.isOpening = false
                 reject(new Error(`Failed to open database ${this.dbName}: ${request.error}`))
             }
 
             request.onsuccess = () => {
-                console.log('✅ Database opened successfully:', this.dbName)
                 this.db = request.result
                 this.isOpening = false
 
                 // Handle unexpected database closure
                 this.db.onclose = () => {
-                    console.log('⚠️ Database connection closed unexpectedly')
+                    console.warn('Database connection closed unexpectedly:', this.dbName)
                     this.db = null
                 }
 
@@ -76,10 +63,8 @@ export class IndexedDBManager {
                 const newVersion = event.newVersion
 
                 if (oldVersion === 0) {
-                    console.log('� Creating new database with schema...')
                     this.createSchema(db)
                 } else {
-                    console.log('�🔄 Database upgrade needed, applying schema...')
                     this.applySchema(db, oldVersion, newVersion)
                 }
             }
@@ -89,75 +74,75 @@ export class IndexedDBManager {
     }
 
     /**
+     * Build store options from schema config
+     * @param {Object} storeConfig - Store configuration from schema
+     * @returns {Object} Options for createObjectStore
+     */
+    _buildStoreOptions(storeConfig) {
+        const options = {}
+        if (storeConfig.keyPath) {
+            options.keyPath = storeConfig.keyPath
+        }
+        if (storeConfig.autoIncrement) {
+            options.autoIncrement = true
+        }
+        // Default to autoIncrement if neither keyPath nor autoIncrement specified
+        if (!storeConfig.keyPath && !storeConfig.autoIncrement) {
+            options.autoIncrement = true
+        }
+        return options
+    }
+
+    /**
+     * Create object stores and indexes from schema config
+     * @param {IDBDatabase} db
+     * @param {Object} stores - Store definitions from schema
+     */
+    _createStores(db, stores) {
+        for (const [storeName, storeConfig] of Object.entries(stores)) {
+            const options = this._buildStoreOptions(storeConfig)
+            const store = db.createObjectStore(storeName, options)
+
+            if (storeConfig.indexes) {
+                for (const [indexName, indexConfig] of Object.entries(storeConfig.indexes)) {
+                    store.createIndex(indexName, indexConfig.keyPath, {
+                        unique: indexConfig.unique || false,
+                        multiEntry: indexConfig.multiEntry || false
+                    })
+                }
+            }
+        }
+    }
+
+    /**
      * Create database schema for a new database
      * @param {IDBDatabase} db
      */
     createSchema(db) {
-        console.log('📦 Creating fresh database schema')
-
         try {
-            for (const [storeName, storeConfig] of Object.entries(this.schema.stores)) {
-                console.log('📦 Creating object store:', storeName)
-                console.log(' Using autoIncrement configuration')
-
-                const store = db.createObjectStore(storeName, { autoIncrement: true })
-
-                // Create indexes
-                if (storeConfig.indexes) {
-                    for (const [indexName, indexConfig] of Object.entries(storeConfig.indexes)) {
-                        console.log('🔍 Creating index:', indexName, 'on store:', storeName)
-                        store.createIndex(indexName, indexConfig.keyPath, {
-                            unique: indexConfig.unique || false,
-                            multiEntry: indexConfig.multiEntry || false
-                        })
-                    }
-                }
-            }
-            console.log('✅ Fresh database schema created successfully')
+            this._createStores(db, this.schema.stores)
         } catch (error) {
-            console.error('❌ Error creating schema:', error)
+            console.error('Error creating schema:', error)
             throw error
         }
     }
 
     /**
-     * Create a transaction for the specified stores
+     * Apply schema upgrade by recreating stores
      * @param {IDBDatabase} db
      * @param {number} oldVersion
      * @param {number} newVersion
      */
     applySchema(db, oldVersion, newVersion) {
-        console.log(`🔄 Applying schema upgrade from version ${oldVersion} to ${newVersion}`)
-
         try {
-            // For major schema changes, delete and recreate stores
-            for (const [storeName, storeConfig] of Object.entries(this.schema.stores)) {
-                // Delete existing store if it exists
+            for (const storeName of Object.keys(this.schema.stores)) {
                 if (db.objectStoreNames.contains(storeName)) {
-                    console.log('🗑️ Deleting existing object store:', storeName)
                     db.deleteObjectStore(storeName)
                 }
-
-                // Create new object store with autoIncrement
-                console.log('📦 Creating object store:', storeName)
-                console.log('� Using autoIncrement configuration')
-
-                const store = db.createObjectStore(storeName, { autoIncrement: true })
-
-                // Create indexes
-                if (storeConfig.indexes) {
-                    for (const [indexName, indexConfig] of Object.entries(storeConfig.indexes)) {
-                        console.log('🔍 Creating index:', indexName, 'on store:', storeName)
-                        store.createIndex(indexName, indexConfig.keyPath, {
-                            unique: indexConfig.unique || false,
-                            multiEntry: indexConfig.multiEntry || false
-                        })
-                    }
-                }
             }
-            console.log('✅ Schema applied successfully')
+            this._createStores(db, this.schema.stores)
         } catch (error) {
-            console.error('❌ Error applying schema:', error)
+            console.error('Error applying schema:', error)
             throw error
         }
     }
@@ -166,25 +151,16 @@ export class IndexedDBManager {
      * Create a transaction for the specified stores
      * @param {string|string[]} storeNames
      * @param {string} mode - 'readonly', 'readwrite', or 'versionchange'
-     * @returns {Promise<IDBTransaction>}
+     * @returns {IDBTransaction}
      */
     async transaction(storeNames, mode = 'readonly') {
         const db = await this.open()
         const stores = Array.isArray(storeNames) ? storeNames : [storeNames]
 
         try {
-            const transaction = db.transaction(stores, mode)
-
-            return new Promise((resolve, reject) => {
-                transaction.oncomplete = () => resolve(transaction)
-                transaction.onerror = () => reject(new Error(`Transaction failed: ${transaction.error}`))
-                transaction.onabort = () => reject(new Error('Transaction was aborted'))
-
-                // Return transaction immediately for chaining operations
-                resolve(transaction)
-            })
+            return db.transaction(stores, mode)
         } catch (error) {
-            console.error('❌ Error creating transaction:', error)
+            console.error('Failed to create transaction:', error)
             throw new Error(`Failed to create transaction: ${error.message}`)
         }
     }
@@ -196,19 +172,14 @@ export class IndexedDBManager {
      * @returns {Promise<*>} The key of the stored record
      */
     async put(storeName, data) {
-        try {
-            const transaction = await this.transaction(storeName, 'readwrite')
-            const store = transaction.objectStore(storeName)
+        const transaction = await this.transaction(storeName, 'readwrite')
+        const store = transaction.objectStore(storeName)
 
-            return new Promise((resolve, reject) => {
-                const request = store.put(data)
-                request.onsuccess = () => resolve(request.result)
-                request.onerror = () => reject(new Error(`Put operation failed: ${request.error}`))
-            })
-        } catch (error) {
-            console.error('❌ Error in put operation:', error)
-            throw error
-        }
+        return new Promise((resolve, reject) => {
+            const request = store.put(data)
+            request.onsuccess = () => resolve(request.result)
+            request.onerror = () => reject(new Error(`Put failed on ${storeName}: ${request.error}`))
+        })
     }
 
     /**
@@ -218,19 +189,14 @@ export class IndexedDBManager {
      * @returns {Promise<*>} The record or undefined if not found
      */
     async get(storeName, key) {
-        try {
-            const transaction = await this.transaction(storeName, 'readonly')
-            const store = transaction.objectStore(storeName)
+        const transaction = await this.transaction(storeName, 'readonly')
+        const store = transaction.objectStore(storeName)
 
-            return new Promise((resolve, reject) => {
-                const request = store.get(key)
-                request.onsuccess = () => resolve(request.result)
-                request.onerror = () => reject(new Error(`Get operation failed: ${request.error}`))
-            })
-        } catch (error) {
-            console.error('❌ Error in get operation:', error)
-            throw error
-        }
+        return new Promise((resolve, reject) => {
+            const request = store.get(key)
+            request.onsuccess = () => resolve(request.result)
+            request.onerror = () => reject(new Error(`Get failed on ${storeName}: ${request.error}`))
+        })
     }
 
     /**
@@ -242,25 +208,15 @@ export class IndexedDBManager {
      * @returns {Promise<Array>} Array of matching records
      */
     async query(storeName, indexName, value, limit = null) {
-        try {
-            const transaction = await this.transaction(storeName, 'readonly')
-            const store = transaction.objectStore(storeName)
-            const index = store.index(indexName)
+        const transaction = await this.transaction(storeName, 'readonly')
+        const store = transaction.objectStore(storeName)
+        const index = store.index(indexName)
 
-            // Use getAll for much better performance than cursor iteration
-            return new Promise((resolve, reject) => {
-                const request = index.getAll(IDBKeyRange.only(value), limit)
-
-                request.onsuccess = () => {
-                    resolve(request.result || [])
-                }
-
-                request.onerror = () => reject(new Error(`Query operation failed: ${request.error}`))
-            })
-        } catch (error) {
-            console.error('❌ Error in query operation:', error)
-            throw error
-        }
+        return new Promise((resolve, reject) => {
+            const request = index.getAll(IDBKeyRange.only(value), limit)
+            request.onsuccess = () => resolve(request.result || [])
+            request.onerror = () => reject(new Error(`Query failed on ${storeName}.${indexName}: ${request.error}`))
+        })
     }
 
     /**
@@ -269,19 +225,14 @@ export class IndexedDBManager {
      * @returns {Promise<Array>} All records in the store
      */
     async getAll(storeName) {
-        try {
-            const transaction = await this.transaction(storeName, 'readonly')
-            const store = transaction.objectStore(storeName)
+        const transaction = await this.transaction(storeName, 'readonly')
+        const store = transaction.objectStore(storeName)
 
-            return new Promise((resolve, reject) => {
-                const request = store.getAll()
-                request.onsuccess = () => resolve(request.result)
-                request.onerror = () => reject(new Error(`GetAll operation failed: ${request.error}`))
-            })
-        } catch (error) {
-            console.error('❌ Error in getAll operation:', error)
-            throw error
-        }
+        return new Promise((resolve, reject) => {
+            const request = store.getAll()
+            request.onsuccess = () => resolve(request.result)
+            request.onerror = () => reject(new Error(`GetAll failed on ${storeName}: ${request.error}`))
+        })
     }
 
     /**
@@ -290,32 +241,25 @@ export class IndexedDBManager {
      * @returns {Promise<Array>} All records with id property set to the primary key
      */
     async getAllWithKeys(storeName) {
-        try {
-            const transaction = await this.transaction(storeName, 'readonly')
-            const store = transaction.objectStore(storeName)
+        const transaction = await this.transaction(storeName, 'readonly')
+        const store = transaction.objectStore(storeName)
 
-            return new Promise((resolve, reject) => {
-                const results = []
-                const request = store.openCursor()
+        return new Promise((resolve, reject) => {
+            const results = []
+            const request = store.openCursor()
 
-                request.onsuccess = (event) => {
-                    const cursor = event.target.result
-                    if (cursor) {
-                        // Add the primary key as 'id' to the record
-                        const record = { ...cursor.value, id: cursor.key }
-                        results.push(record)
-                        cursor.continue()
-                    } else {
-                        resolve(results)
-                    }
+            request.onsuccess = (event) => {
+                const cursor = event.target.result
+                if (cursor) {
+                    results.push({ ...cursor.value, id: cursor.key })
+                    cursor.continue()
+                } else {
+                    resolve(results)
                 }
+            }
 
-                request.onerror = () => reject(new Error(`GetAllWithKeys operation failed: ${request.error}`))
-            })
-        } catch (error) {
-            console.error('❌ Error in getAllWithKeys operation:', error)
-            throw error
-        }
+            request.onerror = () => reject(new Error(`GetAllWithKeys failed on ${storeName}: ${request.error}`))
+        })
     }
 
     /**
@@ -327,35 +271,28 @@ export class IndexedDBManager {
      * @returns {Promise<Array>} Records with id property set to the primary key
      */
     async queryWithKeys(storeName, indexName, value, limit = null) {
-        try {
-            const transaction = await this.transaction(storeName, 'readonly')
-            const store = transaction.objectStore(storeName)
-            const index = store.index(indexName)
+        const transaction = await this.transaction(storeName, 'readonly')
+        const store = transaction.objectStore(storeName)
+        const index = store.index(indexName)
 
-            return new Promise((resolve, reject) => {
-                const results = []
-                let count = 0
-                const request = index.openCursor(IDBKeyRange.only(value))
+        return new Promise((resolve, reject) => {
+            const results = []
+            let count = 0
+            const request = index.openCursor(IDBKeyRange.only(value))
 
-                request.onsuccess = (event) => {
-                    const cursor = event.target.result
-                    if (cursor && (limit === null || count < limit)) {
-                        // Add the primary key as 'id' to the record
-                        const record = { ...cursor.value, id: cursor.primaryKey }
-                        results.push(record)
-                        count++
-                        cursor.continue()
-                    } else {
-                        resolve(results)
-                    }
+            request.onsuccess = (event) => {
+                const cursor = event.target.result
+                if (cursor && (limit === null || count < limit)) {
+                    results.push({ ...cursor.value, id: cursor.primaryKey })
+                    count++
+                    cursor.continue()
+                } else {
+                    resolve(results)
                 }
+            }
 
-                request.onerror = () => reject(new Error(`QueryWithKeys operation failed: ${request.error}`))
-            })
-        } catch (error) {
-            console.error('❌ Error in queryWithKeys operation:', error)
-            throw error
-        }
+            request.onerror = () => reject(new Error(`QueryWithKeys failed on ${storeName}.${indexName}: ${request.error}`))
+        })
     }
 
     /**
@@ -370,49 +307,42 @@ export class IndexedDBManager {
             return 0
         }
 
-        console.log('📦 Starting bulk insert:', records.length, 'records to', storeName)
         const batchSize = 100
         let inserted = 0
 
-        try {
-            for (let i = 0; i < records.length; i += batchSize) {
-                const batch = records.slice(i, i + batchSize)
-                const transaction = await this.transaction(storeName, 'readwrite')
-                const store = transaction.objectStore(storeName)
+        for (let i = 0; i < records.length; i += batchSize) {
+            const batch = records.slice(i, i + batchSize)
+            const transaction = await this.transaction(storeName, 'readwrite')
+            const store = transaction.objectStore(storeName)
 
-                await new Promise((resolve, reject) => {
-                    let completed = 0
-                    let hasError = false
+            await new Promise((resolve, reject) => {
+                let completed = 0
+                let hasError = false
 
-                    for (const record of batch) {
-                        const request = store.put(record)
+                for (const record of batch) {
+                    const request = store.put(record)
 
-                        request.onsuccess = () => {
-                            completed++
-                            inserted++
-                            if (completed === batch.length && !hasError) {
-                                resolve()
-                            }
-                        }
-
-                        request.onerror = () => {
-                            hasError = true
-                            reject(new Error(`Bulk insert failed: ${request.error}`))
+                    request.onsuccess = () => {
+                        completed++
+                        inserted++
+                        if (completed === batch.length && !hasError) {
+                            resolve()
                         }
                     }
-                })
 
-                if (progressCallback) {
-                    progressCallback(inserted, records.length)
+                    request.onerror = () => {
+                        hasError = true
+                        reject(new Error(`Bulk insert failed: ${request.error}`))
+                    }
                 }
-            }
+            })
 
-            console.log('✅ Bulk insert completed:', inserted, 'records inserted')
-            return inserted
-        } catch (error) {
-            console.error('❌ Error in bulk insert:', error)
-            throw error
+            if (progressCallback) {
+                progressCallback(inserted, records.length)
+            }
         }
+
+        return inserted
     }
 
     /**
@@ -427,50 +357,36 @@ export class IndexedDBManager {
             return 0
         }
 
-        console.log(`📦 Starting ultra-fast bulk insert: ${records.length} records to ${storeName}`)
-        const startTime = performance.now()
-        
-        try {
-            // Single transaction for entire dataset
-            const transaction = await this.transaction(storeName, 'readwrite')
-            const store = transaction.objectStore(storeName)
-            
-            return new Promise((resolve, reject) => {
-                let completed = 0
-                let hasError = false
-                
-                // Queue all insertions simultaneously
-                records.forEach((record, index) => {
-                    const request = store.put(record)
-                    
-                    request.onsuccess = () => {
-                        completed++
-                        
-                        // Optional progress callbacks (minimal overhead)
-                        if (progressCallback && completed % 1000 === 0) {
-                            progressCallback(completed, records.length)
-                        }
-                        
-                        if (completed === records.length && !hasError) {
-                            const duration = performance.now() - startTime
-                            console.log(`✅ Ultra-fast bulk insert completed: ${completed} records in ${duration.toFixed(2)}ms`)
-                            resolve(completed)
-                        }
+        const transaction = await this.transaction(storeName, 'readwrite')
+        const store = transaction.objectStore(storeName)
+
+        return new Promise((resolve, reject) => {
+            let completed = 0
+            let hasError = false
+
+            records.forEach((record, index) => {
+                const request = store.put(record)
+
+                request.onsuccess = () => {
+                    completed++
+
+                    if (progressCallback && completed % 1000 === 0) {
+                        progressCallback(completed, records.length)
                     }
-                    
-                    request.onerror = () => {
-                        if (!hasError) {
-                            hasError = true
-                            console.error(`❌ Bulk insert failed at record ${index}:`, request.error)
-                            reject(new Error(`Bulk insert failed: ${request.error}`))
-                        }
+
+                    if (completed === records.length && !hasError) {
+                        resolve(completed)
                     }
-                })
+                }
+
+                request.onerror = () => {
+                    if (!hasError) {
+                        hasError = true
+                        reject(new Error(`Bulk insert failed at record ${index}: ${request.error}`))
+                    }
+                }
             })
-        } catch (error) {
-            console.error('❌ Error in ultra-fast bulk insert:', error)
-            throw error
-        }
+        })
     }
 
     /**
@@ -480,71 +396,48 @@ export class IndexedDBManager {
      * @returns {Promise<void>}
      */
     async delete(storeName, key) {
-        try {
-            const transaction = await this.transaction(storeName, 'readwrite')
-            const store = transaction.objectStore(storeName)
+        const transaction = await this.transaction(storeName, 'readwrite')
+        const store = transaction.objectStore(storeName)
 
-            return new Promise((resolve, reject) => {
-                const request = store.delete(key)
-                request.onsuccess = () => resolve()
-                request.onerror = () => reject(new Error(`Delete operation failed: ${request.error}`))
-            })
-        } catch (error) {
-            console.error('❌ Error in delete operation:', error)
-            throw error
-        }
+        return new Promise((resolve, reject) => {
+            const request = store.delete(key)
+            request.onsuccess = () => resolve()
+            request.onerror = () => reject(new Error(`Delete failed on ${storeName}: ${request.error}`))
+        })
     }
 
     /**
      * Delete all records matching an index value using optimized bulk deletion
-     * @param {string} storeName 
+     * @param {string} storeName
      * @param {string} indexName
      * @param {*} value - Value to match for deletion
      * @returns {Promise<number>} Number of records deleted
      */
     async deleteByIndex(storeName, indexName, value) {
-        try {
-            console.log(`🗑️ Starting optimized bulk deletion: ${storeName}.${indexName} = ${value}`)
-            const startTime = performance.now()
-            
-            // Single transaction for entire operation
-            const transaction = await this.transaction(storeName, 'readwrite')
-            const store = transaction.objectStore(storeName)
-            const index = store.index(indexName)
-            
-            return new Promise((resolve, reject) => {
-                let deletedCount = 0
-                const keyRange = IDBKeyRange.only(value)
-                
-                // Use a faster approach: open cursor and delete immediately
-                const cursorRequest = index.openCursor(keyRange)
-                
-                cursorRequest.onsuccess = (event) => {
-                    const cursor = event.target.result
-                    if (cursor) {
-                        // Delete the current record immediately
-                        cursor.delete()
-                        deletedCount++
-                        
-                        // Continue to next record without waiting for delete completion
-                        cursor.continue()
-                    } else {
-                        // All records processed
-                        const duration = performance.now() - startTime
-                        console.log(`✅ Bulk deletion completed: ${deletedCount} records from ${storeName} in ${duration.toFixed(2)}ms`)
-                        resolve(deletedCount)
-                    }
+        const transaction = await this.transaction(storeName, 'readwrite')
+        const store = transaction.objectStore(storeName)
+        const index = store.index(indexName)
+
+        return new Promise((resolve, reject) => {
+            let deletedCount = 0
+            const keyRange = IDBKeyRange.only(value)
+            const cursorRequest = index.openCursor(keyRange)
+
+            cursorRequest.onsuccess = (event) => {
+                const cursor = event.target.result
+                if (cursor) {
+                    cursor.delete()
+                    deletedCount++
+                    cursor.continue()
+                } else {
+                    resolve(deletedCount)
                 }
-                
-                cursorRequest.onerror = () => {
-                    console.error(`❌ Cursor operation failed: ${cursorRequest.error}`)
-                    reject(cursorRequest.error)
-                }
-            })
-        } catch (error) {
-            console.error('❌ Error in deleteByIndex operation:', error)
-            throw error
-        }
+            }
+
+            cursorRequest.onerror = () => {
+                reject(new Error(`deleteByIndex failed on ${storeName}.${indexName}: ${cursorRequest.error}`))
+            }
+        })
     }
 
     /**
@@ -553,22 +446,14 @@ export class IndexedDBManager {
      * @returns {Promise<void>}
      */
     async clear(storeName) {
-        try {
-            const transaction = await this.transaction(storeName, 'readwrite')
-            const store = transaction.objectStore(storeName)
+        const transaction = await this.transaction(storeName, 'readwrite')
+        const store = transaction.objectStore(storeName)
 
-            return new Promise((resolve, reject) => {
-                const request = store.clear()
-                request.onsuccess = () => {
-                    console.log('🧹 Cleared all records from store:', storeName)
-                    resolve()
-                }
-                request.onerror = () => reject(new Error(`Clear operation failed: ${request.error}`))
-            })
-        } catch (error) {
-            console.error('❌ Error in clear operation:', error)
-            throw error
-        }
+        return new Promise((resolve, reject) => {
+            const request = store.clear()
+            request.onsuccess = () => resolve()
+            request.onerror = () => reject(new Error(`Clear failed on ${storeName}: ${request.error}`))
+        })
     }
 
     /**
@@ -577,19 +462,14 @@ export class IndexedDBManager {
      * @returns {Promise<number>}
      */
     async count(storeName) {
-        try {
-            const transaction = await this.transaction(storeName, 'readonly')
-            const store = transaction.objectStore(storeName)
+        const transaction = await this.transaction(storeName, 'readonly')
+        const store = transaction.objectStore(storeName)
 
-            return new Promise((resolve, reject) => {
-                const request = store.count()
-                request.onsuccess = () => resolve(request.result)
-                request.onerror = () => reject(new Error(`Count operation failed: ${request.error}`))
-            })
-        } catch (error) {
-            console.error('❌ Error in count operation:', error)
-            throw error
-        }
+        return new Promise((resolve, reject) => {
+            const request = store.count()
+            request.onsuccess = () => resolve(request.result)
+            request.onerror = () => reject(new Error(`Count failed on ${storeName}: ${request.error}`))
+        })
     }
 
     /**
@@ -597,7 +477,6 @@ export class IndexedDBManager {
      */
     close() {
         if (this.db) {
-            console.log('🛑 Closing database connection:', this.dbName)
             this.db.close()
             this.db = null
         }
@@ -607,41 +486,22 @@ export class IndexedDBManager {
      * Completely drop the database
      */
     async drop() {
-        try {
-            console.log('🗑️ Dropping database completely:', this.dbName)
+        this.close()
 
-            // Close existing connection if open
-            this.close()
+        await new Promise((resolve, reject) => {
+            const deleteRequest = indexedDB.deleteDatabase(this.dbName)
 
-            // Delete the entire database
-            await new Promise((resolve, reject) => {
-                const deleteRequest = indexedDB.deleteDatabase(this.dbName)
+            deleteRequest.onsuccess = () => resolve()
+            deleteRequest.onerror = () => {
+                reject(new Error(`Failed to delete database ${this.dbName}: ${deleteRequest.error}`))
+            }
+            deleteRequest.onblocked = () => {
+                console.warn('Database deletion blocked, waiting for connections to close:', this.dbName)
+            }
+        })
 
-                deleteRequest.onsuccess = () => {
-                    console.log('✅ Database deleted successfully:', this.dbName)
-                    resolve()
-                }
-
-                deleteRequest.onerror = () => {
-                    console.error('❌ Failed to delete database:', deleteRequest.error)
-                    reject(new Error(`Failed to delete database ${this.dbName}: ${deleteRequest.error}`))
-                }
-
-                deleteRequest.onblocked = () => {
-                    console.warn('⚠️ Database deletion blocked - closing all connections...')
-                    // The deletion is blocked, likely because there are open connections
-                    // This will resolve once all connections are closed
-                }
-            })
-
-            // Reset internal state
-            this.db = null
-            this.isOpening = false
-            this.openPromise = null
-
-        } catch (error) {
-            console.error('❌ Error dropping database:', error)
-            throw error
-        }
+        this.db = null
+        this.isOpening = false
+        this.openPromise = null
     }
 }

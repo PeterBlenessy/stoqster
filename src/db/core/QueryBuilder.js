@@ -110,8 +110,6 @@ export class QueryBuilder {
      */
     async execute() {
         try {
-            console.log('🔍 Executing query on store:', this.storeName, 'with filters:', this.filters)
-
             if (this.filters.length === 0) {
                 // No filters, get all records with their keys
                 const allRecords = await this.db.getAllWithKeys(this.storeName)
@@ -129,7 +127,7 @@ export class QueryBuilder {
             // Multiple filters require cursor-based approach
             return this.executeComplexQuery()
         } catch (error) {
-            console.error('❌ Query execution failed:', error)
+            console.error('Query execution failed:', error)
             throw error
         }
     }
@@ -210,7 +208,7 @@ export class QueryBuilder {
 
         } catch (error) {
             // Field is not indexed, fall back to full cursor scan
-            console.warn(`⚠️ Field ${field} not indexed, using slow cursor scan`)
+            console.warn(`Field ${field} not indexed, using cursor scan`)
             return this.executeCursorFallback(store, field, operator, value)
         }
     }
@@ -256,18 +254,9 @@ export class QueryBuilder {
      * @returns {Promise<Array>}
      */
     async executeComplexQuery() {
-        console.log('🔍 Executing complex query with multiple filters:', this.filters)
-
-        // Strategy: Use the most selective filter as the primary index query,
-        // then filter the results with the remaining conditions
-
-        // Find the best filter to use as primary (most selective)
         const primaryFilter = this.findMostSelectiveFilter()
         const remainingFilters = this.filters.filter(f => f !== primaryFilter)
 
-        console.log('🎯 Using primary filter on index:', primaryFilter.field, primaryFilter.operator, primaryFilter.value)
-
-        // Execute primary filter using index
         let candidateResults
         if (primaryFilter.operator === '=') {
             // Use index directly for equality with primary keys
@@ -277,22 +266,18 @@ export class QueryBuilder {
             candidateResults = await this.executeCursorQuery(primaryFilter.field, primaryFilter.operator, primaryFilter.value)
         }
 
-        console.log(`📊 Primary index query returned ${candidateResults.length} candidates`)
-
-        // Apply remaining filters to the candidate set (much smaller than full dataset)
         if (remainingFilters.length === 0) {
             return candidateResults
         }
 
-        const finalResults = candidateResults.filter(record => {
+        const filtered = candidateResults.filter(record => {
             return remainingFilters.every(filter => {
                 const fieldValue = this.getFieldValue(record, filter.field)
                 return this.matchesFilter(fieldValue, filter.operator, filter.value)
             })
         })
 
-        console.log(`✅ Complex query completed: ${candidateResults.length} candidates → ${finalResults.length} final results`)
-        return finalResults
+        return this.postProcessResults(filtered)
     }
 
     /**
@@ -429,10 +414,34 @@ export class QueryBuilder {
     }
 
     /**
-     * Get count of records matching the query
+     * Get count of records matching the query.
+     * Uses native IndexedDB count for simple equality queries (no post-processing needed).
+     * Falls back to execute() for complex queries.
      * @returns {Promise<number>}
      */
     async count() {
+        // Optimization: use native IndexedDB count for single equality filter with no sort/limit/offset
+        if (this.filters.length === 1 && this.filters[0].operator === '=' && !this.sortBy && !this.limitCount && this.offsetCount === 0) {
+            const { field, value } = this.filters[0]
+            try {
+                const transaction = await this.db.transaction(this.storeName, 'readonly')
+                const store = transaction.objectStore(this.storeName)
+                const index = store.index(field)
+                return new Promise((resolve, reject) => {
+                    const request = index.count(IDBKeyRange.only(value))
+                    request.onsuccess = () => resolve(request.result)
+                    request.onerror = () => reject(new Error(`Count failed: ${request.error}`))
+                })
+            } catch {
+                // Field not indexed, fall back
+            }
+        }
+
+        // For no filters, use native store count
+        if (this.filters.length === 0 && !this.sortBy && !this.limitCount && this.offsetCount === 0) {
+            return this.db.count(this.storeName)
+        }
+
         const results = await this.execute()
         return results.length
     }
@@ -442,8 +451,17 @@ export class QueryBuilder {
      * @returns {Promise<boolean>}
      */
     async exists() {
-        const count = await this.limit(1).count()
-        return count > 0
+        // Optimization: for simple queries, count is efficient and doesn't need limit hack
+        if (this.filters.length <= 1 && !this.sortBy && !this.limitCount && this.offsetCount === 0) {
+            const count = await this.count()
+            return count > 0
+        }
+        // For complex queries, limit to 1 to avoid loading all records
+        const savedLimit = this.limitCount
+        this.limitCount = 1
+        const results = await this.execute()
+        this.limitCount = savedLimit
+        return results.length > 0
     }
 }
 
